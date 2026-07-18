@@ -40,7 +40,7 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/request-phone-otp", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/request-phone-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, newPhone }),
@@ -65,7 +65,7 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/verify-phone", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/verify-phone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, otp }),

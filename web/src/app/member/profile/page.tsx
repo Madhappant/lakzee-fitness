@@ -61,7 +61,7 @@ export default function MemberProfilePage() {
     setIsPhoneLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/request-phone-otp", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/request-phone-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user?.email, newPhone }),
@@ -83,7 +83,7 @@ export default function MemberProfilePage() {
     setIsPhoneLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/verify-phone", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/verify-phone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user?.email, otp }),
@@ -131,7 +131,7 @@ export default function MemberProfilePage() {
 
   const profile = profileData?.data;
   const user = profile?.user;
-  const photoUrl = profile?.photoUrl ? `http://localhost:5000${profile.photoUrl}` : null;
+  const photoUrl = profile?.photoUrl ? `${process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace("/api", "") : "http://localhost:5000"}${profile.photoUrl}` : null;
 
   if (!profile || !user) return null;
 
