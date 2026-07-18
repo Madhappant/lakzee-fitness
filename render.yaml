@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: lakzee-backend
+    env: node
+    plan: starter
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        value: "https://your-vercel-domain.vercel.app" # UPDATE THIS AFTER VERCEL DEPLOYMENT
+      - key: DATABASE_URL
+        value: "file:/data/lakzee.db"
+    disk:
+      name: lakzee-data
+      mountPath: /data
+      sizeGB: 1

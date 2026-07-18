@@ -1,0 +1,200 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      String   @default("MEMBER") // ADMIN, RECEPTIONIST, TRAINER, MEMBER
+  firstName String
+  lastName  String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  resetOtp       String?
+  resetOtpExpiry DateTime?
+  
+  pendingPhone   String?
+  phoneOtp       String?
+  phoneOtpExpiry DateTime?
+
+  memberProfile MemberProfile?
+  staffProfile  StaffProfile?
+
+  // Trainer specific
+  assignedMembers MemberProfile[] @relation("TrainerToMember")
+}
+
+model StaffProfile {
+  id             String @id @default(uuid())
+  userId         String @unique
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  designation    String?
+  shiftStart     String? // HH:mm
+  shiftEnd       String? // HH:mm
+  specialization String? // For trainers
+}
+
+model MemberProfile {
+  id             String   @id @default(uuid())
+  memberId       String   @unique // Auto-generated Lakzee ID
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  photoUrl       String?
+  whatsapp       String?
+  dob            DateTime?
+  gender         String? // MALE, FEMALE, OTHER
+  height         Float? // in cm
+  weight         Float? // in kg
+  bloodGroup     String?
+  occupation     String?
+  emergencyContact String?
+  medicalConditions String?
+  address        String?
+  joiningDate    DateTime @default(now())
+  lockerNumber   String?
+  notes          String?
+  idProofUrl     String?
+  qrCode         String   @unique @default(uuid()) // Unique identifier for QR checking
+  
+  trainerId      String?
+  trainer        User?    @relation("TrainerToMember", fields: [trainerId], references: [id])
+
+  subscriptions  Subscription[]
+  attendances    Attendance[]
+  invoices       Invoice[]
+  dietPlans      DietPlan[]
+  workoutRoutines WorkoutRoutine[]
+}
+
+model MembershipPlan {
+  id            String   @id @default(uuid())
+  name          String   // e.g., "Premium Annual", "Student Monthly"
+  description   String?
+  price         Float
+  durationDays  Int
+  gstPercentage Float    @default(18.0)
+  freezeDays    Int      @default(0)
+  personalTraining Boolean @default(false)
+  dietIncluded  Boolean  @default(false)
+  lockerIncluded Boolean @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id            String             @id @default(uuid())
+  memberId      String
+  member        MemberProfile      @relation(fields: [memberId], references: [id])
+  planId        String
+  plan          MembershipPlan     @relation(fields: [planId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  status        String             @default("ACTIVE") // ACTIVE, EXPIRED, FROZEN, CANCELLED
+  paymentStatus String             @default("PAID")   // PAID, PENDING
+  frozenDaysUsed Int               @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  invoice       Invoice?
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique // Auto generated
+  memberId      String
+  member        MemberProfile @relation(fields: [memberId], references: [id])
+  subscriptionId String?      @unique
+  subscription  Subscription? @relation(fields: [subscriptionId], references: [id])
+  
+  subtotal      Float
+  discount      Float         @default(0)
+  gstAmount     Float
+  totalAmount   Float
+  
+  status        String        @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  createdAt     DateTime      @default(now())
+  
+  payments      Payment[]
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id])
+  amount        Float
+  method        String // CASH, UPI, CREDIT_CARD, DEBIT_CARD, BANK_TRANSFER, SPLIT
+  transactionId String?
+  status        String        @default("COMPLETED")
+  paymentDate   DateTime      @default(now())
+  notes         String?
+}
+
+model Attendance {
+  id            String        @id @default(uuid())
+  memberId      String
+  member        MemberProfile @relation(fields: [memberId], references: [id])
+  checkIn       DateTime      @default(now())
+  checkOut      DateTime?
+  date          DateTime
+}
+
+model Settings {
+  id              String   @id @default("1")
+  gymName         String   @default("Lakzee Fitness Studio")
+  logoUrl         String?
+  branch          String?
+  workingHours    String?
+  gstNumber       String?
+  address         String?
+  contactEmail    String?
+  contactPhone    String?
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model DietPlan {
+  id          String        @id @default(uuid())
+  memberId    String
+  member      MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  assignedBy  String?       // ID of trainer/admin who assigned it
+  title       String        @default("Personalized Diet Plan")
+  notes       String?       // General guidelines
+  mealsData   String        // JSON string of meals (e.g. { breakfast: "...", lunch: "..." })
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model WorkoutRoutine {
+  id          String        @id @default(uuid())
+  memberId    String
+  member      MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  assignedBy  String?       // ID of trainer/admin who assigned it
+  title       String        @default("Personalized Workout Routine")
+  notes       String?       // General guidelines
+  exercisesData String      // JSON string of days/exercises
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
