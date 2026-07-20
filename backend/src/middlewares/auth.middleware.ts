@@ -27,8 +27,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     req.user = decoded;
     next();
-  } catch (error) {
-    res.status(401).json({ status: 'error', message: 'Unauthorized, invalid token' });
+  } catch (error: any) {
+    console.error("Auth Middleware Error:", error);
+    res.status(401).json({ status: 'error', message: 'Unauthorized, invalid token', details: error?.message });
   }
 };
 
