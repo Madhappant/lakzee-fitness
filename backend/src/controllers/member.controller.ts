@@ -1,10 +1,35 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../app';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 
-export const createMember = async (req: Request, res: Response) => {
+const createMemberSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  phone: z.string().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
+  dob: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  address: z.string().optional(),
+  emergencyContact: z.string().optional()
+});
+
+const updateMemberSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  phone: z.string().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
+  dob: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  address: z.string().optional(),
+  emergencyContact: z.string().optional()
+});
+export const createMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, firstName, lastName, phone, ...profileData } = req.body;
+    const validatedData = createMemberSchema.parse(req.body);
+    const { email, password, firstName, lastName, phone, ...profileData } = validatedData;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -38,12 +63,11 @@ export const createMember = async (req: Request, res: Response) => {
 
     res.status(201).json({ status: 'success', data: newMember });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to create member' });
+    next(error);
   }
 };
 
-export const getMembers = async (req: Request, res: Response) => {
+export const getMembers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const members = await prisma.user.findMany({
       where: { role: 'MEMBER' },
@@ -51,11 +75,11 @@ export const getMembers = async (req: Request, res: Response) => {
     });
     res.json({ status: 'success', data: members });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch members' });
+    next(error);
   }
 };
 
-export const getMemberById = async (req: Request, res: Response) => {
+export const getMemberById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const member = await prisma.user.findUnique({
@@ -68,11 +92,11 @@ export const getMemberById = async (req: Request, res: Response) => {
     }
     res.json({ status: 'success', data: member });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch member' });
+    next(error);
   }
 };
 
-export const deleteMember = async (req: Request, res: Response) => {
+export const deleteMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     
@@ -83,15 +107,15 @@ export const deleteMember = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', message: 'Member deleted successfully' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to delete member' });
+    next(error);
   }
 };
 
-export const updateMember = async (req: Request, res: Response) => {
+export const updateMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, phone, ...profileData } = req.body;
+    const validatedData = updateMemberSchema.parse(req.body);
+    const { firstName, lastName, phone, ...profileData } = validatedData;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ 
@@ -123,7 +147,6 @@ export const updateMember = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: updatedMember });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to update member' });
+    next(error);
   }
 };

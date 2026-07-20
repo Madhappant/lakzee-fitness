@@ -1,7 +1,13 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../app';
+import { z } from 'zod';
 
-export const getStaff = async (req: Request, res: Response) => {
+const assignRoleSchema = z.object({
+  userId: z.string(),
+  role: z.enum(['ADMIN', 'RECEPTIONIST', 'TRAINER'])
+});
+
+export const getStaff = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await prisma.user.findMany({
       where: {
@@ -19,13 +25,14 @@ export const getStaff = async (req: Request, res: Response) => {
     });
     res.json({ status: 'success', data: users });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch staff' });
+    next(error);
   }
 };
 
-export const assignRole = async (req: Request, res: Response) => {
+export const assignRole = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { userId, role } = req.body;
+    const validatedData = assignRoleSchema.parse(req.body);
+    const { userId, role } = validatedData;
     
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
@@ -34,21 +41,21 @@ export const assignRole = async (req: Request, res: Response) => {
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { role: role.toUpperCase() }
+      data: { role: role }
     });
 
     res.json({ status: 'success', message: 'Role assigned successfully', data: updated });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to assign role' });
+    next(error);
   }
 };
 
-export const revokeRole = async (req: Request, res: Response) => {
+export const revokeRole = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     
     // Prevent self-revocation for safety
-    if (req.user?.id === id) {
+    if ((req as any).user?.id === id) {
       return res.status(400).json({ status: 'error', message: 'Cannot revoke your own admin role' });
     }
 
@@ -59,6 +66,6 @@ export const revokeRole = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', message: 'Role revoked', data: updated });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to revoke role' });
+    next(error);
   }
 };

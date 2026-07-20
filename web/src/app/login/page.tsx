@@ -4,44 +4,36 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Lock, Mail } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { loginUser } from "@/lib/api/auth";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+  const mutation = useMutation({
+    mutationFn: loginUser,
+    onSuccess: (data) => {
+      localStorage.setItem('lakzee_token', data.data.token);
+      localStorage.setItem('lakzee_user', JSON.stringify(data.data.user));
       
-      const data = await response.json();
+      toast.success("Welcome back!");
       
-      if (response.ok && data.status === 'success') {
-        localStorage.setItem('lakzee_token', data.data.token);
-        localStorage.setItem('lakzee_user', JSON.stringify(data.data.user));
-        
-        if (data.data.user.role === 'MEMBER') {
-          router.push("/member/dashboard");
-        } else {
-          router.push("/admin/dashboard");
-        }
+      if (data.data.user.role === 'MEMBER') {
+        router.push("/member/dashboard");
       } else {
-        alert(data.message || 'Login failed');
-        setLoading(false);
+        router.push("/admin/dashboard");
       }
-    } catch (error) {
-      console.error(error);
-      alert('Network error. Is the backend running?');
-      setLoading(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Login failed');
     }
+  });
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate({ email, password });
   };
 
   return (
@@ -101,11 +93,11 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={mutation.isPending}
               className="w-full mt-4 bg-primary text-primary-foreground font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-all hover:bg-accent-hover hover:scale-[1.02] active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.2)] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in..." : "Sign In"}
-              {!loading && <ArrowRight className="h-4 w-4" />}
+              {mutation.isPending ? "Signing in..." : "Sign In"}
+              {!mutation.isPending && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>
 

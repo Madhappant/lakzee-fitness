@@ -2,7 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const app: Application = express();
 export const prisma = new PrismaClient();
@@ -56,6 +56,25 @@ app.use('/api/notifications', notificationRoutes);
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      const target = err.meta?.target as string[];
+      return res.status(400).json({
+        status: 'error',
+        message: `A record with this ${target ? target.join(', ') : 'value'} already exists. Please use a unique value.`
+      });
+    }
+  }
+
+  if (err.name === 'ZodError') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation failed',
+      errors: err.errors
+    });
+  }
+
   res.status(err.status || 500).json({
     status: 'error',
     message: err.message || 'Internal Server Error',

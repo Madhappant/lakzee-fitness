@@ -6,44 +6,50 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createMember } from "@/lib/api/members";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
+
+const addMemberSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  phone: z.string().optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+  bloodGroup: z.string().optional(),
+  address: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  dob: z.string().optional(),
+});
+type AddMemberFormValues = z.infer<typeof addMemberSchema>;
 
 export default function AddMemberPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    phone: "",
-    gender: "MALE",
-    bloodGroup: "",
-    address: "",
-    emergencyContact: "",
-    dob: "",
+  const { register, handleSubmit, formState: { errors } } = useForm<AddMemberFormValues>({
+    resolver: zodResolver(addMemberSchema),
+    defaultValues: {
+      firstName: "", lastName: "", email: "", password: "", phone: "", gender: "MALE", bloodGroup: "", address: "", emergencyContact: "", dob: ""
+    }
   });
 
   const mutation = useMutation({
     mutationFn: createMember,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+      toast.success("Member created successfully!");
       router.push("/admin/members");
     },
     onError: (err: any) => {
-      setError(err.message || "Something went wrong.");
+      toast.error(err.message || "Failed to create member");
     }
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    mutation.mutate(formData);
+  const onSubmit = (data: AddMemberFormValues) => {
+    mutation.mutate(data);
   };
 
   return (
@@ -58,12 +64,7 @@ export default function AddMemberPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 font-medium">
-            {error}
-          </div>
-        )}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
         {/* Account Details */}
         <fieldset disabled={mutation.isPending} className="space-y-8 group disabled:opacity-70 transition-opacity">
@@ -72,19 +73,23 @@ export default function AddMemberPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">First Name <span className="text-brand-gold">*</span></label>
-              <input required name="firstName" value={formData.firstName} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input {...register("firstName")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Last Name <span className="text-brand-gold">*</span></label>
-              <input required name="lastName" value={formData.lastName} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input {...register("lastName")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Email Address <span className="text-brand-gold">*</span></label>
-              <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input type="email" {...register("email")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Password <span className="text-brand-gold">*</span></label>
-              <input required type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input type="password" {...register("password")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
             </div>
           </div>
         </div>
@@ -95,11 +100,11 @@ export default function AddMemberPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Phone Number</label>
-              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input type="tel" {...register("phone")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Gender</label>
-              <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors appearance-none">
+              <select {...register("gender")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors appearance-none">
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
                 <option value="OTHER">Other</option>
@@ -107,19 +112,19 @@ export default function AddMemberPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
-              <input type="date" name="dob" value={formData.dob} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input type="date" {...register("dob")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Blood Group</label>
-              <input name="bloodGroup" placeholder="e.g. O+" value={formData.bloodGroup} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input placeholder="e.g. O+" {...register("bloodGroup")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Emergency Contact</label>
-              <input name="emergencyContact" value={formData.emergencyContact} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input {...register("emergencyContact")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-muted-foreground">Address</label>
-              <textarea name="address" rows={3} value={formData.address} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors resize-none"></textarea>
+              <textarea rows={3} {...register("address")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors resize-none"></textarea>
             </div>
           </div>
         </div>
