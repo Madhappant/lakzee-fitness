@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 
 type Notification = {
   id: string;
-  type: "EXPIRY" | "PAYMENT" | "SYSTEM";
+  type: "EXPIRY" | "PAYMENT" | "SYSTEM" | "ANNOUNCEMENT";
   title: string;
   message: string;
   date: string;
@@ -56,6 +56,7 @@ export function NotificationDropdown({ role }: { role: "ADMIN" | "MEMBER" }) {
     switch (type) {
       case "EXPIRY": return <AlertTriangle className="w-5 h-5 text-orange-500" />;
       case "PAYMENT": return <CreditCard className="w-5 h-5 text-red-500" />;
+      case "ANNOUNCEMENT": return <Bell className="w-5 h-5 text-blue-500" />; // using Bell or Megaphone (if imported)
       default: return <Bell className="w-5 h-5 text-primary" />;
     }
   };

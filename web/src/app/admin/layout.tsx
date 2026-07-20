@@ -20,7 +20,8 @@ import {
   Package,
   BarChart3,
   ShieldCheck,
-  UserCircle
+  UserCircle,
+  Megaphone
 } from "lucide-react";
 
 const sidebarGroups = [
@@ -36,6 +37,7 @@ const sidebarGroups = [
       { name: "Members", href: "/admin/members", icon: Users },
       { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
       { name: "Payments", href: "/admin/payments", icon: CreditCard },
+      { name: "Announcements", href: "/admin/announcements", icon: Megaphone },
     ],
   },
   {

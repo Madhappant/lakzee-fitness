@@ -113,7 +113,27 @@ router.get('/', authenticate, async (req: any, res) => {
       }
     }
 
-    // Sort all notifications by date (newest first for payments, and closest expiry first?)
+    // Add Announcements for everyone
+    const recentAnnouncements = await prisma.announcement.findMany({
+      where: {
+        createdAt: { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } // Last 30 days
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    recentAnnouncements.forEach(announcement => {
+      notifications.push({
+        id: `ann-${announcement.id}`,
+        type: 'ANNOUNCEMENT',
+        title: announcement.title,
+        message: announcement.message,
+        date: announcement.createdAt,
+        link: userRole === 'MEMBER' ? '/member/dashboard' : '/admin/announcements',
+        read: false
+      });
+    });
+
+    // Sort all notifications by date (newest first for payments and announcements, and closest expiry first?)
     // Actually, sorting by date descending is fine for payments, but for expiry, maybe we want most recent expiries first.
     notifications.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

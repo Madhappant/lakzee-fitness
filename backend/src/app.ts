@@ -36,6 +36,7 @@ import reportsRoutes from './routes/reports.routes';
 import portalRoutes from './routes/portal.routes';
 import dietWorkoutRoutes from './routes/diet-workout.routes';
 import notificationRoutes from './routes/notification.routes';
+import announcementRoutes from './routes/announcement.routes';
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
@@ -52,6 +53,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/portal', portalRoutes);
 app.use('/api/plans-routines', dietWorkoutRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
