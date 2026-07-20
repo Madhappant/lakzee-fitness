@@ -5,9 +5,14 @@ export const checkIn = async (req: Request, res: Response) => {
   try {
     const { lakzeeId } = req.body; // e.g. LZ-1234
     
-    // Find member by Lakzee ID
-    const member = await prisma.memberProfile.findUnique({
-      where: { memberId: lakzeeId },
+    // Find member by Lakzee ID or QR Code UUID
+    const member = await prisma.memberProfile.findFirst({
+      where: {
+        OR: [
+          { memberId: lakzeeId },
+          { qrCode: lakzeeId }
+        ]
+      },
       include: { user: true }
     });
 
