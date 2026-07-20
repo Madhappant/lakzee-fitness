@@ -10,7 +10,7 @@ export const checkIn = async (req: Request, res: Response) => {
       where: {
         OR: [
           { memberId: lakzeeId },
-          { qrCode: lakzeeId }
+          { qrCode: lakzeeId.toLowerCase() }
         ]
       },
       include: { user: true }
