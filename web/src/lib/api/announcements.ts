@@ -1,4 +1,4 @@
-import { getAuthToken, API_URL } from "./auth";
+import { getAuthToken, API_URL } from "./members";
 
 export const fetchAnnouncements = async () => {
   const token = getAuthToken();
