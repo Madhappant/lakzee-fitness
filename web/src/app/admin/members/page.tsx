@@ -7,6 +7,7 @@ const BASE_URL = API_URL.replace('/api', '');
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, Loader2, Trash2, Edit2, FileText, X } from "lucide-react";
+import Image from "next/image";
 
 export default function MembersPage() {
   const queryClient = useQueryClient();
@@ -127,9 +128,11 @@ export default function MembersPage() {
                       className="flex items-center gap-3 hover:text-brand-gold transition-colors text-left"
                     >
                       {member.memberProfile?.photoUrl ? (
-                        <img 
+                        <Image 
                           src={`${BASE_URL}${member.memberProfile.photoUrl}`} 
                           alt="Profile" 
+                          width={32}
+                          height={32}
                           className="w-8 h-8 rounded-full object-cover border border-brand-gold/20"
                         />
                       ) : (
@@ -211,9 +214,11 @@ export default function MembersPage() {
                 
                 <div className="flex flex-col items-center text-center mt-2">
                   {selectedMember.memberProfile?.photoUrl ? (
-                    <img 
+                    <Image 
                       src={`${BASE_URL}${selectedMember.memberProfile.photoUrl}`} 
                       alt="Profile" 
+                      width={96}
+                      height={96}
                       className="w-24 h-24 rounded-full object-cover border-4 border-brand-gold/20 shadow-xl mb-4"
                     />
                   ) : (

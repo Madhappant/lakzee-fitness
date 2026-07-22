@@ -7,6 +7,7 @@ import { ArrowRight, Lock, Mail } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { loginUser } from "@/lib/api/auth";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,10 +45,13 @@ export default function LoginPage() {
       <div className="z-10 w-full max-w-md">
         <div className="glass-card p-8 md:p-10 flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2 text-center">
-            <img 
+            <Image 
               src="/logo.png" 
               alt="Lakzee Fitness" 
+              width={80}
+              height={80}
               className="w-20 h-20 object-cover rounded-full bg-white mb-2 shadow-lg" 
+              priority
             />
             <h1 className="text-2xl font-heading font-bold">Welcome Back</h1>
             <p className="text-sm text-muted-foreground font-body">

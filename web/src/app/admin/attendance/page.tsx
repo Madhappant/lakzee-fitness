@@ -5,7 +5,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchTodayAttendance, checkInMember } from "@/lib/api/attendance";
 import { LogIn, Loader2, Search, Camera, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { Scanner } from "@yudiel/react-qr-scanner";
+import dynamic from "next/dynamic";
+
+const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(mod => mod.Scanner), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full w-full bg-muted/20 text-muted-foreground">Loading camera...</div>
+});
 
 export default function AttendancePage() {
   const queryClient = useQueryClient();

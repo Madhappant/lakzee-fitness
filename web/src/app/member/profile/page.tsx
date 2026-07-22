@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { UserCircle, Mail, ShieldCheck, Copy, CheckCircle2, Phone, X, Loader2, Upload, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchMyProfile, uploadMyPhoto } from "@/lib/api/portal";
 
@@ -153,12 +154,14 @@ export default function MemberProfilePage() {
             
             <div 
               onClick={handlePhotoClick}
-              className="w-32 h-32 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-brand-gold/50 flex items-center justify-center mb-6 relative z-10 shadow-lg shadow-brand-gold/10 cursor-pointer group overflow-hidden"
+              className="w-32 h-32 rounded-full border-4 border-background overflow-hidden relative bg-muted shadow-xl cursor-pointer group"
             >
               {photoUrl ? (
-                <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                <Image src={photoUrl} alt="Profile" width={128} height={128} className="w-full h-full object-cover" unoptimized />
               ) : (
-                <UserCircle className="w-16 h-16 text-brand-gold/50" />
+                <div className="flex items-center justify-center h-full w-full">
+                  <UserCircle className="w-16 h-16 text-brand-gold/50" />
+                </div>
               )}
               
               <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

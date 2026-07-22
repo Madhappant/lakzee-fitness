@@ -169,9 +169,9 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                 <p className="text-sm font-medium text-foreground uppercase tracking-wider">{user?.firstName}</p>
                 <p className="text-[10px] text-muted-foreground uppercase">{user?.memberProfile?.memberId || 'Member'}</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border">
+              <div className="w-10 h-10 rounded-full border-2 border-border overflow-hidden shrink-0 hidden md:block">
                 {user?.memberProfile?.photoUrl ? (
-                  <img src={user.memberProfile.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                  <Image src={user.memberProfile.photoUrl} alt="Profile" width={40} height={40} className="w-full h-full object-cover" unoptimized />
                 ) : (
                   <UserCircle className="w-6 h-6 text-muted-foreground" />
                 )}
