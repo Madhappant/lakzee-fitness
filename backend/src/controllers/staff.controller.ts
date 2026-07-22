@@ -52,7 +52,7 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
 
 export const revokeRole = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     // Prevent self-revocation for safety
     if ((req as any).user?.id === id) {

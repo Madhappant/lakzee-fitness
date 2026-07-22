@@ -152,7 +152,7 @@ export default function PaymentsPage() {
             setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID" });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20"
+          className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 w-full sm:w-auto"
         >
           <Plus className="w-5 h-5" /> Assign Plan
         </button>
@@ -371,11 +371,11 @@ export default function PaymentsPage() {
                   </select>
                 </div>
 
-                <div className="pt-4 border-t border-border flex justify-end gap-3">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl font-medium text-foreground hover:bg-white/5 transition-colors">
+                <div className="pt-4 border-t border-border flex flex-col sm:flex-row justify-end gap-3">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto px-5 py-3 rounded-xl font-medium text-foreground hover:bg-white/5 transition-colors order-2 sm:order-1 border border-border sm:border-transparent">
                     Cancel
                   </button>
-                  <button type="submit" disabled={mutation.isPending || updateMut.isPending} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50">
+                  <button type="submit" disabled={mutation.isPending || updateMut.isPending} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50 order-1 sm:order-2">
                     {(mutation.isPending || updateMut.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : (modalMode === "ASSIGN" ? <Plus className="w-4 h-4" /> : <Save className="w-4 h-4" />)}
                     {modalMode === "ASSIGN" ? "Assign Plan" : "Save Changes"}
                   </button>

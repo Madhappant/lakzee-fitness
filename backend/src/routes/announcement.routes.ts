@@ -65,7 +65,7 @@ router.post('/', authenticate, authorize('ADMIN'), async (req: any, res, next) =
 // DELETE /api/announcements/:id - Delete an announcement
 router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.announcement.delete({
       where: { id }
     });

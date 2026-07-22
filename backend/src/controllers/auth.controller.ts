@@ -70,7 +70,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: error.errors });
+      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
     }
     next(error);
   }
@@ -101,7 +101,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: error.errors });
+      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
     }
     next(error);
   }
@@ -180,7 +180,7 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: error.errors });
+      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
     }
     next(error);
   }
@@ -217,7 +217,7 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: error.errors });
+      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
     }
     next(error);
   }
@@ -290,7 +290,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: error.errors });
+      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
     }
     next(error);
   }
@@ -332,7 +332,7 @@ export const verifyPhoneOtp = async (req: Request, res: Response, next: NextFunc
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: error.errors });
+      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
     }
     next(error);
   }

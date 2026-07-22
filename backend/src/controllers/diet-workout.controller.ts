@@ -3,7 +3,7 @@ import { prisma } from '../app';
 
 export const assignDietPlan = async (req: Request, res: Response) => {
   try {
-    const { memberId } = req.params;
+    const memberId = req.params.memberId as string;
     const { title, notes, mealsData } = req.body;
     const assignedBy = req.user?.id;
 
@@ -32,7 +32,7 @@ export const assignDietPlan = async (req: Request, res: Response) => {
 
 export const getMemberDietPlan = async (req: Request, res: Response) => {
   try {
-    const { memberId } = req.params;
+    const memberId = req.params.memberId as string;
     const activeDietPlan = await prisma.dietPlan.findFirst({
       where: { memberId, isActive: true },
       orderBy: { createdAt: 'desc' }
@@ -47,7 +47,7 @@ export const getMemberDietPlan = async (req: Request, res: Response) => {
 
 export const assignWorkoutRoutine = async (req: Request, res: Response) => {
   try {
-    const { memberId } = req.params;
+    const memberId = req.params.memberId as string;
     const { title, notes, exercisesData } = req.body;
     const assignedBy = req.user?.id;
 
@@ -75,7 +75,7 @@ export const assignWorkoutRoutine = async (req: Request, res: Response) => {
 
 export const getMemberWorkoutRoutine = async (req: Request, res: Response) => {
   try {
-    const { memberId } = req.params;
+    const memberId = req.params.memberId as string;
     const activeRoutine = await prisma.workoutRoutine.findFirst({
       where: { memberId, isActive: true },
       orderBy: { createdAt: 'desc' }

@@ -85,7 +85,7 @@ export const getPaymentStats = async (req: Request, res: Response) => {
 
 export const updateSubscription = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { planId, startDate, status, paymentStatus } = req.body;
 
     const subscription = await prisma.subscription.findUnique({ where: { id } });
@@ -120,7 +120,7 @@ export const updateSubscription = async (req: Request, res: Response) => {
 
 export const deleteSubscription = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.subscription.delete({ where: { id } });
     res.json({ status: 'success', message: 'Subscription deleted successfully' });
   } catch (error) {

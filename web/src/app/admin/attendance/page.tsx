@@ -106,7 +106,7 @@ export default function AttendancePage() {
           <button 
             type="submit" 
             disabled={mutation.isPending}
-            className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50 w-full sm:w-auto"
           >
             {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
             Check In

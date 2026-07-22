@@ -81,7 +81,7 @@ export const getMembers = async (req: Request, res: Response, next: NextFunction
 
 export const getMemberById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const member = await prisma.user.findUnique({
       where: { id },
       include: { memberProfile: true, assignedMembers: true }
@@ -98,7 +98,7 @@ export const getMemberById = async (req: Request, res: Response, next: NextFunct
 
 export const deleteMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     // User deletion will cascade and delete the MemberProfile due to the schema relation
     await prisma.user.delete({
@@ -113,7 +113,7 @@ export const deleteMember = async (req: Request, res: Response, next: NextFuncti
 
 export const updateMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const validatedData = updateMemberSchema.parse(req.body);
     const { firstName, lastName, phone, ...profileData } = validatedData;
 
