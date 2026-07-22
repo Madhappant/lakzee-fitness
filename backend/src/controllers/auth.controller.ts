@@ -133,50 +133,40 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
       }
     });
 
-    // SIMULATED SMS -> NOW ETHEREAL EMAIL
-    let transporter;
-    
+    let previewUrl = "";
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+        await transporter.sendMail({
+          from: '"Lakzee Fitness" <noreply@lakzeefitness.com>',
+          to: email, // Sending to registered email
+          subject: "Your Password Reset OTP",
+          text: `Your Lakzee Fitness OTP is: ${otp}`,
+          html: `<b>Your Lakzee Fitness OTP is: ${otp}</b>`,
+        });
+        console.log(`[SMTP] Real email sent to ${email}`);
+      } catch (mailError) {
+        console.error("Failed to send real email via SMTP", mailError);
+      }
     } else {
-      let testAccount = await nodemailer.createTestAccount();
-      transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
+      console.log(`\n\n========================================`);
+      console.log(`[MOCK] EMAIL SENT TO ${email}`);
+      console.log(`[MOCK] Your Lakzee Fitness OTP is: ${otp}`);
+      console.log(`========================================\n\n`);
     }
-
-    let info = await transporter.sendMail({
-      from: '"Lakzee Fitness" <noreply@lakzeefitness.com>',
-      to: email, // Sending to registered email
-      subject: "Your Password Reset OTP",
-      text: `Your Lakzee Fitness OTP is: ${otp}`,
-      html: `<b>Your Lakzee Fitness OTP is: ${otp}</b>`,
-    });
-
-    console.log(`\n\n========================================`);
-    console.log(`📧 EMAIL SENT TO ${email}`);
-    console.log(`🔒 Your Lakzee Fitness OTP is: ${otp}`);
-    console.log(`🔗 Preview URL: %s`, nodemailer.getTestMessageUrl(info));
-    console.log(`========================================\n\n`);
 
     res.status(200).json({
       status: 'success',
       message: 'OTP has been sent to your registered email address.',
       simulatedOtp: otp, // Kept for UI convenience if needed
       phoneMasked: email,
-      previewUrl: nodemailer.getTestMessageUrl(info)
+      previewUrl: previewUrl
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -244,49 +234,40 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
       }
     });
 
-    let transporter;
-    
+    let previewUrl = "";
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+        await transporter.sendMail({
+          from: '"Lakzee Fitness" <noreply@lakzeefitness.com>',
+          to: email, // Sending to registered email
+          subject: "Verify Your New Phone Number",
+          text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}`,
+          html: `<b>Your Lakzee Fitness Phone Verification OTP is: ${otp}</b>`,
+        });
+        console.log(`[SMTP] Real email sent to ${email} (for phone verification)`);
+      } catch (mailError) {
+        console.error("Failed to send real email via SMTP", mailError);
+      }
     } else {
-      let testAccount = await nodemailer.createTestAccount();
-      transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
+      console.log(`\n\n========================================`);
+      console.log(`[MOCK] EMAIL SENT TO ${email} (for phone verification)`);
+      console.log(`[MOCK] Your Lakzee Fitness Phone Verification OTP is: ${otp}`);
+      console.log(`========================================\n\n`);
     }
-
-    let info = await transporter.sendMail({
-      from: '"Lakzee Fitness" <noreply@lakzeefitness.com>',
-      to: email, // Sending to registered email
-      subject: "Verify Your New Phone Number",
-      text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}`,
-      html: `<b>Your Lakzee Fitness Phone Verification OTP is: ${otp}</b>`,
-    });
-
-    console.log(`\n\n========================================`);
-    console.log(`📧 EMAIL SENT TO ${email} (for phone verification)`);
-    console.log(`🔒 Your Lakzee Fitness Phone Verification OTP is: ${otp}`);
-    console.log(`🔗 Preview URL: %s`, nodemailer.getTestMessageUrl(info));
-    console.log(`========================================\n\n`);
 
     res.status(200).json({
       status: 'success',
       message: 'OTP has been sent to your registered email address.',
       simulatedOtp: otp,
       phoneMasked: email,
-      previewUrl: nodemailer.getTestMessageUrl(info)
+      previewUrl: previewUrl
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
