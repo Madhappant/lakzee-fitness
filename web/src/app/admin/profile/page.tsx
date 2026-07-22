@@ -119,8 +119,8 @@ export default function ProfilePage() {
               <UserCircle className="w-48 h-48 text-brand-gold" />
             </div>
             
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-brand-gold/50 flex items-center justify-center mb-6 relative z-10 shadow-lg shadow-brand-gold/10">
-              <UserCircle className="w-16 h-16 text-brand-gold/50" />
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 border-2 border-brand-gold/50 flex items-center justify-center mb-6 relative z-10 shadow-lg shadow-brand-gold/10">
+              <UserCircle className="w-16 h-16 text-brand-gold" />
             </div>
             
             <h2 className="text-2xl font-bold text-foreground relative z-10">{user.firstName} {user.lastName}</h2>
@@ -140,14 +140,14 @@ export default function ProfilePage() {
             </h3>
             
             <div className="space-y-6">
-              <div className="bg-black/40 border border-border rounded-xl p-4">
+              <div className="bg-muted/50 border border-border rounded-xl p-4">
                 <p className="text-sm font-medium text-muted-foreground mb-1">Full Name</p>
                 <p className="text-lg font-medium text-foreground">{user.firstName} {user.lastName}</p>
               </div>
               
-              <div className="bg-black/40 border border-border rounded-xl p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                  <Mail className="w-5 h-5 text-brand-gold/80" />
+              <div className="bg-muted/50 border border-border rounded-xl p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shrink-0">
+                  <Mail className="w-5 h-5 text-brand-gold" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Email Address</p>
@@ -155,10 +155,10 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="bg-black/40 border border-border rounded-xl p-4 flex items-center justify-between gap-4">
+              <div className="bg-muted/50 border border-border rounded-xl p-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                    <Phone className="w-5 h-5 text-brand-gold/80" />
+                  <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shrink-0">
+                    <Phone className="w-5 h-5 text-brand-gold" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">Phone Number</p>
@@ -171,7 +171,7 @@ export default function ProfilePage() {
                 </div>
                 <button 
                   onClick={() => setPhoneStep("REQUEST_OTP")}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-foreground rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-background hover:bg-muted border border-border text-foreground rounded-lg text-sm font-medium transition-colors"
                 >
                   {user.phone ? "Update" : "Add Phone"}
                 </button>
@@ -188,7 +188,7 @@ export default function ProfilePage() {
             </p>
             
             <div className="flex items-center gap-3">
-              <div className="flex-1 bg-black/60 border border-brand-gold/30 rounded-xl px-4 py-4 text-brand-gold font-mono text-sm sm:text-base break-all">
+              <div className="flex-1 bg-muted/50 border border-border rounded-xl px-4 py-4 text-foreground font-mono text-sm sm:text-base break-all">
                 {user.id}
               </div>
               <button 
@@ -216,14 +216,14 @@ export default function ProfilePage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#111] border border-border rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden"
+              className="bg-card border border-border rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden"
             >
               {/* Dynamic Background for Modal */}
               <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-transparent pointer-events-none" />
               
               <button 
                 onClick={resetPhoneFlow}
-                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 rounded-full transition-colors z-10"
+                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors z-10"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -243,7 +243,7 @@ export default function ProfilePage() {
                     )}
 
                     <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         New Phone Number
                       </label>
                       <input
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                         required
                         value={newPhone}
                         onChange={(e) => setNewPhone(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-border text-foreground placeholder-white/40 focus:ring-2 focus:ring-brand-gold/50 transition-all"
+                        className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-gold/50 transition-all"
                         placeholder="+1 (555) 000-0000"
                       />
                     </div>
@@ -281,7 +281,7 @@ export default function ProfilePage() {
                     )}
 
                     <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         6-Digit OTP
                       </label>
                       <input
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                         maxLength={6}
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-border text-foreground focus:ring-2 focus:ring-brand-gold/50 transition-all font-mono tracking-widest text-center text-xl"
+                        className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-gold/50 transition-all font-mono tracking-widest text-center text-xl"
                         placeholder="------"
                       />
                     </div>

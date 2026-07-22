@@ -72,6 +72,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [pageTitle, setPageTitle] = useState("Admin Dashboard");
+
+  useEffect(() => {
+    // Find active page title
+    let found = false;
+    for (const group of sidebarGroups) {
+      const activeItem = group.items.find(item => pathname === item.href || pathname.startsWith(item.href + "/"));
+      if (activeItem) {
+        setPageTitle(activeItem.name);
+        found = true;
+        break;
+      }
+    }
+    if (!found) setPageTitle("Admin Dashboard");
+  }, [pathname]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -189,7 +204,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               <Menu className="w-6 h-6" aria-hidden="true" />
             </button>
-            <h2 className="text-xl font-bold hidden md:block text-foreground/90">Admin Dashboard</h2>
+            <h2 className="text-xl font-bold hidden md:block text-foreground/90">{pageTitle}</h2>
           </div>
 
           <div className="flex items-center gap-4 md:gap-6">
