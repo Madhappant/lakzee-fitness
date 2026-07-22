@@ -96,13 +96,13 @@ export default function DashboardOverview() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Here is what's happening at Lakzee Fitness Studio today.</p>
+          <p className="text-muted-foreground text-sm md:text-base">Here is what's happening at Lakzee Fitness Studio today.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/admin/attendance" className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-brand-gold text-brand-gold hover:bg-brand-gold/10 font-semibold transition-colors">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <Link href="/admin/attendance" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-brand-gold text-brand-gold hover:bg-brand-gold/10 font-semibold transition-colors w-full sm:w-auto">
             <QrCode className="w-5 h-5" /> Scan QR
           </Link>
-          <Link href="/admin/members" className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary-foreground bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors">
+          <Link href="/admin/members" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors w-full sm:w-auto">
             <UserPlus className="w-5 h-5" /> New Member
           </Link>
         </div>

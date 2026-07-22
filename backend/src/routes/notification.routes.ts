@@ -61,6 +61,33 @@ router.get('/', authenticate, async (req: any, res) => {
         });
       });
 
+      // 3. Member Birthdays (ONLY for Admins)
+      if (userRole === 'ADMIN') {
+        const membersWithBirthdays = await prisma.memberProfile.findMany({
+          where: { dob: { not: null } },
+          include: { user: true }
+        });
+        
+        const currentMonth = now.getMonth();
+        const currentDay = now.getDate();
+
+        membersWithBirthdays.forEach(member => {
+          if (!member.dob) return;
+          // Check if birthday matches today's exact date (ignoring year)
+          if (member.dob.getMonth() === currentMonth && member.dob.getDate() === currentDay) {
+            notifications.push({
+              id: `bday-${member.id}`,
+              type: 'SYSTEM',
+              title: 'Member Birthday Today! 🎉',
+              message: `It's ${member.user.firstName} ${member.user.lastName}'s birthday today! Don't forget to wish them.`,
+              date: now,
+              link: `/admin/members/${member.id}`,
+              read: false
+            });
+          }
+        });
+      }
+
     } else if (userRole === 'MEMBER') {
       // MEMBER NOTIFICATIONS
       

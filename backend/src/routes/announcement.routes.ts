@@ -38,7 +38,7 @@ router.get('/', authenticate, async (req: any, res, next) => {
 });
 
 // POST /api/announcements - Create a new announcement
-router.post('/', authenticate, authorize('ADMIN', 'RECEPTIONIST'), async (req: any, res, next) => {
+router.post('/', authenticate, authorize('ADMIN'), async (req: any, res, next) => {
   try {
     const { title, message } = createAnnouncementSchema.parse(req.body);
     const authorId = req.user.id;
@@ -63,7 +63,7 @@ router.post('/', authenticate, authorize('ADMIN', 'RECEPTIONIST'), async (req: a
 });
 
 // DELETE /api/announcements/:id - Delete an announcement
-router.delete('/:id', authenticate, authorize('ADMIN', 'RECEPTIONIST'), async (req, res, next) => {
+router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.announcement.delete({

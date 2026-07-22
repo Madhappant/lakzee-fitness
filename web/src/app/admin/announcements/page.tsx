@@ -101,42 +101,42 @@ export default function AnnouncementsPage() {
           >
             <div className="glass-panel p-6 border border-brand-gold/30 mb-8">
               <h2 className="text-xl font-bold mb-6">Post New Announcement</h2>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Title</label>
+                  <label className="block text-sm sm:text-base font-medium mb-2">Title</label>
                   <input
                     {...register("title")}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 sm:py-3 text-base focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all"
                     placeholder="e.g., Gym Closed Tomorrow for Maintenance"
                   />
                   {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Message</label>
+                  <label className="block text-sm sm:text-base font-medium mb-2">Message</label>
                   <textarea
                     {...register("message")}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all min-h-[120px]"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 sm:py-3 text-base focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all min-h-[140px] resize-y"
                     placeholder="Type your announcement here..."
                   />
                   {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message.message}</p>}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
                   <button
                     type="button"
                     onClick={() => {
                       setIsCreating(false);
                       reset();
                     }}
-                    className="px-6 py-2.5 rounded-xl font-medium border border-border hover:bg-muted transition-colors"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl font-medium border border-border hover:bg-muted transition-colors order-2 sm:order-1 text-base"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={createMutation.isPending}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium bg-brand-gold text-black hover:bg-yellow-500 transition-colors disabled:opacity-50 shadow-sm"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium bg-brand-gold text-black hover:bg-yellow-500 transition-colors disabled:opacity-50 shadow-sm order-1 sm:order-2 text-base"
                   >
                     {createMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Megaphone className="w-5 h-5" />}
                     Post Announcement
@@ -166,21 +166,23 @@ export default function AnnouncementsPage() {
           ) : (
             <div className="space-y-4">
               {announcements.map((announcement: any) => (
-                <div key={announcement.id} className="p-6 rounded-xl border border-border bg-muted/20 relative group">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-bold text-brand-gold">{announcement.title}</h3>
+                <div key={announcement.id} className="p-4 sm:p-6 rounded-xl border border-border bg-muted/20 relative group flex flex-col h-full w-full">
+                  <div className="flex justify-between items-start mb-2 gap-4">
+                    <h3 className="text-base sm:text-lg font-bold text-brand-gold break-words flex-1">{announcement.title}</h3>
                     <button 
                       onClick={() => handleDelete(announcement.id)}
                       disabled={deleteMutation.isPending}
-                      className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-500/10 rounded-lg disabled:opacity-50"
+                      className="text-red-500 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 sm:p-3 hover:bg-red-500/10 rounded-lg disabled:opacity-50 shrink-0"
+                      aria-label="Delete Announcement"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
-                  <p className="text-foreground whitespace-pre-wrap">{announcement.message}</p>
-                  <div className="mt-4 text-xs text-muted-foreground font-medium flex gap-4">
-                    <span>Posted {formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}</span>
-                    <span>By {announcement.author.firstName} {announcement.author.lastName}</span>
+                  <p className="text-sm sm:text-base text-foreground whitespace-pre-wrap flex-1 leading-relaxed">{announcement.message}</p>
+                  <div className="mt-4 sm:mt-6 text-xs text-muted-foreground font-medium flex flex-wrap gap-2 sm:gap-4 border-t border-border/50 pt-3">
+                    <span className="whitespace-nowrap">Posted {formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="whitespace-nowrap">By {announcement.author.firstName} {announcement.author.lastName}</span>
                   </div>
                 </div>
               ))}

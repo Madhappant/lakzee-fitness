@@ -101,14 +101,18 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground transition-colors duration-300;
+    @apply bg-background text-foreground transition-colors duration-300 overflow-x-hidden;
     font-family: var(--font-body);
+    width: 100vw;
+    max-width: 100%;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
   }
   html {
-    @apply font-sans;
+    @apply font-sans overflow-x-hidden;
+    width: 100vw;
+    max-width: 100%;
   }
 }
 
