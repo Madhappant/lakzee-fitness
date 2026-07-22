@@ -84,7 +84,7 @@ export default function AnnouncementsPage() {
         </div>
         <button
           onClick={() => setIsCreating(!isCreating)}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary-foreground bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-black bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors shadow-sm"
         >
           {isCreating ? <Megaphone className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
           {isCreating ? "Cancel" : "New Announcement"}
@@ -136,7 +136,7 @@ export default function AnnouncementsPage() {
                   <button
                     type="submit"
                     disabled={createMutation.isPending}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium bg-brand-gold text-primary-foreground hover:bg-yellow-500 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium bg-brand-gold text-black hover:bg-yellow-500 transition-colors disabled:opacity-50 shadow-sm"
                   >
                     {createMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Megaphone className="w-5 h-5" />}
                     Post Announcement
