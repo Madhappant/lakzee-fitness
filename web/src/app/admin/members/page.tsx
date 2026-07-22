@@ -52,7 +52,7 @@ export default function MembersPage() {
         </div>
         <Link 
           href="/admin/members/new"
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20"
         >
           <Plus className="w-5 h-5" /> Add New Member
         </Link>
@@ -152,6 +152,7 @@ export default function MembersPage() {
                           width={32}
                           height={32}
                           className="w-8 h-8 rounded-full object-cover border border-brand-gold/20"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 border border-brand-gold/20 flex items-center justify-center text-brand-gold font-bold text-xs shrink-0">
@@ -238,6 +239,7 @@ export default function MembersPage() {
                       width={96}
                       height={96}
                       className="w-24 h-24 rounded-full object-cover border-4 border-brand-gold/20 shadow-xl mb-4"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 border-4 border-brand-gold/20 flex items-center justify-center text-brand-gold font-bold text-3xl mb-4 shadow-xl">
