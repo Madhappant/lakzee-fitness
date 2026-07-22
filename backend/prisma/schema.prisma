@@ -155,6 +155,9 @@ model Attendance {
   checkIn       DateTime      @default(now())
   checkOut      DateTime?
   date          DateTime
+
+  @@index([date])
+  @@index([date, checkIn(sort: Desc)])
 }
 
 model Settings {

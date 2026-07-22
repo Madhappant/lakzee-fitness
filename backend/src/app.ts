@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
 import { PrismaClient, Prisma } from '@prisma/client';
 
 const app: Application = express();
@@ -10,6 +11,7 @@ export const prisma = new PrismaClient();
 // Middlewares
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
