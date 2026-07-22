@@ -113,10 +113,13 @@ router.get('/', authenticate, async (req: any, res) => {
       }
     }
 
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
     // Add Announcements for everyone
     const recentAnnouncements = await prisma.announcement.findMany({
       where: {
-        createdAt: { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } // Last 30 days
+        createdAt: { gte: todayStart }
       },
       orderBy: { createdAt: 'desc' }
     });
