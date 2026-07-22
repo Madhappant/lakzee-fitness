@@ -280,6 +280,17 @@ export default function ProfilePage() {
                       </div>
                     )}
 
+                    {simulatedData && (
+                      <div className="p-4 bg-brand-gold/10 border border-brand-gold/20 rounded-xl flex flex-col gap-2 mb-6">
+                        <p className="text-sm text-brand-gold font-medium">
+                          <span className="opacity-80">Test Mode OTP:</span> <span className="font-mono text-lg tracking-widest">{simulatedData.otp}</span>
+                        </p>
+                        <p className="text-xs text-brand-gold/80">
+                          Since SMTP is not configured, the email was not sent. Use the OTP above to verify.
+                        </p>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
                         6-Digit OTP
