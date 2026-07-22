@@ -12,6 +12,6 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CLIENT_URL
-        value: "https://your-vercel-domain.vercel.app"
+        value: "https://lakzee-fitness.vercel.app"
       - key: DATABASE_URL
-        value: "file:./dev.db"
+        sync: false # You must set this manually in the Render Dashboard with your Supabase URL!
