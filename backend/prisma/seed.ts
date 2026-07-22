@@ -39,9 +39,7 @@ async function main() {
     { name: "Quarterly", durationDays: 90, price: 3999, description: "All Monthly Features, Diet Plan" },
     { name: "Half Year", durationDays: 180, price: 7499, description: "All Quarterly Features, 2 PT Sessions" },
     { name: "Yearly", durationDays: 365, price: 12999, description: "All Features, Unlimited PT Consultations" },
-    { name: "Premium", durationDays: 30, price: 2999, description: "VIP Access, Spa, Personal Trainer" },
-    { name: "Couple", durationDays: 30, price: 2499, description: "Access for 2, Group Classes" },
-    { name: "VIP", durationDays: 365, price: 24999, description: "Exclusive Access, Private Locker, Priority" }
+    { name: "Couple", durationDays: 30, price: 2499, description: "Access for 2, Group Classes" }
   ];
 
   for (const p of plansToSeed) {

@@ -57,7 +57,11 @@ export const updatePlan = async (req: Request, res: Response, next: NextFunction
 export const deletePlan = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    await prisma.membershipPlan.delete({ where: { id } });
+    // Perform a soft-delete instead of hard-delete to avoid breaking Foreign Key constraints on Subscriptions
+    await prisma.membershipPlan.update({ 
+      where: { id },
+      data: { isActive: false }
+    });
     res.json({ status: 'success', message: 'Plan deleted successfully' });
   } catch (error) {
     next(error);

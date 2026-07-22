@@ -1,7 +1,14 @@
 import { API_URL, getAuthToken } from "./members";
 
 export const fetchPlans = async () => {
-  const res = await fetch(`${API_URL}/plans`);
+  const res = await fetch(`${API_URL}/plans`, {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+  });
   if (!res.ok) throw new Error("Failed to fetch plans");
   return res.json();
 };
