@@ -143,11 +143,16 @@ export default function AttendancePage() {
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-brand-gold mx-auto" />
-                  </td>
-                </tr>
+                <>
+                  {[...Array(5)].map((_, i) => (
+                    <tr key={`skeleton-${i}`} className="border-b border-border/50">
+                      <td className="px-6 py-4"><div className="h-4 w-16 bg-muted/60 animate-pulse rounded"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 w-24 bg-muted/60 animate-pulse rounded"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 w-32 bg-muted/60 animate-pulse rounded"></div></td>
+                      <td className="px-6 py-4"><div className="h-6 w-20 bg-muted/60 animate-pulse rounded-full"></div></td>
+                    </tr>
+                  ))}
+                </>
               )}
 
               {!isLoading && logs.length === 0 && (
