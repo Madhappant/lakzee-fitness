@@ -153,7 +153,7 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         await transporter.verify();
 
         await transporter.sendMail({
-          from: '"Lakzee Fitness" <noreply@lakzeefitness.com>',
+          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
           to: email, // Sending to registered email
           subject: "Your Password Reset OTP",
           text: `Your Lakzee Fitness OTP is: ${otp}`,
@@ -265,7 +265,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
         await transporter.verify();
 
         await transporter.sendMail({
-          from: '"Lakzee Fitness" <noreply@lakzeefitness.com>',
+          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
           to: email, // Sending to registered email
           subject: "Verify Your New Phone Number",
           text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}`,
