@@ -138,16 +138,15 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
       try {
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
-          port: 465,
-          secure: true, // Use true for port 465, false for 587
+          port: 587,
+          secure: false, // Use STARTTLS on port 587
+          requireTLS: true,
+          family: 4, // Force IPv4 to prevent ENETUNREACH IPv6 errors
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
-          },
-          connectionTimeout: 8000, // Fail fast after 8 seconds
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
-        });
+          }
+        } as any);
         
         // Fast-fail if credentials are bad or connection is blocked
         await transporter.verify();
@@ -276,16 +275,15 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
       try {
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
+          port: 587,
+          secure: false, // Use STARTTLS on port 587
+          requireTLS: true,
+          family: 4, // Force IPv4 to prevent ENETUNREACH IPv6 errors
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
-          },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
-        });
+          }
+        } as any);
         
         await transporter.verify();
 
