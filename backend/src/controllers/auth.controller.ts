@@ -161,6 +161,7 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         });
         console.log(`[SMTP] Real email sent to ${email}`);
       } catch (mailError: any) {
+      } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
         let errorMessage = "Failed to send email. Please check your SMTP configuration.";
         if (mailError.message?.includes("Invalid login")) {
@@ -169,18 +170,13 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         return res.status(500).json({ status: 'error', message: errorMessage });
       }
     } else {
-      console.log(`\n\n========================================`);
-      console.log(`[MOCK] EMAIL SENT TO ${email}`);
-      console.log(`[MOCK] Your Lakzee Fitness OTP is: ${otp}`);
-      console.log(`========================================\n\n`);
+      return res.status(500).json({ status: 'error', message: 'SMTP credentials are not configured. Cannot send email.' });
     }
 
     res.status(200).json({
       status: 'success',
       message: 'OTP has been sent to your registered email address.',
-      simulatedOtp: otp, // Kept for UI convenience if needed
-      phoneMasked: email,
-      previewUrl: previewUrl
+      phoneMasked: email
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -248,7 +244,6 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
       }
     });
 
-    let previewUrl = "";
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       try {
         const transporter = nodemailer.createTransport({
@@ -273,7 +268,6 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
           text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}`,
           html: `<b>Your Lakzee Fitness Phone Verification OTP is: ${otp}</b>`,
         });
-        console.log(`[SMTP] Real email sent to ${email} (for phone verification)`);
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
         let errorMessage = "Failed to send email. Please check your SMTP configuration.";
@@ -283,18 +277,13 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
         return res.status(500).json({ status: 'error', message: errorMessage });
       }
     } else {
-      console.log(`\n\n========================================`);
-      console.log(`[MOCK] EMAIL SENT TO ${email} (for phone verification)`);
-      console.log(`[MOCK] Your Lakzee Fitness Phone Verification OTP is: ${otp}`);
-      console.log(`========================================\n\n`);
+      return res.status(500).json({ status: 'error', message: 'SMTP credentials are not configured. Cannot send email.' });
     }
 
     res.status(200).json({
       status: 'success',
       message: 'OTP has been sent to your registered email address.',
-      simulatedOtp: otp,
-      phoneMasked: email,
-      previewUrl: previewUrl
+      phoneMasked: email
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
