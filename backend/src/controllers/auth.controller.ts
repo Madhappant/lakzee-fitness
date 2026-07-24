@@ -4,6 +4,10 @@ import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+// Force IPv4 for all DNS resolutions in this file to prevent Render ENETUNREACH errors
+dns.setDefaultResultOrder('ipv4first');
 
 const registerSchema = z.object({
   email: z.string().email(),
