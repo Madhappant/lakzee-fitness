@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
                 )}
                 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-white/80">
+                  <label htmlFor="email" className="block text-sm font-medium text-foreground">
                     Email address
                   </label>
                   <p className="text-xs text-muted-foreground mt-1 mb-3">We will send a 6-digit OTP to your registered email.</p>
@@ -123,7 +123,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-4 py-3 rounded-xl bg-white/5 border border-border text-foreground placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 transition-all duration-300"
+                    className="appearance-none block w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 transition-all duration-300"
                     placeholder="Enter your registered email"
                   />
                 </div>
@@ -156,8 +156,19 @@ export default function ForgotPasswordPage() {
                   </div>
                 )}
                 
+                {simulatedData && (
+                  <div className="p-4 bg-brand-gold/10 border border-brand-gold/20 rounded-xl flex flex-col gap-2">
+                    <p className="text-sm text-brand-gold font-medium">
+                      <span className="opacity-80">Test Mode OTP:</span> <span className="font-mono text-lg tracking-widest">{simulatedData.otp}</span>
+                    </p>
+                    <p className="text-xs text-brand-gold/80">
+                      Since SMTP is not configured, the email was not sent. Use the OTP above to verify.
+                    </p>
+                  </div>
+                )}
+                
                 <div>
-                  <label htmlFor="otp" className="block text-sm font-medium text-white/80">
+                  <label htmlFor="otp" className="block text-sm font-medium text-foreground">
                     6-Digit OTP
                   </label>
                   <div className="mt-2">
@@ -168,14 +179,14 @@ export default function ForgotPasswordPage() {
                       maxLength={6}
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="appearance-none block w-full px-4 py-3 rounded-xl bg-white/5 border border-border text-foreground placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 transition-all duration-300 font-mono tracking-widest text-center text-xl"
+                      className="appearance-none block w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 transition-all duration-300 font-mono tracking-widest text-center text-xl"
                       placeholder="------"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-white/80">
+                  <label htmlFor="newPassword" className="block text-sm font-medium text-foreground">
                     New Password
                   </label>
                   <div className="mt-2">
@@ -186,7 +197,7 @@ export default function ForgotPasswordPage() {
                       minLength={6}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="appearance-none block w-full px-4 py-3 rounded-xl bg-white/5 border border-border text-foreground placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 transition-all duration-300"
+                      className="appearance-none block w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 transition-all duration-300"
                       placeholder="Enter new secure password"
                     />
                   </div>
