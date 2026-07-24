@@ -37,6 +37,49 @@ const verifyPhoneSchema = z.object({
   otp: z.string().length(6),
 });
 
+const generateEmailHtml = (otp: string, context: "password reset" | "phone verification") => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; color: #18181b; }
+    .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .header { background: #000000; padding: 30px 20px; text-align: center; }
+    .header img { max-width: 150px; height: auto; }
+    .content { padding: 40px 30px; line-height: 1.6; }
+    .title { font-size: 24px; font-weight: 700; color: #18181b; margin-bottom: 20px; }
+    .otp-box { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #ffffff; text-align: center; padding: 20px; border-radius: 12px; margin: 30px 0; font-size: 36px; font-weight: 800; letter-spacing: 8px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3); }
+    .footer { background: #fafafa; padding: 20px 30px; text-align: center; font-size: 13px; color: #71717a; border-top: 1px solid #e4e4e7; }
+    p { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness" />
+    </div>
+    <div class="content">
+      <h1 class="title">Secure Your Account</h1>
+      <p>Hello there,</p>
+      <p>We received a request for a <strong>${context}</strong> for your Lakzee Fitness account. At Lakzee Fitness, your security and privacy are our highest priorities. We utilize robust encryption and verification systems to ensure that your personal information and membership details remain completely safe.</p>
+      <p>To proceed with your request, please use the 6-digit One-Time Password (OTP) provided below. This code is unique to your current session and will securely authenticate your identity.</p>
+      
+      <div class="otp-box">${otp}</div>
+      
+      <p>For your security, this code will expire automatically in 10 minutes. Please do not share this code with anyone, including Lakzee Fitness staff. If you did not initiate this ${context}, please ignore this email—your account remains completely secure and no changes will be made.</p>
+      <p>Thank you for choosing Lakzee Fitness. Let's keep pushing towards your fitness goals together!</p>
+      <p>Best regards,<br><strong>The Lakzee Fitness Team</strong></p>
+    </div>
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
+      If you need assistance, please contact support via the Lakzee Fitness app.
+    </div>
+  </div>
+</body>
+</html>
+`;
+
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, firstName, lastName } = registerSchema.parse(req.body);
@@ -156,8 +199,8 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
           from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
           to: email, // Sending to registered email
           subject: "Your Password Reset OTP",
-          text: `Your Lakzee Fitness OTP is: ${otp}`,
-          html: `<b>Your Lakzee Fitness OTP is: ${otp}</b>`,
+          text: `Your Lakzee Fitness OTP is: ${otp}. Please check your HTML email for details.`,
+          html: generateEmailHtml(otp, "password reset"),
         });
         console.log(`[SMTP] Real email sent to ${email}`);
       } catch (mailError: any) {
@@ -268,8 +311,8 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
           from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
           to: email, // Sending to registered email
           subject: "Verify Your New Phone Number",
-          text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}`,
-          html: `<b>Your Lakzee Fitness Phone Verification OTP is: ${otp}</b>`,
+          text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}. Please check your HTML email for details.`,
+          html: generateEmailHtml(otp, "phone verification"),
         });
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
