@@ -4,10 +4,6 @@ import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
-import dns from 'dns';
-
-// Force IPv4 for all DNS resolutions in this file to prevent Render ENETUNREACH errors
-dns.setDefaultResultOrder('ipv4first');
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -40,49 +36,6 @@ const verifyPhoneSchema = z.object({
   email: z.string().email(),
   otp: z.string().length(6),
 });
-
-const generateEmailHtml = (otp: string, context: "password reset" | "phone verification") => `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; color: #18181b; }
-    .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    .header { background: #000000; padding: 30px 20px; text-align: center; }
-    .header img { max-width: 150px; height: auto; }
-    .content { padding: 40px 30px; line-height: 1.6; }
-    .title { font-size: 24px; font-weight: 700; color: #18181b; margin-bottom: 20px; }
-    .otp-box { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #ffffff; text-align: center; padding: 20px; border-radius: 12px; margin: 30px 0; font-size: 36px; font-weight: 800; letter-spacing: 8px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3); }
-    .footer { background: #fafafa; padding: 20px 30px; text-align: center; font-size: 13px; color: #71717a; border-top: 1px solid #e4e4e7; }
-    p { margin-bottom: 16px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h2 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px;">LAKZEE FITNESS</h2>
-    </div>
-    <div class="content">
-      <h1 class="title">Secure Your Account</h1>
-      <p>Hello there,</p>
-      <p>We received a request for a <strong>${context}</strong> for your Lakzee Fitness account. At Lakzee Fitness, your security and privacy are our highest priorities. We utilize robust encryption and verification systems to ensure that your personal information and membership details remain completely safe.</p>
-      <p>To proceed with your request, please use the 6-digit One-Time Password (OTP) provided below. This code is unique to your current session and will securely authenticate your identity.</p>
-      
-      <div class="otp-box">${otp}</div>
-      
-      <p>For your security, this code will expire automatically in 10 minutes. Please do not share this code with anyone, including Lakzee Fitness staff. If you did not initiate this ${context}, please ignore this email—your account remains completely secure and no changes will be made.</p>
-      <p>Thank you for choosing Lakzee Fitness. Let's keep pushing towards your fitness goals together!</p>
-      <p>Best regards,<br><strong>The Lakzee Fitness Team</strong></p>
-    </div>
-    <div class="footer">
-      &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
-      If you need assistance, please contact support via the Lakzee Fitness app.
-    </div>
-  </div>
-</body>
-</html>
-`;
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -191,23 +144,52 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-          connectionTimeout: 20000,
-          greetingTimeout: 20000,
-          socketTimeout: 20000,
-          family: 4
-        } as any);
+          connectionTimeout: 8000, // Fail fast after 8 seconds
+          greetingTimeout: 8000,
+          socketTimeout: 8000,
+        });
+        
+        // Fast-fail if credentials are bad or connection is blocked
+        await transporter.verify();
+
+        const resetHtml = `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
+  </div>
+  <h2 style="color: #333333; text-align: center;">Your Password Reset Request</h2>
+  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+    Hello,<br><br>
+    We received a request to reset the password associated with your Lakzee Fitness account. We understand how important it is to keep your account secure and accessible. To proceed with resetting your password, please use the One-Time Password (OTP) provided below.
+  </p>
+  <div style="text-align: center; margin: 30px 0;">
+    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
+      ${otp}
+    </span>
+  </div>
+  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+    This verification code is valid for the next 10 minutes. Please do not share this code with anyone, including our support team, as it grants access to modify your account credentials. If you did not request a password reset, you can safely ignore this email and your account will remain secure. Your security and fitness journey are our top priorities!
+  </p>
+  <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
+  <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
+    &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
+    Train Hard, Stay Fit.
+  </p>
+</div>
+        `;
 
         await transporter.sendMail({
-          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
+          from: \`"Lakzee Fitness" <\${process.env.SMTP_USER}>\`,
           to: email, // Sending to registered email
           subject: "Your Password Reset OTP",
-          text: `Your Lakzee Fitness OTP is: ${otp}. Please check your HTML email for details.`,
-          html: generateEmailHtml(otp, "password reset"),
+          text: \`Your Lakzee Fitness OTP is: \${otp}\`,
+          html: resetHtml,
         });
         console.log(`[SMTP] Real email sent to ${email}`);
       } catch (mailError: any) {
+      } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = "Failed to send email: " + (mailError.message || "Please check your SMTP configuration.");
+        let errorMessage = "Failed to send email. Please check your SMTP configuration.";
         if (mailError.message?.includes("Invalid login")) {
            errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
         }
@@ -301,22 +283,49 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-          connectionTimeout: 20000,
-          greetingTimeout: 20000,
-          socketTimeout: 20000,
-          family: 4
-        } as any);
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 8000,
+        });
         
+        await transporter.verify();
+
+        const phoneHtml = `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
+  </div>
+  <h2 style="color: #333333; text-align: center;">Phone Verification Request</h2>
+  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+    Hello,<br><br>
+    We received a request to update the phone number associated with your Lakzee Fitness account. Keeping your contact information up-to-date helps us ensure you receive important gym announcements and membership updates. To verify and confirm this change, please use the One-Time Password (OTP) provided below.
+  </p>
+  <div style="text-align: center; margin: 30px 0;">
+    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
+      ${otp}
+    </span>
+  </div>
+  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+    This verification code is valid for the next 10 minutes. Please do not share this code with anyone, as it authorizes changes to your personal account profile. If you did not request a phone number update, you can safely ignore this email and your profile will remain unchanged. Thank you for being a valued member of our fitness community!
+  </p>
+  <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
+  <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
+    &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
+    Train Hard, Stay Fit.
+  </p>
+</div>
+        `;
+
         await transporter.sendMail({
-          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
+          from: \`"Lakzee Fitness" <\${process.env.SMTP_USER}>\`,
           to: email, // Sending to registered email
           subject: "Verify Your New Phone Number",
-          text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}. Please check your HTML email for details.`,
-          html: generateEmailHtml(otp, "phone verification"),
+          text: \`Your Lakzee Fitness Phone Verification OTP is: \${otp}\`,
+          html: phoneHtml,
         });
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = "Failed to send email: " + (mailError.message || "Please check your SMTP configuration.");
+        let errorMessage = "Failed to send email. Please check your SMTP configuration.";
         if (mailError.message?.includes("Invalid login")) {
            errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
         }
