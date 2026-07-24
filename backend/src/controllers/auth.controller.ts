@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
-import { Resend } from 'resend';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -135,10 +134,8 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
     });
 
     let previewUrl = "";
-    if (process.env.RESEND_API_KEY) {
+    if (process.env.GOOGLE_SCRIPT_URL) {
       try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-
         const resetHtml = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
   <div style="text-align: center; margin-bottom: 20px;">
@@ -165,27 +162,35 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
 </div>
         `;
 
-        const data = await resend.emails.send({
-          from: 'Lakzee Fitness <onboarding@resend.dev>', // Resend's free testing domain
-          to: email, // IMPORTANT: on free tier this must be the email you registered Resend with!
-          subject: "Your Password Reset OTP",
-          html: resetHtml,
+        const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            secret: 'lakzee-secret-key-2026',
+            to: email,
+            subject: 'Your Password Reset OTP',
+            html: resetHtml
+          })
         });
+
+        const data = await response.json();
         
         if (data.error) {
-           throw new Error(data.error.message);
+           throw new Error(data.error);
         }
 
-        console.log(`[HTTP] Real email sent to ${email} via Resend`);
+        console.log(`[HTTP] Real email sent to ${email} via Google Apps Script`);
       } catch (mailError: any) {
-        console.error("Failed to send real email via Resend API", mailError);
+        console.error("Failed to send real email via Google Script API", mailError);
         return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
       }
     } else {
-      console.error("Missing RESEND_API_KEY in environment variables.");
+      console.error("Missing GOOGLE_SCRIPT_URL in environment variables.");
       return res.status(500).json({ 
         status: 'error', 
-        message: 'Server configuration error: RESEND_API_KEY is missing. Please add it to your Render environment variables.' 
+        message: 'Server configuration error: GOOGLE_SCRIPT_URL is missing. Please add it to your Render environment variables.' 
       });
     }
 
@@ -260,10 +265,8 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
       }
     });
 
-    if (process.env.RESEND_API_KEY) {
+    if (process.env.GOOGLE_SCRIPT_URL) {
       try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-
         const phoneHtml = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
   <div style="text-align: center; margin-bottom: 20px;">
@@ -290,27 +293,35 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
 </div>
         `;
 
-        const data = await resend.emails.send({
-          from: 'Lakzee Fitness <onboarding@resend.dev>', // Resend's free testing domain
-          to: email, // IMPORTANT: on free tier this must be the email you registered Resend with!
-          subject: "Verify Your New Phone Number",
-          html: phoneHtml,
+        const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            secret: 'lakzee-secret-key-2026',
+            to: email,
+            subject: 'Verify Your New Phone Number',
+            html: phoneHtml
+          })
         });
+
+        const data = await response.json();
         
         if (data.error) {
-           throw new Error(data.error.message);
+           throw new Error(data.error);
         }
 
-        console.log(`[HTTP] Real email sent to ${email} via Resend`);
+        console.log(`[HTTP] Real email sent to ${email} via Google Apps Script`);
       } catch (mailError: any) {
-        console.error("Failed to send real email via Resend API", mailError);
+        console.error("Failed to send real email via Google Script API", mailError);
         return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
       }
     } else {
-      console.error("Missing RESEND_API_KEY in environment variables.");
+      console.error("Missing GOOGLE_SCRIPT_URL in environment variables.");
       return res.status(500).json({ 
         status: 'error', 
-        message: 'Server configuration error: RESEND_API_KEY is missing. Please add it to your Render environment variables.' 
+        message: 'Server configuration error: GOOGLE_SCRIPT_URL is missing. Please add it to your Render environment variables.' 
       });
     }
 
