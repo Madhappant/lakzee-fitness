@@ -187,13 +187,10 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-          connectionTimeout: 8000, // Fail fast after 8 seconds
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
+          connectionTimeout: 20000,
+          greetingTimeout: 20000,
+          socketTimeout: 20000,
         });
-        
-        // Fast-fail if credentials are bad or connection is blocked
-        await transporter.verify();
 
         await transporter.sendMail({
           from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
@@ -205,7 +202,7 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         console.log(`[SMTP] Real email sent to ${email}`);
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = "Failed to send email. Please check your SMTP configuration.";
+        let errorMessage = "Failed to send email: " + (mailError.message || "Please check your SMTP configuration.");
         if (mailError.message?.includes("Invalid login")) {
            errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
         }
@@ -299,13 +296,11 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
+          connectionTimeout: 20000,
+          greetingTimeout: 20000,
+          socketTimeout: 20000,
         });
         
-        await transporter.verify();
-
         await transporter.sendMail({
           from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
           to: email, // Sending to registered email
@@ -315,7 +310,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
         });
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = "Failed to send email. Please check your SMTP configuration.";
+        let errorMessage = "Failed to send email: " + (mailError.message || "Please check your SMTP configuration.");
         if (mailError.message?.includes("Invalid login")) {
            errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
         }
