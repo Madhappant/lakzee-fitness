@@ -1,6 +1,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import dns from 'dns';
+// Force IPv4 resolution to prevent ENETUNREACH errors on hosts without IPv6 routing
+dns.setDefaultResultOrder('ipv4first');
+
 import app from './app';
 import { prisma } from './app';
 
