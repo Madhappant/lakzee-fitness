@@ -188,7 +188,7 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         console.log(`[SMTP] Real email sent to ${email}`);
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = "Failed to send email. Please check your SMTP configuration.";
+        let errorMessage = `Failed to send email: ${mailError.message || mailError}`;
         if (mailError.message?.includes("Invalid login")) {
            errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
         }
@@ -324,7 +324,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
         });
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = "Failed to send email. Please check your SMTP configuration.";
+        let errorMessage = `Failed to send email: ${mailError.message || mailError}`;
         if (mailError.message?.includes("Invalid login")) {
            errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
         }
