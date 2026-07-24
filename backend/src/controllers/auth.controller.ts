@@ -204,7 +204,6 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         });
         console.log(`[SMTP] Real email sent to ${email}`);
       } catch (mailError: any) {
-      } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
         let errorMessage = "Failed to send email. Please check your SMTP configuration.";
         if (mailError.message?.includes("Invalid login")) {
