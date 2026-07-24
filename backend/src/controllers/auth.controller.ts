@@ -190,7 +190,8 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
           connectionTimeout: 20000,
           greetingTimeout: 20000,
           socketTimeout: 20000,
-        });
+          family: 4
+        } as any);
 
         await transporter.sendMail({
           from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
@@ -299,7 +300,8 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
           connectionTimeout: 20000,
           greetingTimeout: 20000,
           socketTimeout: 20000,
-        });
+          family: 4
+        } as any);
         
         await transporter.sendMail({
           from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
