@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -134,18 +135,9 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
     });
 
     let previewUrl = "";
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (process.env.RESEND_API_KEY) {
       try {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          }
-        });
-        
-        // Fast-fail if credentials are bad or connection is blocked
-        await transporter.verify();
+        const resend = new Resend(process.env.RESEND_API_KEY);
 
         const resetHtml = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
@@ -173,21 +165,21 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
 </div>
         `;
 
-        await transporter.sendMail({
-          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
-          to: email, // Sending to registered email
+        const data = await resend.emails.send({
+          from: 'Lakzee Fitness <onboarding@resend.dev>', // Resend's free testing domain
+          to: email, // IMPORTANT: on free tier this must be the email you registered Resend with!
           subject: "Your Password Reset OTP",
-          text: `Your Lakzee Fitness OTP is: ${otp}`,
           html: resetHtml,
         });
-        console.log(`[SMTP] Real email sent to ${email}`);
-      } catch (mailError: any) {
-        console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = `Failed to send email: ${mailError.message || mailError}`;
-        if (mailError.message?.includes("Invalid login")) {
-           errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
+        
+        if (data.error) {
+           throw new Error(data.error.message);
         }
-        return res.status(500).json({ status: 'error', message: errorMessage });
+
+        console.log(`[HTTP] Real email sent to ${email} via Resend`);
+      } catch (mailError: any) {
+        console.error("Failed to send real email via Resend API", mailError);
+        return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
       }
     } else {
       console.log(`\n\n========================================`);
@@ -267,17 +259,9 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
       }
     });
 
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (process.env.RESEND_API_KEY) {
       try {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          }
-        });
-        
-        await transporter.verify();
+        const resend = new Resend(process.env.RESEND_API_KEY);
 
         const phoneHtml = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
@@ -295,7 +279,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
     </span>
   </div>
   <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    This verification code is valid for the next 10 minutes. Please do not share this code with anyone, as it authorizes changes to your personal account profile. If you did not request a phone number update, you can safely ignore this email and your profile will remain unchanged. Thank you for being a valued member of our fitness community!
+    This verification code is valid for the next 10 minutes. If you did not request to update your phone number, please ignore this email and your account details will remain unchanged. Your security and fitness journey are our top priorities!
   </p>
   <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
   <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
@@ -305,20 +289,21 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
 </div>
         `;
 
-        await transporter.sendMail({
-          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
-          to: email, // Sending to registered email
+        const data = await resend.emails.send({
+          from: 'Lakzee Fitness <onboarding@resend.dev>', // Resend's free testing domain
+          to: email, // IMPORTANT: on free tier this must be the email you registered Resend with!
           subject: "Verify Your New Phone Number",
-          text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}`,
           html: phoneHtml,
         });
-      } catch (mailError: any) {
-        console.error("Failed to send real email via SMTP", mailError);
-        let errorMessage = `Failed to send email: ${mailError.message || mailError}`;
-        if (mailError.message?.includes("Invalid login")) {
-           errorMessage = "SMTP Authentication Failed. If using Gmail, you MUST use an 'App Password', not your regular password.";
+        
+        if (data.error) {
+           throw new Error(data.error.message);
         }
-        return res.status(500).json({ status: 'error', message: errorMessage });
+
+        console.log(`[HTTP] Real email sent to ${email} via Resend`);
+      } catch (mailError: any) {
+        console.error("Failed to send real email via Resend API", mailError);
+        return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
       }
     } else {
       console.log(`\n\n========================================`);
