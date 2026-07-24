@@ -137,16 +137,12 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       try {
         const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // Use STARTTLS on port 587
-          requireTLS: true,
-          family: 4, // Force IPv4 to prevent ENETUNREACH IPv6 errors
+          service: 'gmail',
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           }
-        } as any);
+        });
         
         // Fast-fail if credentials are bad or connection is blocked
         await transporter.verify();
@@ -274,16 +270,12 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       try {
         const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // Use STARTTLS on port 587
-          requireTLS: true,
-          family: 4, // Force IPv4 to prevent ENETUNREACH IPv6 errors
+          service: 'gmail',
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           }
-        } as any);
+        });
         
         await transporter.verify();
 
