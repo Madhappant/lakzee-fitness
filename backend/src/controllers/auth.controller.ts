@@ -170,7 +170,10 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         return res.status(500).json({ status: 'error', message: errorMessage });
       }
     } else {
-      return res.status(500).json({ status: 'error', message: 'SMTP credentials are not configured. Cannot send email.' });
+      console.log(`\n\n========================================`);
+      console.log(`[MOCK] NO SMTP CONFIGURED - MOCK EMAIL SENT TO ${email}`);
+      console.log(`[MOCK] Your Lakzee Fitness OTP is: ${otp}`);
+      console.log(`========================================\n\n`);
     }
 
     res.status(200).json({
@@ -277,7 +280,10 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
         return res.status(500).json({ status: 'error', message: errorMessage });
       }
     } else {
-      return res.status(500).json({ status: 'error', message: 'SMTP credentials are not configured. Cannot send email.' });
+      console.log(`\n\n========================================`);
+      console.log(`[MOCK] NO SMTP CONFIGURED - MOCK EMAIL SENT TO ${email} (for phone verification)`);
+      console.log(`[MOCK] Your Lakzee Fitness Phone Verification OTP is: ${otp}`);
+      console.log(`========================================\n\n`);
     }
 
     res.status(200).json({
