@@ -179,14 +179,13 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
         `;
 
         await transporter.sendMail({
-          from: \`"Lakzee Fitness" <\${process.env.SMTP_USER}>\`,
+          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
           to: email, // Sending to registered email
           subject: "Your Password Reset OTP",
-          text: \`Your Lakzee Fitness OTP is: \${otp}\`,
+          text: `Your Lakzee Fitness OTP is: ${otp}`,
           html: resetHtml,
         });
         console.log(`[SMTP] Real email sent to ${email}`);
-      } catch (mailError: any) {
       } catch (mailError: any) {
         console.error("Failed to send real email via SMTP", mailError);
         let errorMessage = "Failed to send email. Please check your SMTP configuration.";
@@ -317,10 +316,10 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
         `;
 
         await transporter.sendMail({
-          from: \`"Lakzee Fitness" <\${process.env.SMTP_USER}>\`,
+          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
           to: email, // Sending to registered email
           subject: "Verify Your New Phone Number",
-          text: \`Your Lakzee Fitness Phone Verification OTP is: \${otp}\`,
+          text: `Your Lakzee Fitness Phone Verification OTP is: ${otp}`,
           html: phoneHtml,
         });
       } catch (mailError: any) {
