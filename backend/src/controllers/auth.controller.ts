@@ -57,7 +57,7 @@ const generateEmailHtml = (otp: string, context: "password reset" | "phone verif
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness" />
+      <h2 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px;">LAKZEE FITNESS</h2>
     </div>
     <div class="content">
       <h1 class="title">Secure Your Account</h1>
