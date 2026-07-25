@@ -66,15 +66,27 @@ export const checkIn = async (req: Request, res: Response) => {
 
 export const getTodayAttendance = async (req: Request, res: Response) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const { start, end } = req.query;
+    
+    let startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    
+    if (start) {
+      startDate = new Date(start as string);
+    }
+
+    const whereClause: any = {
+      date: {
+        gte: startDate,
+      }
+    };
+
+    if (end) {
+      whereClause.date.lte = new Date(end as string);
+    }
 
     const logs = await prisma.attendance.findMany({
-      where: {
-        date: {
-          gte: today,
-        }
-      },
+      where: whereClause,
       include: {
         member: {
           include: { user: true }
