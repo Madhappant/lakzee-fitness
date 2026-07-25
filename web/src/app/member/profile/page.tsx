@@ -132,7 +132,8 @@ export default function MemberProfilePage() {
 
   const profile = profileData?.data;
   const user = profile?.user;
-  const photoUrl = profile?.photoUrl ? `${process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace("/api", "") : "http://localhost:5000"}${profile.photoUrl}` : null;
+  const base = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace("/api", "") : "http://localhost:5000";
+  const photoUrl = profile?.photoUrl ? (profile.photoUrl.startsWith('http') ? profile.photoUrl : `${base}${profile.photoUrl}`) : null;
 
   if (!profile || !user) return null;
 

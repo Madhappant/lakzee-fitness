@@ -147,7 +147,7 @@ export default function MembersPage() {
                     >
                       {member.memberProfile?.photoUrl ? (
                         <Image 
-                          src={`${BASE_URL}${member.memberProfile.photoUrl}`} 
+                          src={member.memberProfile.photoUrl.startsWith('http') ? member.memberProfile.photoUrl : `${BASE_URL}${member.memberProfile.photoUrl}`} 
                           alt="Profile" 
                           width={32}
                           height={32}
@@ -234,7 +234,7 @@ export default function MembersPage() {
                 <div className="flex flex-col items-center text-center mt-2">
                   {selectedMember.memberProfile?.photoUrl ? (
                     <Image 
-                      src={`${BASE_URL}${selectedMember.memberProfile.photoUrl}`} 
+                      src={selectedMember.memberProfile.photoUrl.startsWith('http') ? selectedMember.memberProfile.photoUrl : `${BASE_URL}${selectedMember.memberProfile.photoUrl}`} 
                       alt="Profile" 
                       width={96}
                       height={96}

@@ -1,4 +1,6 @@
 "use client";
+import { API_URL } from "@/lib/api/members";
+const BASE_URL = API_URL.replace('/api', '');
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
@@ -171,7 +173,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
               </div>
               <div className="w-10 h-10 rounded-full border-2 border-border overflow-hidden shrink-0 hidden md:block">
                 {user?.memberProfile?.photoUrl ? (
-                  <Image src={user.memberProfile.photoUrl} alt="Profile" width={40} height={40} className="w-full h-full object-cover" unoptimized />
+                  <Image src={user.memberProfile.photoUrl.startsWith('http') ? user.memberProfile.photoUrl : `${BASE_URL}${user.memberProfile.photoUrl}`} alt="Profile" width={40} height={40} className="w-full h-full object-cover" unoptimized />
                 ) : (
                   <UserCircle className="w-6 h-6 text-muted-foreground" />
                 )}

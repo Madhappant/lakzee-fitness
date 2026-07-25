@@ -107,8 +107,11 @@ export const uploadPhoto = async (req: Request, res: Response) => {
     const memberProfile = await prisma.memberProfile.findUnique({ where: { userId } });
     if (!memberProfile) return res.status(404).json({ status: 'error', message: 'Member not found' });
 
-    // Store the relative URL to the uploaded file
-    const photoUrl = `/uploads/${req.file.filename}`;
+    // Store the URL depending on storage provider
+    let photoUrl = `/uploads/${req.file.filename}`;
+    if (process.env.CLOUDINARY_URL && req.file.path) {
+      photoUrl = req.file.path; // Cloudinary URL
+    }
 
     const updatedProfile = await prisma.memberProfile.update({
       where: { userId },
