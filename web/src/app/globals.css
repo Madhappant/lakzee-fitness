@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 
 @theme {
+  --color-brand-gold: #D4AF37;
   --color-primary: #000000;
   --color-secondary: #1A1A1A;
   --color-accent: #D4AF37;
