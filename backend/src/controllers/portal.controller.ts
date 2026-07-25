@@ -119,9 +119,9 @@ export const uploadPhoto = async (req: Request, res: Response) => {
     });
 
     res.json({ status: 'success', data: { photoUrl: updatedProfile.photoUrl } });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to upload photo' });
+    res.status(500).json({ status: 'error', message: error?.message || 'Failed to upload photo' });
   }
 };
 

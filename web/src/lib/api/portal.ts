@@ -53,7 +53,10 @@ export const uploadMyPhoto = async (file: File) => {
     body: formData,
   });
 
-  if (!res.ok) throw new Error("Failed to upload photo");
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to upload photo");
+  }
   return res.json();
 };
 
