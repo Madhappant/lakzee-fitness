@@ -19,6 +19,7 @@ export default function PaymentsPage() {
     startDate: new Date().toISOString().split('T')[0], // Today's date by default
     status: "ACTIVE",
     paymentStatus: "PAID",
+    paymentMethod: "CASH",
   });
 
   // Fetching Data
@@ -38,7 +39,7 @@ export default function PaymentsPage() {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
       setIsModalOpen(false);
-      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID" });
+      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH" });
     },
   });
 
@@ -48,7 +49,7 @@ export default function PaymentsPage() {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
       setIsModalOpen(false);
-      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID" });
+      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH" });
     },
   });
 
@@ -101,6 +102,7 @@ export default function PaymentsPage() {
       startDate: new Date(sub.startDate).toISOString().split('T')[0],
       status: sub.status,
       paymentStatus: sub.paymentStatus || "PAID",
+      paymentMethod: sub.paymentMethod || "CASH",
     });
     setIsModalOpen(true);
   };
@@ -149,7 +151,7 @@ export default function PaymentsPage() {
         <button 
           onClick={() => {
             setModalMode("ASSIGN");
-            setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID" });
+            setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH" });
             setIsModalOpen(true);
           }}
           className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 w-full sm:w-auto"
@@ -225,9 +227,16 @@ export default function PaymentsPage() {
                       {new Date(sub.endDate).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${sub.paymentStatus === 'PAID' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'}`}>
-                        {sub.paymentStatus || 'PAID'}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${sub.paymentStatus === 'PAID' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'}`}>
+                          {sub.paymentStatus || 'PAID'}
+                        </span>
+                        {sub.paymentMethod && (
+                          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pl-1">
+                            Via {sub.paymentMethod.replace('_', ' ')}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
@@ -368,6 +377,23 @@ export default function PaymentsPage() {
                   >
                     <option value="PAID">PAID</option>
                     <option value="PENDING">PENDING</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Payment Method</label>
+                  <select 
+                    required 
+                    name="paymentMethod" 
+                    value={formData.paymentMethod} 
+                    onChange={e => setFormData(p => ({...p, paymentMethod: e.target.value}))} 
+                    className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none appearance-none"
+                  >
+                    <option value="CASH">Cash</option>
+                    <option value="UPI">UPI</option>
+                    <option value="CREDIT_CARD">Credit Card</option>
+                    <option value="DEBIT_CARD">Debit Card</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
                   </select>
                 </div>
 

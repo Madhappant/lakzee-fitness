@@ -3,7 +3,7 @@ import { prisma } from '../app';
 
 export const createSubscription = async (req: Request, res: Response) => {
   try {
-    const { memberId, planId, startDate, paymentStatus = 'PAID' } = req.body;
+    const { memberId, planId, startDate, paymentStatus = 'PAID', paymentMethod = 'CASH' } = req.body;
     
     const plan = await prisma.membershipPlan.findUnique({ where: { id: planId } });
     if (!plan) return res.status(404).json({ status: 'error', message: 'Plan not found' });
@@ -19,7 +19,8 @@ export const createSubscription = async (req: Request, res: Response) => {
         startDate: start,
         endDate: end,
         status: 'ACTIVE',
-        paymentStatus
+        paymentStatus,
+        paymentMethod
       }
     });
 
@@ -86,7 +87,7 @@ export const getPaymentStats = async (req: Request, res: Response) => {
 export const updateSubscription = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { planId, startDate, status, paymentStatus } = req.body;
+    const { planId, startDate, status, paymentStatus, paymentMethod } = req.body;
 
     const subscription = await prisma.subscription.findUnique({ where: { id } });
     if (!subscription) return res.status(404).json({ status: 'error', message: 'Subscription not found' });
@@ -109,6 +110,7 @@ export const updateSubscription = async (req: Request, res: Response) => {
         ...(startDate || planId ? { endDate } : {}),
         ...(status && { status }),
         ...(paymentStatus && { paymentStatus }),
+        ...(paymentMethod && { paymentMethod }),
       }
     });
 
