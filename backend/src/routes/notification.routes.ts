@@ -90,7 +90,7 @@ router.get('/', authenticate, async (req: any, res) => {
               title: 'Member Birthday Today! 🎉',
               message: `It's ${member.user.firstName} ${member.user.lastName}'s birthday today! Don't forget to wish them.`,
               date: now,
-              link: `/admin/members/${member.id}`,
+              link: `/admin/members?viewMember=${member.userId}`,
               read: false
             });
           }

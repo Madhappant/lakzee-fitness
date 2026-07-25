@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { fetchMembers, deleteMember, API_URL } from "@/lib/api/members";
 const BASE_URL = API_URL.replace('/api', '');
 import Link from "next/link";
@@ -9,8 +10,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, Loader2, Trash2, Edit2, FileText, X } from "lucide-react";
 import Image from "next/image";
 
-export default function MembersPage() {
+function MembersContent() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [selectedMember, setSelectedMember] = useState<any>(null);
@@ -19,6 +21,17 @@ export default function MembersPage() {
     queryKey: ["members"],
     queryFn: fetchMembers,
   });
+
+  const viewMemberId = searchParams.get('viewMember');
+
+  useEffect(() => {
+    if (viewMemberId && data?.data) {
+      const member = data.data.find((m: any) => m.id === viewMemberId);
+      if (member) {
+        setSelectedMember(member);
+      }
+    }
+  }, [viewMemberId, data]);
 
   const deleteMutation = useMutation({
     mutationFn: deleteMember,
@@ -320,5 +333,17 @@ export default function MembersPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-gold" />
+      </div>
+    }>
+      <MembersContent />
+    </Suspense>
   );
 }
