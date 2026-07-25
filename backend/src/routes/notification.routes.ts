@@ -12,9 +12,17 @@ router.get('/', authenticate, async (req: any, res) => {
     const notifications: any[] = [];
     
     // Calculate 3 days from now for expiry warnings
-    const now = new Date();
+    let now = new Date();
+    
+    // Adjust 'now' to match the user's local timezone if tzOffset is provided
+    if (req.query.tzOffset) {
+      const offset = parseInt(req.query.tzOffset as string, 10);
+      // Offset is in minutes (e.g., -330 for IST).
+      now = new Date(Date.now() - (offset * 60000));
+    }
+    
     const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(now.getDate() + 3);
+    threeDaysFromNow.setDate(new Date().getDate() + 3);
 
     if (userRole === 'ADMIN' || userRole === 'RECEPTIONIST') {
       // ADMIN NOTIFICATIONS
@@ -68,13 +76,14 @@ router.get('/', authenticate, async (req: any, res) => {
           include: { user: true }
         });
         
-        const currentMonth = now.getMonth();
-        const currentDay = now.getDate();
+        const currentMonth = now.getUTCMonth();
+        const currentDay = now.getUTCDate();
 
         membersWithBirthdays.forEach(member => {
           if (!member.dob) return;
           // Check if birthday matches today's exact date (ignoring year)
-          if (member.dob.getMonth() === currentMonth && member.dob.getDate() === currentDay) {
+          // We use getUTCMonth/Date because dates saved from frontend (e.g. YYYY-MM-DD) are often stored as UTC midnight
+          if (member.dob.getUTCMonth() === currentMonth && member.dob.getUTCDate() === currentDay) {
             notifications.push({
               id: `bday-${member.id}`,
               type: 'SYSTEM',

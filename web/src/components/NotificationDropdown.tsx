@@ -38,7 +38,8 @@ export function NotificationDropdown({ role }: { role: "ADMIN" | "MEMBER" }) {
       const token = localStorage.getItem("lakzee_token");
       if (!token) return [];
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/notifications`, {
+      const tzOffset = new Date().getTimezoneOffset();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/notifications?tzOffset=${tzOffset}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
