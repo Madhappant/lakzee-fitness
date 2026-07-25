@@ -71,7 +71,13 @@ export const getMembers = async (req: Request, res: Response, next: NextFunction
   try {
     const members = await prisma.user.findMany({
       where: { role: 'MEMBER' },
-      include: { memberProfile: true }
+      include: { 
+        memberProfile: {
+          include: {
+            subscriptions: true
+          }
+        } 
+      }
     });
     res.json({ status: 'success', data: members });
   } catch (error) {

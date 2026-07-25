@@ -12,6 +12,7 @@ import Image from "next/image";
 export default function MembersPage() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Status");
   const [selectedMember, setSelectedMember] = useState<any>(null);
 
   const { data, isLoading, isError } = useQuery({
@@ -39,7 +40,13 @@ export default function MembersPage() {
     const nameMatch = `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchLower);
     const emailMatch = member.email.toLowerCase().includes(searchLower);
     const idMatch = member.memberProfile?.memberId?.toLowerCase().includes(searchLower) || false;
-    return nameMatch || emailMatch || idMatch;
+    const isMemberActive = member.memberProfile?.subscriptions?.some((sub: any) => sub.status === 'ACTIVE') || false;
+
+    let matchesStatus = true;
+    if (statusFilter === "Active") matchesStatus = isMemberActive;
+    if (statusFilter === "Inactive") matchesStatus = !isMemberActive;
+
+    return (nameMatch || emailMatch || idMatch) && matchesStatus;
   });
 
   return (
@@ -71,7 +78,11 @@ export default function MembersPage() {
           />
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <select className="bg-card/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none w-full md:w-auto appearance-none">
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-card/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none w-full md:w-auto appearance-none"
+          >
             <option>All Status</option>
             <option>Active</option>
             <option>Inactive</option>
@@ -170,9 +181,14 @@ export default function MembersPage() {
                     {member.memberProfile?.gender?.toLowerCase() || 'N/A'}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
-                      Active
-                    </span>
+                    {(() => {
+                      const isActive = member.memberProfile?.subscriptions?.some((sub: any) => sub.status === 'ACTIVE') || false;
+                      return (
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${isActive ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                          {isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
