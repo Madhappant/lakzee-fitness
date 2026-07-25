@@ -109,7 +109,7 @@ export const uploadPhoto = async (req: Request, res: Response) => {
 
     // Store the URL depending on storage provider
     let photoUrl = `/uploads/${req.file.filename}`;
-    if (process.env.CLOUDINARY_URL && req.file.path) {
+    if ((process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) && req.file.path) {
       photoUrl = req.file.path; // Cloudinary URL
     }
 
