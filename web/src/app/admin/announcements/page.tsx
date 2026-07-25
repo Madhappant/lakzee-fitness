@@ -82,13 +82,15 @@ export default function AnnouncementsPage() {
           <h1 className="text-3xl font-bold mb-2">Announcements</h1>
           <p className="text-muted-foreground">Post announcements that will appear in the notification panel for all members.</p>
         </div>
-        <button
-          onClick={() => setIsCreating(!isCreating)}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-black bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors shadow-sm"
-        >
-          {isCreating ? <Megaphone className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-          {isCreating ? "Cancel" : "New Announcement"}
-        </button>
+        {!isCreating && (
+          <button
+            onClick={() => setIsCreating(true)}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-black bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors shadow-sm"
+          >
+            <Plus className="w-5 h-5" />
+            New Announcement
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
