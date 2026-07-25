@@ -91,13 +91,25 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    // Birthdays This Month (SQLite doesn't have easy month extraction, so we fetch and filter in memory)
+    // Birthdays This Month and Today
     const currentMonth = today.getMonth(); // 0-11
+    const currentDate = today.getDate();
+    
     const allMembersWithDob = await prisma.memberProfile.findMany({
       where: { dob: { not: null } },
-      select: { dob: true }
+      include: { user: true }
     });
-    const birthdaysThisMonth = allMembersWithDob.filter(m => m.dob && m.dob.getMonth() === currentMonth).length;
+    
+    // We use getUTCMonth/Date because dates saved from frontend (e.g. YYYY-MM-DD) are often stored as UTC midnight
+    const birthdaysThisMonth = allMembersWithDob.filter(m => m.dob && m.dob.getUTCMonth() === currentMonth).length;
+    
+    const todaysBirthdays = allMembersWithDob
+      .filter(m => m.dob && m.dob.getUTCMonth() === currentMonth && m.dob.getUTCDate() === currentDate)
+      .map(m => ({
+        id: m.id,
+        name: `${m.user.firstName} ${m.user.lastName}`,
+        memberId: m.memberId
+      }));
 
     // 14 Days Revenue Chart Data
     const fourteenDaysAgo = new Date(today);
@@ -161,6 +173,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         expiringIn7Days,
         expiredMembers,
         birthdaysThisMonth,
+        todaysBirthdays,
         revenueLast14Days,
         recentPaymentsList
       }

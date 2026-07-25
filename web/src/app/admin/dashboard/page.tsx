@@ -27,6 +27,7 @@ export default function DashboardOverview() {
     expiringIn7Days: 0,
     expiredMembers: 0,
     birthdaysThisMonth: 0,
+    todaysBirthdays: [] as {id: string, name: string, memberId: string}[],
     recentActivity: [],
     revenueLast14Days: [],
     recentPaymentsList: []
@@ -107,6 +108,32 @@ export default function DashboardOverview() {
           </Link>
         </div>
       </div>
+
+      {/* Birthday Notice */}
+      {stats.todaysBirthdays && stats.todaysBirthdays.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-brand-gold/20 via-yellow-500/10 to-transparent border border-brand-gold/30 rounded-2xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Cake className="w-24 h-24 text-brand-gold" />
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-brand-gold/20 flex items-center justify-center shrink-0 border border-brand-gold/30">
+            <Cake className="w-6 h-6 text-brand-gold" />
+          </div>
+          <div className="relative z-10">
+            <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+              🎉 Today's Birthdays!
+            </h3>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+              Wish a happy birthday to: <span className="text-foreground font-semibold">
+                {stats.todaysBirthdays.map((b: any) => `${b.name} (${b.memberId})`).join(', ')}
+              </span>
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
