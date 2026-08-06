@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -34,6 +35,7 @@ export default function EditMemberPage() {
   useEffect(() => {
     if (memberData?.data) {
       const { firstName, lastName, phone, memberProfile } = memberData.data;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         firstName: firstName || "",
         lastName: lastName || "",

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMyProfile, fetchMyAttendance } from "@/lib/api/portal";
-import { Loader2, CalendarCheck, Clock, ShieldCheck, Dumbbell, Receipt, ArrowRight, UserCircle } from "lucide-react";
+import { Loader2, CalendarCheck, Clock, ShieldCheck, Dumbbell, ArrowRight, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -200,7 +201,7 @@ export default function MemberDashboard() {
                   <>
                     <Dumbbell className="w-12 h-12 text-white/20 mb-4" />
                     <p className="text-sm text-muted-foreground max-w-[200px]">
-                      You don't have a personal trainer assigned. Contact the front desk to upgrade your plan!
+                      You don&apos;t have a personal trainer assigned. Contact the front desk to upgrade your plan!
                     </p>
                   </>
                 )}

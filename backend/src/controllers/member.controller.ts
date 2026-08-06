@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '../middlewares/auth.middleware';
 import { prisma } from '../app';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
@@ -58,7 +59,8 @@ export const createMember = async (req: Request, res: Response, next: NextFuncti
       },
       include: {
         memberProfile: true
-      }
+      },
+      omit: { password: true }
     });
 
     res.status(201).json({ status: 'success', data: newMember });
@@ -77,7 +79,8 @@ export const getMembers = async (req: Request, res: Response, next: NextFunction
             subscriptions: true
           }
         } 
-      }
+      },
+      omit: { password: true }
     });
     res.json({ status: 'success', data: members });
   } catch (error) {
@@ -85,12 +88,18 @@ export const getMembers = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const getMemberById = async (req: Request, res: Response, next: NextFunction) => {
+export const getMemberById = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
+
+    if (req.user?.role === 'MEMBER' && req.user.id !== id) {
+      return res.status(403).json({ status: 'error', message: 'Forbidden: You can only view your own profile' });
+    }
+
     const member = await prisma.user.findUnique({
       where: { id },
-      include: { memberProfile: true, assignedMembers: true }
+      include: { memberProfile: true, assignedMembers: true },
+      omit: { password: true }
     });
 
     if (!member) {
@@ -148,7 +157,8 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
       },
       include: {
         memberProfile: true
-      }
+      },
+      omit: { password: true }
     });
 
     res.json({ status: 'success', data: updatedMember });

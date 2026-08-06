@@ -1,7 +1,8 @@
 "use client";
+import { API_URL } from "@/lib/api/config";
 
-import { useEffect, useState, useRef } from "react";
-import { UserCircle, Mail, ShieldCheck, Copy, CheckCircle2, Phone, X, Loader2, Upload, Camera } from "lucide-react";
+import { useState, useRef } from "react";
+import { UserCircle, Mail, ShieldCheck, CheckCircle2, Phone, X, Loader2, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,7 +12,6 @@ type PhoneStep = "IDLE" | "REQUEST_OTP" | "VERIFY_OTP" | "SUCCESS";
 
 export default function MemberProfilePage() {
   const queryClient = useQueryClient();
-  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profileData, isLoading: profileLoading } = useQuery({
@@ -24,7 +24,7 @@ export default function MemberProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       alert(err.message || "Failed to upload photo");
     }
   });
@@ -49,20 +49,12 @@ export default function MemberProfilePage() {
 
 
 
-  const copyToClipboard = () => {
-    if (user?.id) {
-      navigator.clipboard.writeText(user.id);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsPhoneLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/request-phone-otp`, {
+      const res = await fetch(`${API_URL}/auth/request-phone-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user?.email, newPhone }),
@@ -72,8 +64,8 @@ export default function MemberProfilePage() {
       if (!res.ok) throw new Error(data.message || "Failed to request OTP.");
       
       setPhoneStep("VERIFY_OTP");
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+    } catch (err: Error | unknown) {
+      setError((err as Error).message || "An unexpected error occurred.");
     } finally {
       setIsPhoneLoading(false);
     }
@@ -84,7 +76,7 @@ export default function MemberProfilePage() {
     setIsPhoneLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/verify-phone`, {
+      const res = await fetch(`${API_URL}/auth/verify-phone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user?.email, otp }),
@@ -108,8 +100,8 @@ export default function MemberProfilePage() {
         setNewPhone("");
         setOtp("");
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || "Invalid OTP or request expired.");
+    } catch (err: Error | unknown) {
+      setError((err as Error).message || "Invalid OTP or request expired.");
     } finally {
       setIsPhoneLoading(false);
     }
@@ -132,7 +124,7 @@ export default function MemberProfilePage() {
 
   const profile = profileData?.data;
   const user = profile?.user;
-  const base = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace("/api", "") : "http://localhost:5000";
+  const base = API_URL.replace("/api", "");
   const photoUrl = profile?.photoUrl ? (profile.photoUrl.startsWith('http') ? profile.photoUrl : `${base}${profile.photoUrl}`) : null;
 
   if (!profile || !user) return null;

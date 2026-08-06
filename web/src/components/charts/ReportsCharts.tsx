@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const COLORS = ['#D4AF37', '#ffffff', '#eab308'];
 
-export default function ReportsCharts({ stats }: { stats: any }) {
+export default function ReportsCharts({ stats }: { stats: Record<string, any> }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
       {/* Daily Revenue Chart */}

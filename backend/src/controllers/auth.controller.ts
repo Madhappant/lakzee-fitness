@@ -168,7 +168,7 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            secret: 'lakzee-secret-key-2026',
+            secret: process.env.GOOGLE_SCRIPT_SECRET,
             to: email,
             subject: 'Your Password Reset OTP',
             html: resetHtml
@@ -299,7 +299,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            secret: 'lakzee-secret-key-2026',
+            secret: process.env.GOOGLE_SCRIPT_SECRET,
             to: email,
             subject: 'Verify Your New Phone Number',
             html: phoneHtml

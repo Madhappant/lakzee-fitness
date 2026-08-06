@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import { Manrope, Inter, Geist } from "next/font/google";
+import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 import Providers from "@/components/Providers";
 import { Toaster } from "sonner";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const manrope = Manrope({
   variable: "--font-heading",

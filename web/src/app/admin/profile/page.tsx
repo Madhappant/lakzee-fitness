@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { API_URL } from "@/lib/api/config";
 
 import { useEffect, useState } from "react";
 import { UserCircle, Mail, ShieldCheck, Copy, CheckCircle2, Phone, X, Loader2, MessageSquare } from "lucide-react";
@@ -22,8 +24,9 @@ export default function ProfilePage() {
     const userStr = localStorage.getItem("lakzee_user");
     if (userStr) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser(JSON.parse(userStr));
-      } catch (e) {}
+      } catch (_e) {}
     }
   }, []);
 
@@ -40,7 +43,7 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/request-phone-otp`, {
+      const res = await fetch(`${API_URL}/auth/request-phone-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, newPhone }),
@@ -53,8 +56,8 @@ export default function ProfilePage() {
         setSimulatedData({ otp: data.simulatedOtp, phone: data.phoneMasked, previewUrl: data.previewUrl });
       }
       setPhoneStep("VERIFY_OTP");
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+    } catch (err: Error | unknown) {
+      setError((err as Error).message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +68,7 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/verify-phone`, {
+      const res = await fetch(`${API_URL}/auth/verify-phone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, otp }),
@@ -86,8 +89,8 @@ export default function ProfilePage() {
         setNewPhone("");
         setOtp("");
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || "Invalid OTP or request expired.");
+    } catch (err: Error | unknown) {
+      setError((err as Error).message || "Invalid OTP or request expired.");
     } finally {
       setIsLoading(false);
     }

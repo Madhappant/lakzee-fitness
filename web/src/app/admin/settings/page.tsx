@@ -26,6 +26,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (data?.data) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         gymName: data.data.gymName || "",
         branch: data.data.branch || "",

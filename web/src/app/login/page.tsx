@@ -27,7 +27,7 @@ export default function LoginPage() {
         router.push("/admin/dashboard");
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Login failed');
     }
   });

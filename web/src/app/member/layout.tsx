@@ -1,23 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { API_URL } from "@/lib/api/members";
 const BASE_URL = API_URL.replace('/api', '');
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { 
   LayoutDashboard, 
   CalendarCheck, 
   LogOut,
   Dumbbell,
-  Bell,
   Menu,
   UserCircle,
-  Receipt,
   Utensils,
   CreditCard
 } from "lucide-react";
@@ -38,20 +36,34 @@ const sidebarGroups = [
   },
 ];
 
+const emptySubscribe = () => () => {};
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  memberProfile?: any;
+}
+
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
-  // Close mobile menu on route change
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(pathname);
+  if (pathname !== prevPath) {
     setIsMobileMenuOpen(false);
-  }, [pathname]);
-  const [user, setUser] = useState<any>(null);
+    setPrevPath(pathname);
+  }
+  
+  const user = isClient ? JSON.parse(localStorage.getItem("lakzee_user") || "null") as User | null : null;
 
   useEffect(() => {
-    setIsClient(true);
+    if (!isClient) return;
     const token = localStorage.getItem("lakzee_token");
     const userStr = localStorage.getItem("lakzee_user");
     
@@ -63,11 +75,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     const userData = JSON.parse(userStr);
     if (userData.role !== 'MEMBER') {
       router.push("/admin/dashboard");
-      return;
     }
-    
-    setUser(userData);
-  }, [router]);
+  }, [router, isClient]);
 
   const handleLogout = () => {
     localStorage.removeItem("lakzee_token");

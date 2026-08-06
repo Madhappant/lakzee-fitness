@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { motion } from "framer-motion";
@@ -97,7 +98,7 @@ export default function DashboardOverview() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground text-sm md:text-base">Here is what's happening at Lakzee Fitness Studio today.</p>
+          <p className="text-muted-foreground text-sm md:text-base">Here is what&apos;s happening at Lakzee Fitness Studio today.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <Link href="/admin/attendance" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-brand-gold text-brand-gold hover:bg-brand-gold/10 font-semibold transition-colors w-full sm:w-auto">
@@ -124,7 +125,7 @@ export default function DashboardOverview() {
           </div>
           <div className="relative z-10">
             <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
-              🎉 Today's Birthdays!
+              🎉 Today&apos;s Birthdays!
             </h3>
             <p className="text-muted-foreground mt-1 text-sm md:text-base">
               Wish a happy birthday to: <span className="text-foreground font-semibold">

@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchReports } from "@/lib/api/reports";
 import { TrendingUp, Wallet, Users, CalendarCheck, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 
 const ReportsCharts = dynamic(() => import("@/components/charts/ReportsCharts"), {

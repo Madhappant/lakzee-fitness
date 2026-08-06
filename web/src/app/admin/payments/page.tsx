@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -119,7 +120,7 @@ export default function PaymentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/30 transition-colors">
           <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Today's Collection</h3>
+            <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Today&apos;s Collection</h3>
             <Wallet className="w-5 h-5 text-green-500/50" />
           </div>
           <p className="text-3xl font-bold text-green-500">₹{stats.todaysCollection.toLocaleString()}</p>
@@ -347,7 +348,7 @@ export default function PaymentsPage() {
                     onChange={e => handlePlanOrDateChange('startDate', e.target.value)} 
                     className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none" 
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Expiry date will be calculated automatically based on the plan's duration.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Expiry date will be calculated automatically based on the plan&apos;s duration.</p>
                 </div>
 
                 <div className="space-y-2">

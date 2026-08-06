@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +38,7 @@ export default function MemberWorkoutPage() {
   let exercisesData: any = {};
   try {
     exercisesData = JSON.parse(routine.exercisesData);
-  } catch (e) {}
+  } catch (_e) {}
 
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 

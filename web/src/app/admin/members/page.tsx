@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +29,7 @@ function MembersContent() {
     if (viewMemberId && data?.data) {
       const member = data.data.find((m: any) => m.id === viewMemberId);
       if (member) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedMember(member);
       }
     }

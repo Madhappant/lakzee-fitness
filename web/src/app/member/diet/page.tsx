@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +38,7 @@ export default function MemberDietPage() {
   let mealsData: any = {};
   try {
     mealsData = JSON.parse(plan.mealsData);
-  } catch (e) {}
+  } catch (_e) {}
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">

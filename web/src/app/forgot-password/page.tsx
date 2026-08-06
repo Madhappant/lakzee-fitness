@@ -1,8 +1,9 @@
 "use client";
+import { API_URL } from "@/lib/api/config";
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Dumbbell, Loader2, CheckCircle2, MessageSquare } from "lucide-react";
+import { ArrowLeft, Dumbbell, Loader2, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Step = "REQUEST_OTP" | "VERIFY_OTP" | "SUCCESS";
@@ -14,14 +15,14 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [simulatedData, setSimulatedData] = useState<{otp: string, phone: string, previewUrl?: string} | null>(null);
+  const [_simulatedData, setSimulatedData] = useState<{otp: string, phone: string, previewUrl?: string} | null>(null);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/request-otp`, {
+      const res = await fetch(`${API_URL}/auth/request-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -34,8 +35,8 @@ export default function ForgotPasswordPage() {
         setSimulatedData({ otp: data.simulatedOtp, phone: data.phoneMasked, previewUrl: data.previewUrl });
       }
       setStep("VERIFY_OTP");
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+    } catch (err: Error | unknown) {
+      setError((err as Error).message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +47,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")}/auth/reset-password`, {
+      const res = await fetch(`${API_URL}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp, newPassword }),
@@ -56,8 +57,8 @@ export default function ForgotPasswordPage() {
       if (!res.ok) throw new Error(data.message || "Failed to reset password.");
       
       setStep("SUCCESS");
-    } catch (err: any) {
-      setError(err.message || "Invalid OTP or request expired.");
+    } catch (err: Error | unknown) {
+      setError((err as Error).message || "Invalid OTP or request expired.");
     } finally {
       setIsLoading(false);
     }

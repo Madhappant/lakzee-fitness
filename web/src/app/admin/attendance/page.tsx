@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -62,7 +63,7 @@ export default function AttendancePage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Daily Attendance</h1>
-        <p className="text-muted-foreground">Log member check-ins and view today's active members.</p>
+        <p className="text-muted-foreground">Log member check-ins and view today&apos;s active members.</p>
       </div>
 
       {/* Quick Check-in Module */}
@@ -127,7 +128,7 @@ export default function AttendancePage() {
       {/* Today's Log Table */}
       <div className="glass-panel overflow-hidden">
         <div className="p-6 border-b border-border flex items-center justify-between">
-          <h2 className="text-lg font-bold">Today's Check-ins ({logs.length})</h2>
+          <h2 className="text-lg font-bold">Today&apos;s Check-ins ({logs.length})</h2>
           <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</span>
         </div>
         

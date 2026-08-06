@@ -3,7 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 const app: Application = express();
 export const prisma = new PrismaClient();
@@ -43,6 +45,16 @@ import announcementRoutes from './routes/announcement.routes';
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: { status: 'error', message: 'Too many requests, please try again later.' }
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/request-otp', authLimiter);
+app.use('/api/auth/request-phone-otp', authLimiter);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/plans', planRoutes);
@@ -61,7 +73,7 @@ app.use('/api/announcements', announcementRoutes);
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
 
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
       const target = err.meta?.target as string[];
       return res.status(400).json({

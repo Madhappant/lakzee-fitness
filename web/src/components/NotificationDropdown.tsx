@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { API_URL } from "@/lib/api/config";
 
 type Notification = {
   id: string;
@@ -17,7 +18,7 @@ type Notification = {
   read: boolean;
 };
 
-export function NotificationDropdown({ role }: { role: "ADMIN" | "MEMBER" }) {
+export function NotificationDropdown({ role: _role }: { role: "ADMIN" | "MEMBER" }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +40,7 @@ export function NotificationDropdown({ role }: { role: "ADMIN" | "MEMBER" }) {
       if (!token) return [];
       
       const tzOffset = new Date().getTimezoneOffset();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/notifications?tzOffset=${tzOffset}`, {
+      const res = await fetch(`${API_URL}/notifications?tzOffset=${tzOffset}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -103,7 +104,7 @@ export function NotificationDropdown({ role }: { role: "ADMIN" | "MEMBER" }) {
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
                   <CheckCircle2 className="w-10 h-10 text-green-500/50 mb-2" />
-                  <p>You're all caught up!</p>
+                  <p>You&apos;re all caught up!</p>
                   <p className="text-xs">No pending payments or expiring members.</p>
                 </div>
               ) : (

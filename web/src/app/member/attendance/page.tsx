@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -42,7 +43,7 @@ export default function MemberAttendance() {
         {attendanceLogs.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <CalendarCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>You haven't checked in yet. See you at the gym soon!</p>
+            <p>You haven&apos;t checked in yet. See you at the gym soon!</p>
           </div>
         ) : (
           <div className="space-y-4">

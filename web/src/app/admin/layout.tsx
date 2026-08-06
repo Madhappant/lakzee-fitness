@@ -80,6 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     for (const group of sidebarGroups) {
       const activeItem = group.items.find(item => pathname === item.href || pathname.startsWith(item.href + "/"));
       if (activeItem) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPageTitle(activeItem.name);
         found = true;
         break;
@@ -90,10 +91,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Close mobile menu on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true);
     const token = localStorage.getItem("lakzee_token");
     const userStr = localStorage.getItem("lakzee_user");
