@@ -3,7 +3,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchMyWorkoutRoutine } from "@/lib/api/portal";
-import { Loader2, Dumbbell, Calendar, Activity } from "lucide-react";
+import { Loader2, Dumbbell, Calendar, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function MemberWorkoutPage() {
@@ -80,7 +80,7 @@ export default function MemberWorkoutPage() {
             >
               <div className="md:w-48 flex-shrink-0 border-b md:border-b-0 md:border-r border-border pb-4 md:pb-0 md:pr-6">
                 <h3 className="text-xl font-bold capitalize text-foreground flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-brand-gold" />
+                  <Star className="w-5 h-5 text-brand-gold" />
                   {day}
                 </h3>
               </div>
