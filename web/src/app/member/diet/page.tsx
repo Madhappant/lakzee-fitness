@@ -56,7 +56,7 @@ export default function MemberDietPage() {
       {plan.notes && (
         <div className="glass-panel p-6 sm:p-8 bg-gradient-to-br from-brand-gold/10 to-transparent border-l-4 border-l-brand-gold">
           <h3 className="font-semibold text-brand-gold mb-2">General Guidelines</h3>
-          <p className="text-white/80 whitespace-pre-wrap">{plan.notes}</p>
+          <p className="text-muted-foreground whitespace-pre-wrap">{plan.notes}</p>
         </div>
       )}
 

@@ -275,7 +275,7 @@ export default function MemberProfilePage() {
                      )}
  
                      <div>
-                       <label className="block text-sm font-medium text-white/80 mb-2">
+                       <label className="block text-sm font-medium text-muted-foreground mb-2">
                          New Phone Number
                        </label>
                        <input
@@ -313,7 +313,7 @@ export default function MemberProfilePage() {
                      )}
  
                      <div>
-                       <label className="block text-sm font-medium text-white/80 mb-2">
+                       <label className="block text-sm font-medium text-muted-foreground mb-2">
                          6-Digit OTP
                        </label>
                        <input

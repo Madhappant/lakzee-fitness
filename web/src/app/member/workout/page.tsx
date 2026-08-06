@@ -58,7 +58,7 @@ export default function MemberWorkoutPage() {
       {routine.notes && (
         <div className="glass-panel p-6 sm:p-8 bg-gradient-to-br from-brand-gold/10 to-transparent border-l-4 border-l-brand-gold">
           <h3 className="font-semibold text-brand-gold mb-2">Trainer Notes</h3>
-          <p className="text-white/80 whitespace-pre-wrap">{routine.notes}</p>
+          <p className="text-muted-foreground whitespace-pre-wrap">{routine.notes}</p>
         </div>
       )}
 
@@ -86,7 +86,7 @@ export default function MemberWorkoutPage() {
               </div>
               <div className="flex-1 space-y-2">
                 {lines.map((line: string, i: number) => (
-                  <div key={i} className="flex items-start gap-3 text-white/80">
+                  <div key={i} className="flex items-start gap-3 text-muted-foreground">
                     <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 flex-shrink-0" />
                     <span>{line}</span>
                   </div>

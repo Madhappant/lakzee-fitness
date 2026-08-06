@@ -137,7 +137,7 @@ export default function PlansPage() {
               </div>
 
               <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-sm text-white/80">
+                <li className="flex items-center gap-3 text-sm text-muted-foreground">
                   <div className="w-5 h-5 rounded-full bg-brand-gold/20 flex items-center justify-center">
                     <Check className="w-3 h-3 text-brand-gold" />
                   </div>
