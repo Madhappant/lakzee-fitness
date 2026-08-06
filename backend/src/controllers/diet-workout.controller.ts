@@ -3,19 +3,23 @@ import { prisma } from '../app';
 
 export const assignDietPlan = async (req: Request, res: Response) => {
   try {
-    const memberId = req.params.memberId as string;
+    const userId = req.params.memberId as string;
     const { title, notes, mealsData } = req.body;
     const assignedBy = req.user?.id;
 
+    const profile = await prisma.memberProfile.findUnique({ where: { userId } });
+    if (!profile) return res.status(404).json({ status: 'error', message: 'Member profile not found' });
+    const memberProfileId = profile.id;
+
     // We can archive old active plans by marking them inactive
     await prisma.dietPlan.updateMany({
-      where: { memberId, isActive: true },
+      where: { memberId: memberProfileId, isActive: true },
       data: { isActive: false }
     });
 
     const newDietPlan = await prisma.dietPlan.create({
       data: {
-        memberId,
+        memberId: memberProfileId,
         title,
         notes,
         mealsData: JSON.stringify(mealsData),
@@ -32,9 +36,12 @@ export const assignDietPlan = async (req: Request, res: Response) => {
 
 export const getMemberDietPlan = async (req: Request, res: Response) => {
   try {
-    const memberId = req.params.memberId as string;
+    const userId = req.params.memberId as string;
+    const profile = await prisma.memberProfile.findUnique({ where: { userId } });
+    if (!profile) return res.status(404).json({ status: 'error', message: 'Member profile not found' });
+    
     const activeDietPlan = await prisma.dietPlan.findFirst({
-      where: { memberId, isActive: true },
+      where: { memberId: profile.id, isActive: true },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -47,18 +54,22 @@ export const getMemberDietPlan = async (req: Request, res: Response) => {
 
 export const assignWorkoutRoutine = async (req: Request, res: Response) => {
   try {
-    const memberId = req.params.memberId as string;
+    const userId = req.params.memberId as string;
     const { title, notes, exercisesData } = req.body;
     const assignedBy = req.user?.id;
 
+    const profile = await prisma.memberProfile.findUnique({ where: { userId } });
+    if (!profile) return res.status(404).json({ status: 'error', message: 'Member profile not found' });
+    const memberProfileId = profile.id;
+
     await prisma.workoutRoutine.updateMany({
-      where: { memberId, isActive: true },
+      where: { memberId: memberProfileId, isActive: true },
       data: { isActive: false }
     });
 
     const newRoutine = await prisma.workoutRoutine.create({
       data: {
-        memberId,
+        memberId: memberProfileId,
         title,
         notes,
         exercisesData: JSON.stringify(exercisesData),
@@ -75,9 +86,12 @@ export const assignWorkoutRoutine = async (req: Request, res: Response) => {
 
 export const getMemberWorkoutRoutine = async (req: Request, res: Response) => {
   try {
-    const memberId = req.params.memberId as string;
+    const userId = req.params.memberId as string;
+    const profile = await prisma.memberProfile.findUnique({ where: { userId } });
+    if (!profile) return res.status(404).json({ status: 'error', message: 'Member profile not found' });
+
     const activeRoutine = await prisma.workoutRoutine.findFirst({
-      where: { memberId, isActive: true },
+      where: { memberId: profile.id, isActive: true },
       orderBy: { createdAt: 'desc' }
     });
 
