@@ -115,6 +115,24 @@ export const deleteMember = async (req: Request, res: Response, next: NextFuncti
   try {
     const id = req.params.id as string;
     
+    const profile = await prisma.memberProfile.findUnique({ where: { userId: id } });
+    
+    if (profile) {
+      // Find invoices to delete associated payments first
+      const invoices = await prisma.invoice.findMany({ where: { memberId: profile.id } });
+      const invoiceIds = invoices.map((i: any) => i.id);
+
+      // Perform manual cascading deletes in a transaction
+      await prisma.$transaction([
+        prisma.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } }),
+        prisma.invoice.deleteMany({ where: { memberId: profile.id } }),
+        prisma.subscription.deleteMany({ where: { memberId: profile.id } }),
+        prisma.attendance.deleteMany({ where: { memberId: profile.id } }),
+        prisma.dietPlan.deleteMany({ where: { memberId: profile.id } }),
+        prisma.workoutRoutine.deleteMany({ where: { memberId: profile.id } })
+      ]);
+    }
+
     // User deletion will cascade and delete the MemberProfile due to the schema relation
     await prisma.user.delete({
       where: { id }
