@@ -43,7 +43,7 @@ function MembersContent() {
   });
 
   const handleDelete = (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to delete ${name.trim()}? This action cannot be undone.`)) {
       deleteMutation.mutate(id);
     }
   };
