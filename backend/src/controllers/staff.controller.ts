@@ -20,7 +20,8 @@ export const getStaff = async (req: Request, res: Response, next: NextFunction) 
         email: true,
         role: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        roleAssignedAt: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -51,7 +52,7 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { role: role }
+      data: { role: role, roleAssignedAt: new Date() }
     });
 
     res.json({ status: 'success', message: 'Role assigned successfully', data: updated });

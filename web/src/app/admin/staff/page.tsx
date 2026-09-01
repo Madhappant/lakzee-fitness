@@ -105,7 +105,7 @@ export default function StaffPage() {
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground">{new Date(user.updatedAt).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{new Date(user.roleAssignedAt || user.updatedAt).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={() => revokeMutation.mutate(user.id)}
