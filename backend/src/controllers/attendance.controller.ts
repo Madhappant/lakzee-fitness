@@ -154,7 +154,7 @@ export const checkOut = async (req: Request, res: Response) => {
 
     res.json({ 
       status: 'success', 
-      message: \Checked out \ \\,
+      message: `Checked out ${member.user.firstName} ${member.user.lastName}`,
       data: attendance 
     });
   } catch (error) {
