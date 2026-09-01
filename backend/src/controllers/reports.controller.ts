@@ -19,14 +19,30 @@ export const getReports = async (req: Request, res: Response) => {
       where: { createdAt: { gte: thirtyDaysAgo } },
       include: { plan: true }
     });
-    const revenue30d = recentSubs.reduce((sum, sub) => sum + (sub.plan?.price || 0) - sub.balanceAmount, 0);
+    const revenue30d = recentSubs.reduce((sum, sub) => {
+      const price = sub.plan?.price || 0;
+      if (sub.paymentStatus === 'PAID') return sum + price;
+      if (sub.paymentStatus === 'PENDING') {
+        if (sub.balanceAmount > 0) return sum + Math.max(0, price - sub.balanceAmount);
+        return sum;
+      }
+      return sum;
+    }, 0);
 
     // 2. Revenue This Month
     const monthSubs = await prisma.subscription.findMany({
       where: { createdAt: { gte: firstDayOfMonth } },
       include: { plan: true }
     });
-    const revenueThisMonth = monthSubs.reduce((sum, sub) => sum + (sub.plan?.price || 0) - sub.balanceAmount, 0);
+    const revenueThisMonth = monthSubs.reduce((sum, sub) => {
+      const price = sub.plan?.price || 0;
+      if (sub.paymentStatus === 'PAID') return sum + price;
+      if (sub.paymentStatus === 'PENDING') {
+        if (sub.balanceAmount > 0) return sum + Math.max(0, price - sub.balanceAmount);
+        return sum;
+      }
+      return sum;
+    }, 0);
 
     // 3. Active Members
     const activeMembersCount = await prisma.memberProfile.count({
@@ -62,7 +78,12 @@ export const getReports = async (req: Request, res: Response) => {
     last7DaysSubs.forEach(sub => {
       const name = sub.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (dailyRevenueMap[name] !== undefined) {
-        dailyRevenueMap[name] += (sub.plan?.price || 0) - sub.balanceAmount;
+        const price = sub.plan?.price || 0;
+        if (sub.paymentStatus === 'PAID') {
+          dailyRevenueMap[name] += price;
+        } else if (sub.paymentStatus === 'PENDING' && sub.balanceAmount > 0) {
+          dailyRevenueMap[name] += Math.max(0, price - sub.balanceAmount);
+        }
       }
     });
 
@@ -127,7 +148,17 @@ export const getReports = async (req: Request, res: Response) => {
     
     const paymentMap: Record<string, number> = {};
     payments30dForMix.forEach(sub => {
-      paymentMap[sub.paymentMethod] = (paymentMap[sub.paymentMethod] || 0) + ((sub.plan?.price || 0) - sub.balanceAmount);
+      const price = sub.plan?.price || 0;
+      let paid = 0;
+      if (sub.paymentStatus === 'PAID') {
+        paid = price;
+      } else if (sub.paymentStatus === 'PENDING' && sub.balanceAmount > 0) {
+        paid = Math.max(0, price - sub.balanceAmount);
+      }
+      
+      if (paid > 0) {
+        paymentMap[sub.paymentMethod] = (paymentMap[sub.paymentMethod] || 0) + paid;
+      }
     });
 
     const paymentMix = Object.keys(paymentMap).map(method => ({ name: method, value: paymentMap[method] }));
@@ -152,4 +183,3 @@ export const getReports = async (req: Request, res: Response) => {
     res.status(500).json({ status: 'error', message: 'Failed to fetch reports' });
   }
 };
-

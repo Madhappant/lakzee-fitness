@@ -62,13 +62,29 @@ export const getPaymentStats = async (req: Request, res: Response) => {
       where: { createdAt: { gte: today } },
       include: { plan: true }
     });
-    const todaysCollection = todaysSubs.reduce((sum, sub) => sum + ((sub.plan?.price || 0) - sub.balanceAmount), 0);
+    const todaysCollection = todaysSubs.reduce((sum, sub) => {
+      const price = sub.plan?.price || 0;
+      if (sub.paymentStatus === 'PAID') return sum + price;
+      if (sub.paymentStatus === 'PENDING') {
+        if (sub.balanceAmount > 0) return sum + Math.max(0, price - sub.balanceAmount);
+        return sum;
+      }
+      return sum;
+    }, 0);
 
     const monthSubs = await prisma.subscription.findMany({
       where: { createdAt: { gte: firstDayOfMonth } },
       include: { plan: true }
     });
-    const thisMonth = monthSubs.reduce((sum, sub) => sum + ((sub.plan?.price || 0) - sub.balanceAmount), 0);
+    const thisMonth = monthSubs.reduce((sum, sub) => {
+      const price = sub.plan?.price || 0;
+      if (sub.paymentStatus === 'PAID') return sum + price;
+      if (sub.paymentStatus === 'PENDING') {
+        if (sub.balanceAmount > 0) return sum + Math.max(0, price - sub.balanceAmount);
+        return sum;
+      }
+      return sum;
+    }, 0);
 
     const totalRecords = await prisma.subscription.count();
 
@@ -121,7 +137,6 @@ export const updateSubscription = async (req: Request, res: Response) => {
     res.status(500).json({ status: 'error', message: 'Failed to update subscription' });
   }
 };
-
 export const deleteSubscription = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
@@ -131,4 +146,3 @@ export const deleteSubscription = async (req: Request, res: Response) => {
     res.status(500).json({ status: 'error', message: 'Failed to delete subscription' });
   }
 };
-
