@@ -8,7 +8,7 @@ import { ShieldCheck, Loader2, UserMinus } from "lucide-react";
 
 export default function StaffPage() {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({ userId: "", role: "receptionist" });
+  const [formData, setFormData] = useState({ userId: "", role: "RECEPTIONIST" });
 
   const { data, isLoading } = useQuery({ queryKey: ["staff"], queryFn: fetchStaff });
   const staff = data?.data || [];
@@ -17,7 +17,7 @@ export default function StaffPage() {
     mutationFn: () => assignRole(formData.userId, formData.role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
-      setFormData({ userId: "", role: "receptionist" });
+      setFormData({ userId: "", role: "RECEPTIONIST" });
       alert("Role assigned successfully!");
     },
     onError: (err: any) => {
@@ -63,9 +63,9 @@ export default function StaffPage() {
             onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
             className="w-full bg-card/50 border border-border rounded-lg px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none appearance-none"
           >
-            <option value="receptionist">receptionist</option>
-            <option value="trainer">trainer</option>
-            <option value="admin">admin</option>
+            <option value="RECEPTIONIST">receptionist</option>
+            <option value="TRAINER">trainer</option>
+            <option value="ADMIN">admin</option>
           </select>
         </div>
 

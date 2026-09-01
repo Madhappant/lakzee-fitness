@@ -19,7 +19,10 @@ export const assignRole = async (userId: string, role: string) => {
     },
     body: JSON.stringify({ userId, role }),
   });
-  if (!res.ok) throw new Error("Failed to assign role");
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to assign role");
+  }
   return res.json();
 };
 
