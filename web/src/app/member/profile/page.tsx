@@ -245,11 +245,11 @@ export default function MemberProfilePage() {
             
             <div className="flex items-center gap-3">
               <div className="flex-1 bg-black/40 border border-border rounded-xl px-4 py-4 text-foreground font-mono text-sm sm:text-base break-all">
-                {user.id}
+                {profile.memberId}
               </div>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(user.id);
+                  navigator.clipboard.writeText(profile.memberId);
                   const el = document.getElementById('copy-text');
                   if (el) {
                     el.innerText = 'Copied!';
