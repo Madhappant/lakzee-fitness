@@ -32,26 +32,26 @@ export const checkIn = async (req: Request, res: Response) => {
     const activeSub = await prisma.subscription.findFirst({
       where: {
         memberId: member.id,
-        status: 'ACTIVE',
-        paymentStatus: 'PAID'
+        status: 'ACTIVE'
       }
     });
 
     if (!activeSub) {
-      return res.status(403).json({ status: 'error', message: 'Member does not have an active, paid subscription' });
+      return res.status(403).json({ status: 'error', message: 'Member does not have an active subscription' });
     }
 
-    // Check if already checked in today
+    // Check if already checked in today and not checked out
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
     const existingCheckIn = await prisma.attendance.findFirst({
       where: {
         memberId: member.id,
-        date: todayStart
+        date: todayStart,
+        checkOut: null
       }
     });
 
     if (existingCheckIn) {
-      return res.status(400).json({ status: 'error', message: 'Member is already checked in for today' });
+      return res.status(400).json({ status: 'error', message: 'Member is already checked in and has not checked out' });
     }
 
     // Create checkin record
