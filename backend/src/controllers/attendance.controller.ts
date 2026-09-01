@@ -40,12 +40,10 @@ export const checkIn = async (req: Request, res: Response) => {
       return res.status(403).json({ status: 'error', message: 'Member does not have an active subscription' });
     }
 
-    // Check if already checked in today and not checked out
-    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+    // Check if member is already checked in and not checked out
     const existingCheckIn = await prisma.attendance.findFirst({
       where: {
         memberId: member.id,
-        date: todayStart,
         checkOut: null
       }
     });
@@ -58,7 +56,7 @@ export const checkIn = async (req: Request, res: Response) => {
     const attendance = await prisma.attendance.create({
       data: {
         memberId: member.id,
-        date: new Date(new Date().setHours(0, 0, 0, 0)), // Normalize to start of day
+        date: new Date(),
       }
     });
 
@@ -84,13 +82,13 @@ export const getTodayAttendance = async (req: Request, res: Response) => {
     }
 
     const whereClause: any = {
-      date: {
+      checkIn: {
         gte: startDate,
       }
     };
 
     if (end) {
-      whereClause.date.lte = new Date(end as string);
+      whereClause.checkIn.lte = new Date(end as string);
     }
 
     const logs = await prisma.attendance.findMany({
@@ -132,12 +130,10 @@ export const checkOut = async (req: Request, res: Response) => {
     }
 
     const member = members[0];
-    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
 
     const existingCheckIn = await prisma.attendance.findFirst({
       where: {
         memberId: member.id,
-        date: todayStart,
         checkOut: null
       },
       orderBy: { checkIn: 'desc' }
