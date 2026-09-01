@@ -232,6 +232,37 @@ export default function MemberProfilePage() {
 
             </div>
           </div>
+          
+          <div className="glass-panel p-8 border-l-4 border-brand-gold/50">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-brand-gold" />
+              Your Unique User ID
+            </h3>
+            <p className="text-muted-foreground mb-6 text-sm">
+              This UUID uniquely identifies your account across the Lakzee Fitness platform. 
+              If you need technical support or account adjustments, administrators will use this exact ID to look up your account.
+            </p>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex-1 bg-black/40 border border-border rounded-xl px-4 py-4 text-foreground font-mono text-sm sm:text-base break-all">
+                {user.id}
+              </div>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(user.id);
+                  const el = document.getElementById('copy-text');
+                  if (el) {
+                    el.innerText = 'Copied!';
+                    setTimeout(() => { el.innerText = 'Copy'; }, 2000);
+                  }
+                }}
+                className="flex items-center gap-2 px-6 py-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shrink-0 shadow-lg shadow-brand-gold/20"
+              >
+                <CheckCircle2 className="w-5 h-5 hidden" id="copy-icon-check" />
+                <span id="copy-text" className="hidden sm:inline">Copy</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
