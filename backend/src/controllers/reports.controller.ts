@@ -4,55 +4,70 @@ import { prisma } from '../app';
 export const getReports = async (req: Request, res: Response) => {
   try {
     const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    today.setHours(0, 0, 0, 0);
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 29); // 30 days including today
 
-    const firstDayOfMonth = new Date();
-    firstDayOfMonth.setDate(1);
-    firstDayOfMonth.setHours(0, 0, 0, 0);
+    const sixDaysAgo = new Date(today);
+    sixDaysAgo.setDate(today.getDate() - 6); // 7 days including today
 
-    // Basic Stats
-    const recentSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo }, paymentStatus: 'PAID' },
-      include: { plan: true }
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    // 1. Revenue 30d
+    const payments30d = await prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        paymentDate: { gte: thirtyDaysAgo },
+        status: 'COMPLETED'
+      }
     });
-    const revenue30d = recentSubs.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
+    const revenue30d = payments30d._sum.amount || 0;
 
-    const monthSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: firstDayOfMonth }, paymentStatus: 'PAID' },
-      include: { plan: true }
+    // 2. Revenue This Month
+    const paymentsThisMonth = await prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        paymentDate: { gte: firstDayOfMonth },
+        status: 'COMPLETED'
+      }
     });
-    const revenueThisMonth = monthSubs.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
+    const revenueThisMonth = paymentsThisMonth._sum.amount || 0;
 
-    const activeMembersCount = await prisma.user.count({ where: { role: 'MEMBER' } });
+    // 3. Active Members
+    const activeMembersCount = await prisma.memberProfile.count({
+      where: {
+        subscriptions: {
+          some: {
+            endDate: { gte: new Date() },
+            status: 'ACTIVE'
+          }
+        }
+      }
+    });
 
+    // 4. Visits 30d
     const visits30d = await prisma.attendance.count({
       where: { checkIn: { gte: thirtyDaysAgo } }
     });
 
-    // Chart Data Generation
-
     // 1. Daily Revenue (Last 7 Days)
     const dailyRevenueMap: Record<string, number> = {};
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
+      const d = new Date(today);
       d.setDate(d.getDate() - i);
       const name = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       dailyRevenueMap[name] = 0;
     }
 
-    const last7DaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: sevenDaysAgo }, paymentStatus: 'PAID' },
-      include: { plan: true }
+    const last7DaysPayments = await prisma.payment.findMany({
+      where: { paymentDate: { gte: sixDaysAgo }, status: 'COMPLETED' }
     });
 
-    last7DaysSubs.forEach(sub => {
-      const name = sub.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    last7DaysPayments.forEach(p => {
+      const name = p.paymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (dailyRevenueMap[name] !== undefined) {
-        dailyRevenueMap[name] += sub.plan?.price || 0;
+        dailyRevenueMap[name] += p.amount;
       }
     });
 
@@ -61,14 +76,14 @@ export const getReports = async (req: Request, res: Response) => {
     // 2. Daily Visits (Last 7 Days)
     const dailyVisitsMap: Record<string, number> = {};
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
+      const d = new Date(today);
       d.setDate(d.getDate() - i);
       const name = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       dailyVisitsMap[name] = 0;
     }
 
     const last7DaysVisits = await prisma.attendance.findMany({
-      where: { checkIn: { gte: sevenDaysAgo } }
+      where: { checkIn: { gte: sixDaysAgo } }
     });
 
     last7DaysVisits.forEach(att => {
@@ -81,12 +96,20 @@ export const getReports = async (req: Request, res: Response) => {
     const dailyVisits = Object.keys(dailyVisitsMap).map(name => ({ name, visits: dailyVisitsMap[name] }));
 
     // 3. Gender Mix
-    const members = await prisma.memberProfile.findMany({
+    const activeMembers = await prisma.memberProfile.findMany({
+      where: {
+        subscriptions: {
+          some: {
+            endDate: { gte: new Date() },
+            status: 'ACTIVE'
+          }
+        }
+      },
       select: { gender: true }
     });
     
     let male = 0, female = 0, other = 0;
-    members.forEach(m => {
+    activeMembers.forEach(m => {
       if (m.gender?.toUpperCase() === 'MALE') male++;
       else if (m.gender?.toUpperCase() === 'FEMALE') female++;
       else other++;
@@ -101,19 +124,18 @@ export const getReports = async (req: Request, res: Response) => {
       genderMix.push({ name: 'None', value: 1 });
     }
 
-    // 4. Payment Mix (since we don't track payments yet, we will mock it based on seed data or empty)
-    const payments = await prisma.payment.findMany({
-      where: { paymentDate: { gte: thirtyDaysAgo } }
+    // 4. Payment Mix
+    const payments30dForMix = await prisma.payment.findMany({
+      where: { paymentDate: { gte: thirtyDaysAgo }, status: 'COMPLETED' }
     });
     
     const paymentMap: Record<string, number> = {};
-    payments.forEach(p => {
-      paymentMap[p.method] = (paymentMap[p.method] || 0) + 1;
+    payments30dForMix.forEach(p => {
+      paymentMap[p.method] = (paymentMap[p.method] || 0) + p.amount;
     });
 
     const paymentMix = Object.keys(paymentMap).map(method => ({ name: method, value: paymentMap[method] }));
     if (paymentMix.length === 0) {
-      // Fallback if no payments are recorded yet, we just show a pending state
       paymentMix.push({ name: 'No Data', value: 1 });
     }
 
@@ -134,3 +156,4 @@ export const getReports = async (req: Request, res: Response) => {
     res.status(500).json({ status: 'error', message: 'Failed to fetch reports' });
   }
 };
+
