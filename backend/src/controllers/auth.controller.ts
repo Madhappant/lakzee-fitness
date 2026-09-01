@@ -133,66 +133,53 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
       }
     });
 
-    let previewUrl = "";
-    if (process.env.GOOGLE_SCRIPT_URL) {
       try {
         const resetHtml = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
-  <div style="text-align: center; margin-bottom: 20px;">
-    <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
+    </div>
+    <h2 style="color: #333333; text-align: center;">Your Password Reset Request</h2>
+    <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+      Hello,<br><br>
+      We received a request to reset the password associated with your Lakzee Fitness account. We understand how important it is to keep your account secure and accessible. To proceed with resetting your password, please use the One-Time Password (OTP) provided below.
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
+        ${otp}
+      </span>
+    </div>
+    <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+      This verification code is valid for the next 10 minutes. Please do not share this code with anyone, including our support team, as it grants access to modify your account credentials. If you did not request a password reset, you can safely ignore this email and your account will remain secure. Your security and fitness journey are our top priorities!
+    </p>
+    <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
+    <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
+      &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
+      Train Hard, Stay Fit.
+    </p>
   </div>
-  <h2 style="color: #333333; text-align: center;">Your Password Reset Request</h2>
-  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    Hello,<br><br>
-    We received a request to reset the password associated with your Lakzee Fitness account. We understand how important it is to keep your account secure and accessible. To proceed with resetting your password, please use the One-Time Password (OTP) provided below.
-  </p>
-  <div style="text-align: center; margin: 30px 0;">
-    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
-      ${otp}
-    </span>
-  </div>
-  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    This verification code is valid for the next 10 minutes. Please do not share this code with anyone, including our support team, as it grants access to modify your account credentials. If you did not request a password reset, you can safely ignore this email and your account will remain secure. Your security and fitness journey are our top priorities!
-  </p>
-  <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
-  <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
-    &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
-    Train Hard, Stay Fit.
-  </p>
-</div>
         `;
 
-        const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
           },
-          body: JSON.stringify({
-            secret: process.env.GOOGLE_SCRIPT_SECRET,
-            to: email,
-            subject: 'Your Password Reset OTP',
-            html: resetHtml
-          })
         });
 
-        const data = await response.json();
-        
-        if (data.error) {
-           throw new Error(data.error);
-        }
+        await transporter.sendMail({
+          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: 'Your Password Reset OTP',
+          html: resetHtml
+        });
 
-        console.log(`[HTTP] Real email sent to ${email} via Google Apps Script`);
+        console.log(`[HTTP] Real email sent to ${email} via Nodemailer`);
       } catch (mailError: any) {
-        console.error("Failed to send real email via Google Script API", mailError);
+        console.error("Failed to send real email via Nodemailer", mailError);
         return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
       }
-    } else {
-      console.error("Missing GOOGLE_SCRIPT_URL in environment variables.");
-      return res.status(500).json({ 
-        status: 'error', 
-        message: 'Server configuration error: GOOGLE_SCRIPT_URL is missing. Please add it to your Render environment variables.' 
-      });
-    }
 
     res.status(200).json({
       status: 'success',
@@ -265,65 +252,53 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
       }
     });
 
-    if (process.env.GOOGLE_SCRIPT_URL) {
       try {
         const phoneHtml = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
-  <div style="text-align: center; margin-bottom: 20px;">
-    <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
+    </div>
+    <h2 style="color: #333333; text-align: center;">Phone Verification Request</h2>
+    <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+      Hello,<br><br>
+      We received a request to update the phone number associated with your Lakzee Fitness account. Keeping your contact information up-to-date helps us ensure you receive important gym announcements and membership updates. To verify and confirm this change, please use the One-Time Password (OTP) provided below.
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
+        ${otp}
+      </span>
+    </div>
+    <p style="color: #555555; line-height: 1.6; font-size: 16px;">
+      This verification code is valid for the next 10 minutes. If you did not request to update your phone number, please ignore this email and your account details will remain unchanged. Your security and fitness journey are our top priorities!
+    </p>
+    <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
+    <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
+      &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
+      Train Hard, Stay Fit.
+    </p>
   </div>
-  <h2 style="color: #333333; text-align: center;">Phone Verification Request</h2>
-  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    Hello,<br><br>
-    We received a request to update the phone number associated with your Lakzee Fitness account. Keeping your contact information up-to-date helps us ensure you receive important gym announcements and membership updates. To verify and confirm this change, please use the One-Time Password (OTP) provided below.
-  </p>
-  <div style="text-align: center; margin: 30px 0;">
-    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
-      ${otp}
-    </span>
-  </div>
-  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    This verification code is valid for the next 10 minutes. If you did not request to update your phone number, please ignore this email and your account details will remain unchanged. Your security and fitness journey are our top priorities!
-  </p>
-  <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
-  <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
-    &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
-    Train Hard, Stay Fit.
-  </p>
-</div>
         `;
 
-        const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
           },
-          body: JSON.stringify({
-            secret: process.env.GOOGLE_SCRIPT_SECRET,
-            to: email,
-            subject: 'Verify Your New Phone Number',
-            html: phoneHtml
-          })
         });
 
-        const data = await response.json();
-        
-        if (data.error) {
-           throw new Error(data.error);
-        }
+        await transporter.sendMail({
+          from: `"Lakzee Fitness" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: 'Verify Your New Phone Number',
+          html: phoneHtml
+        });
 
-        console.log(`[HTTP] Real email sent to ${email} via Google Apps Script`);
+        console.log(`[HTTP] Real email sent to ${email} via Nodemailer`);
       } catch (mailError: any) {
-        console.error("Failed to send real email via Google Script API", mailError);
+        console.error("Failed to send real email via Nodemailer", mailError);
         return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
       }
-    } else {
-      console.error("Missing GOOGLE_SCRIPT_URL in environment variables.");
-      return res.status(500).json({ 
-        status: 'error', 
-        message: 'Server configuration error: GOOGLE_SCRIPT_URL is missing. Please add it to your Render environment variables.' 
-      });
-    }
 
     res.status(200).json({
       status: 'success',
