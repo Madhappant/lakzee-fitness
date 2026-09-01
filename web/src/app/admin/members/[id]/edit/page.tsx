@@ -24,6 +24,8 @@ export default function EditMemberPage() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    email: "",
+    password: "",
     phone: "",
     gender: "MALE",
     bloodGroup: "",
@@ -34,11 +36,13 @@ export default function EditMemberPage() {
 
   useEffect(() => {
     if (memberData?.data) {
-      const { firstName, lastName, phone, memberProfile } = memberData.data;
+      const { email, firstName, lastName, phone, memberProfile } = memberData.data;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         firstName: firstName || "",
         lastName: lastName || "",
+        email: email || "",
+        password: "", // Keep password empty
         phone: phone || "",
         gender: memberProfile?.gender || "MALE",
         bloodGroup: memberProfile?.bloodGroup || "",
@@ -68,7 +72,11 @@ export default function EditMemberPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    mutation.mutate(formData);
+    const payload = { ...formData };
+    if (!payload.password) {
+      delete (payload as any).password;
+    }
+    mutation.mutate(payload);
   };
 
   if (isLoading) {
@@ -111,8 +119,12 @@ export default function EditMemberPage() {
               <input required name="lastName" value={formData.lastName} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Email Address (Cannot change)</label>
-              <input disabled value={memberData?.data?.email || ""} className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 text-muted-foreground outline-none cursor-not-allowed" />
+              <label className="text-sm font-medium text-muted-foreground">Email Address <span className="text-brand-gold">*</span></label>
+              <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">New Password (leave blank to keep current)</label>
+              <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" placeholder="••••••••" />
             </div>
           </div>
         </div>
