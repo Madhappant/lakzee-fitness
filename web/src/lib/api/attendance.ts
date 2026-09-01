@@ -30,3 +30,21 @@ export const checkInMember = async (lakzeeId: string) => {
   }
   return res.json();
 };
+
+export const checkOutMember = async (lakzeeId: string) => {
+  const token = getAuthToken();
+  const res = await fetch(`${API_URL}/attendance/checkout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ lakzeeId }),
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Check-out failed");
+  }
+  return res.json();
+};
