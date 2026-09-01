@@ -73,7 +73,7 @@ export default function ReportsCharts({ stats }: { stats: Record<string, any> })
               <div key={item.name} className="flex items-center gap-2 text-sm">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
                 <span className="text-muted-foreground">{item.name}</span>
-                <span className="font-bold text-foreground ml-2">{item.value}%</span>
+                <span className="font-bold text-foreground ml-2">{item.value}</span>
               </div>
             ))}
           </div>
@@ -99,7 +99,7 @@ export default function ReportsCharts({ stats }: { stats: Record<string, any> })
               <div key={item.name} className="flex items-center gap-2 text-sm">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
                 <span className="text-muted-foreground">{item.name}</span>
-                <span className="font-bold text-foreground ml-2">{item.value}%</span>
+                <span className="font-bold text-foreground ml-2">{item.value}</span>
               </div>
             ))}
           </div>
