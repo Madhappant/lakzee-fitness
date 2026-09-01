@@ -49,8 +49,25 @@ export default function AddMemberPage() {
     }
   });
 
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPhoto(e.target.files[0]);
+      setPhotoPreview(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
   const onSubmit = (data: AddMemberFormValues) => {
-    mutation.mutate(data);
+    const payload = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value) payload.append(key, value);
+    });
+    if (photo) {
+      payload.append('photo', photo);
+    }
+    mutation.mutate(payload);
   };
 
   return (
@@ -67,8 +84,29 @@ export default function AddMemberPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
-        {/* Account Details */}
         <fieldset disabled={mutation.isPending} className="space-y-8 group disabled:opacity-70 transition-opacity">
+        {/* Profile Image */}
+        <div className="glass-panel p-6 sm:p-8 space-y-6">
+          <h2 className="text-xl font-semibold border-b border-border pb-4 text-brand-gold">Profile Image</h2>
+          <div className="flex items-center gap-6">
+            <div className="relative w-24 h-24 rounded-full overflow-hidden bg-card/50 border border-border">
+              {photoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                  No Image
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Upload photo</label>
+              <input type="file" accept="image/*" onChange={handleFileChange} className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-brand-gold file:text-primary-foreground hover:file:bg-brand-gold/90 transition-colors cursor-pointer" />
+            </div>
+          </div>
+        </div>
+
+        {/* Account Details */}
         <div className="glass-panel p-6 sm:p-8 space-y-6">
           <h2 className="text-xl font-semibold border-b border-border pb-4 text-brand-gold">Account Details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

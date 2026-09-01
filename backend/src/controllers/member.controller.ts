@@ -42,6 +42,7 @@ export const createMember = async (req: Request, res: Response, next: NextFuncti
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const memberId = `LZ-${Math.floor(1000 + Math.random() * 9000)}`;
+    const photoUrl = req.file ? req.file.path : undefined;
 
     const newMember = await prisma.user.create({
       data: {
@@ -55,6 +56,7 @@ export const createMember = async (req: Request, res: Response, next: NextFuncti
           create: {
             memberId,
             ...profileData,
+            photoUrl,
             dob: profileData.dob ? new Date(profileData.dob) : undefined
           }
         }
@@ -180,6 +182,10 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
         }
       }
     };
+
+    if (req.file) {
+      updateData.memberProfile.update.photoUrl = req.file.path;
+    }
 
     if (email) updateData.email = email;
     if (password) updateData.password = await bcrypt.hash(password, 10);

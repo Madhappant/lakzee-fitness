@@ -34,6 +34,9 @@ export default function EditMemberPage() {
     dob: "",
   });
 
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
   useEffect(() => {
     if (memberData?.data) {
       const { email, firstName, lastName, phone, memberProfile } = memberData.data;
@@ -50,6 +53,7 @@ export default function EditMemberPage() {
         emergencyContact: memberProfile?.emergencyContact || "",
         dob: memberProfile?.dob ? new Date(memberProfile.dob).toISOString().split('T')[0] : "",
       });
+      if (memberProfile?.photoUrl) setPhotoPreview(memberProfile.photoUrl);
     }
   }, [memberData]);
 
@@ -69,12 +73,23 @@ export default function EditMemberPage() {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPhoto(e.target.files[0]);
+      setPhotoPreview(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const payload = { ...formData };
-    if (!payload.password) {
-      delete (payload as any).password;
+    const payload = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key === 'password' && !value) return; // Skip empty password
+      payload.append(key, value);
+    });
+    if (photo) {
+      payload.append('photo', photo);
     }
     mutation.mutate(payload);
   };
@@ -105,6 +120,27 @@ export default function EditMemberPage() {
             {error}
           </div>
         )}
+
+        {/* Profile Image */}
+        <div className="glass-panel p-6 sm:p-8 space-y-6">
+          <h2 className="text-xl font-semibold border-b border-border pb-4 text-brand-gold">Profile Image</h2>
+          <div className="flex items-center gap-6">
+            <div className="relative w-24 h-24 rounded-full overflow-hidden bg-card/50 border border-border">
+              {photoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-3xl font-bold">
+                  {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Upload new photo</label>
+              <input type="file" accept="image/*" onChange={handleFileChange} className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-brand-gold file:text-primary-foreground hover:file:bg-brand-gold/90 transition-colors cursor-pointer" />
+            </div>
+          </div>
+        </div>
 
         {/* Account Details */}
         <div className="glass-panel p-6 sm:p-8 space-y-6">

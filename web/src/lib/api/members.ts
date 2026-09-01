@@ -22,13 +22,14 @@ export const fetchMembers = async () => {
 
 export const createMember = async (memberData: any) => {
   const token = getAuthToken();
+  const isFormData = memberData instanceof FormData;
+  const headers: any = { Authorization: `Bearer ${token}` };
+  if (!isFormData) headers['Content-Type'] = 'application/json';
+
   const res = await fetch(`${API_URL}/members`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(memberData),
+    headers,
+    body: isFormData ? memberData : JSON.stringify(memberData),
   });
   
   if (!res.ok) {
@@ -64,13 +65,14 @@ export const fetchMemberById = async (id: string) => {
 
 export const updateMember = async (id: string, memberData: any) => {
   const token = getAuthToken();
+  const isFormData = memberData instanceof FormData;
+  const headers: any = { Authorization: `Bearer ${token}` };
+  if (!isFormData) headers['Content-Type'] = 'application/json';
+
   const res = await fetch(`${API_URL}/members/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(memberData),
+    headers,
+    body: isFormData ? memberData : JSON.stringify(memberData),
   });
   
   if (!res.ok) throw new Error("Failed to update member");
