@@ -5,20 +5,28 @@ export const checkIn = async (req: Request, res: Response) => {
   try {
     const { lakzeeId } = req.body; // e.g. LZ-1234
     
-    // Find member by Lakzee ID or QR Code UUID
-    const member = await prisma.memberProfile.findFirst({
+    // Find member by Lakzee ID, QR Code UUID, or Name
+    const members = await prisma.memberProfile.findMany({
       where: {
         OR: [
           { memberId: lakzeeId },
-          { qrCode: lakzeeId.toLowerCase() }
+          { qrCode: lakzeeId.toLowerCase() },
+          { user: { firstName: { contains: lakzeeId, mode: 'insensitive' } } },
+          { user: { lastName: { contains: lakzeeId, mode: 'insensitive' } } }
         ]
       },
       include: { user: true }
     });
 
-    if (!member) {
+    if (members.length === 0) {
       return res.status(404).json({ status: 'error', message: 'Member not found' });
     }
+
+    if (members.length > 1) {
+      return res.status(400).json({ status: 'error', message: 'Multiple members found. Please use exact ID or scan QR.' });
+    }
+
+    const member = members[0];
 
     // Check if member has an active subscription
     const activeSub = await prisma.subscription.findFirst({

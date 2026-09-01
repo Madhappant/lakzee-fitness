@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchTodayAttendance, checkInMember } from "@/lib/api/attendance";
+import { fetchMembers } from "@/lib/api/members";
 import { LogIn, Loader2, Search, Camera, X } from "lucide-react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -26,6 +27,9 @@ export default function AttendancePage() {
   });
 
   const logs = data?.data || [];
+  
+  const { data: membersData } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
+  const membersList = membersData?.data || [];
 
   const mutation = useMutation({
     mutationFn: checkInMember,
@@ -44,7 +48,12 @@ export default function AttendancePage() {
   const handleCheckIn = (e: React.FormEvent) => {
     e.preventDefault();
     if (!lakzeeId) return;
-    mutation.mutate(lakzeeId.toUpperCase());
+    
+    // Extract ID if selected from datalist
+    const match = lakzeeId.match(/(LZ-\d+)/i);
+    const idToSubmit = match ? match[1].toUpperCase() : lakzeeId.toUpperCase();
+    
+    mutation.mutate(idToSubmit);
   };
 
   const handleScan = (result: any) => {
@@ -98,11 +107,17 @@ export default function AttendancePage() {
               required
               autoFocus
               type="text" 
-              placeholder="Scan QR or enter Lakzee ID (e.g. LZ-1234)" 
+              list="members-datalist"
+              placeholder="Scan QR, enter ID, or search Name" 
               value={lakzeeId}
               onChange={(e) => setLakzeeId(e.target.value)}
               className="w-full bg-card/50 border border-brand-gold/30 rounded-xl pl-12 pr-4 py-4 text-lg font-mono text-brand-gold focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all uppercase"
             />
+            <datalist id="members-datalist">
+              {membersList.map((m: any) => (
+                <option key={m.memberProfile.id} value={`${m.memberProfile.memberId} - ${m.firstName} ${m.lastName}`} />
+              ))}
+            </datalist>
           </div>
           <button 
             type="submit" 
