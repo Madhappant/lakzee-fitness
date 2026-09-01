@@ -3,7 +3,7 @@ import { prisma } from '../app';
 
 export const createSubscription = async (req: Request, res: Response) => {
   try {
-    const { memberId, planId, startDate, paymentStatus = 'PAID', paymentMethod = 'CASH' } = req.body;
+    const { memberId, planId, startDate, paymentStatus = 'PAID', paymentMethod = 'CASH', balanceAmount = 0 } = req.body;
     
     const plan = await prisma.membershipPlan.findUnique({ where: { id: planId } });
     if (!plan) return res.status(404).json({ status: 'error', message: 'Plan not found' });
@@ -20,7 +20,8 @@ export const createSubscription = async (req: Request, res: Response) => {
         endDate: end,
         status: 'ACTIVE',
         paymentStatus,
-        paymentMethod
+        paymentMethod,
+        balanceAmount: Number(balanceAmount) || 0
       }
     });
 
@@ -32,7 +33,6 @@ export const createSubscription = async (req: Request, res: Response) => {
 
 export const getSubscriptions = async (req: Request, res: Response) => {
   try {
-    // Auto-expire subscriptions whose endDate has passed
     const today = new Date();
     await prisma.subscription.updateMany({
       where: {
@@ -58,26 +58,27 @@ export const getPaymentStats = async (req: Request, res: Response) => {
 
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Today's Collection (Only Paid)
     const todaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: today }, paymentStatus: 'PAID' },
+      where: { createdAt: { gte: today } },
       include: { plan: true }
     });
-    const todaysCollection = todaysSubs.reduce((acc, sub) => acc + (sub.plan?.price || 0), 0);
+    const todaysCollection = todaysSubs.reduce((sum, sub) => sum + ((sub.plan?.price || 0) - sub.balanceAmount), 0);
 
-    // This Month Collection (Only Paid)
     const monthSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: firstDayOfMonth }, paymentStatus: 'PAID' },
+      where: { createdAt: { gte: firstDayOfMonth } },
       include: { plan: true }
     });
-    const thisMonth = monthSubs.reduce((acc, sub) => acc + (sub.plan?.price || 0), 0);
+    const thisMonth = monthSubs.reduce((sum, sub) => sum + ((sub.plan?.price || 0) - sub.balanceAmount), 0);
 
-    // Total Records
     const totalRecords = await prisma.subscription.count();
 
     res.json({
       status: 'success',
-      data: { todaysCollection, thisMonth, totalRecords }
+      data: {
+        todaysCollection,
+        thisMonth,
+        totalRecords
+      }
     });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to fetch payment stats' });
@@ -87,34 +88,35 @@ export const getPaymentStats = async (req: Request, res: Response) => {
 export const updateSubscription = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { planId, startDate, status, paymentStatus, paymentMethod } = req.body;
+    const { status, paymentStatus, paymentMethod, startDate, planId, balanceAmount } = req.body;
 
-    const subscription = await prisma.subscription.findUnique({ where: { id } });
-    if (!subscription) return res.status(404).json({ status: 'error', message: 'Subscription not found' });
+    const dataToUpdate: any = {
+      status,
+      paymentStatus,
+      paymentMethod
+    };
 
-    let endDate = subscription.endDate;
-    if (planId || startDate) {
-      const plan = await prisma.membershipPlan.findUnique({ where: { id: planId || subscription.planId } });
+    if (balanceAmount !== undefined) {
+      dataToUpdate.balanceAmount = Number(balanceAmount);
+    }
+
+    if (startDate && planId) {
+      const plan = await prisma.membershipPlan.findUnique({ where: { id: planId } });
       if (plan) {
-        const start = new Date(startDate || subscription.startDate);
-        endDate = new Date(start);
-        endDate.setDate(endDate.getDate() + plan.durationDays);
+        const start = new Date(startDate);
+        const end = new Date(start);
+        end.setDate(end.getDate() + plan.durationDays);
+        dataToUpdate.startDate = start;
+        dataToUpdate.endDate = end;
+        dataToUpdate.planId = planId;
       }
     }
 
-    const updatedSub = await prisma.subscription.update({
+    const updated = await prisma.subscription.update({
       where: { id },
-      data: {
-        ...(planId && { planId }),
-        ...(startDate && { startDate: new Date(startDate) }),
-        ...(startDate || planId ? { endDate } : {}),
-        ...(status && { status }),
-        ...(paymentStatus && { paymentStatus }),
-        ...(paymentMethod && { paymentMethod }),
-      }
+      data: dataToUpdate
     });
-
-    res.json({ status: 'success', data: updatedSub });
+    res.json({ status: 'success', data: updated });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to update subscription' });
   }
@@ -129,3 +131,4 @@ export const deleteSubscription = async (req: Request, res: Response) => {
     res.status(500).json({ status: 'error', message: 'Failed to delete subscription' });
   }
 };
+

@@ -21,6 +21,7 @@ export default function PaymentsPage() {
     status: "ACTIVE",
     paymentStatus: "PAID",
     paymentMethod: "CASH",
+    balanceAmount: "",
   });
 
   // Fetching Data
@@ -40,7 +41,7 @@ export default function PaymentsPage() {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
       setIsModalOpen(false);
-      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH" });
+      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH", balanceAmount: "" });
     },
   });
 
@@ -50,7 +51,7 @@ export default function PaymentsPage() {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
       setIsModalOpen(false);
-      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH" });
+      setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH", balanceAmount: "" });
     },
   });
 
@@ -104,6 +105,7 @@ export default function PaymentsPage() {
       status: sub.status,
       paymentStatus: sub.paymentStatus || "PAID",
       paymentMethod: sub.paymentMethod || "CASH",
+      balanceAmount: sub.balanceAmount || "",
     });
     setIsModalOpen(true);
   };
@@ -152,7 +154,7 @@ export default function PaymentsPage() {
         <button 
           onClick={() => {
             setModalMode("ASSIGN");
-            setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH" });
+            setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH", balanceAmount: "" });
             setIsModalOpen(true);
           }}
           className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 w-full sm:w-auto"
@@ -235,6 +237,11 @@ export default function PaymentsPage() {
                         {sub.paymentMethod && (
                           <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pl-1">
                             Via {sub.paymentMethod.replace('_', ' ')}
+                          </span>
+                        )}
+                        {sub.paymentStatus === 'PENDING' && sub.balanceAmount > 0 && (
+                          <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider pl-1 mt-1">
+                            Bal: ₹{sub.balanceAmount}
                           </span>
                         )}
                       </div>
@@ -397,6 +404,22 @@ export default function PaymentsPage() {
                     <option value="BANK_TRANSFER">Bank Transfer</option>
                   </select>
                 </div>
+
+                {formData.paymentStatus === 'PENDING' && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Balance Amount (₹)</label>
+                    <input 
+                      required 
+                      type="number"
+                      min="0"
+                      name="balanceAmount" 
+                      value={formData.balanceAmount} 
+                      onChange={e => setFormData(p => ({...p, balanceAmount: e.target.value}))} 
+                      className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none"
+                      placeholder="Enter pending balance amount"
+                    />
+                  </div>
+                )}
 
                 <div className="pt-4 border-t border-border flex flex-col sm:flex-row justify-end gap-3">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto px-5 py-3 rounded-xl font-medium text-foreground hover:bg-white/5 transition-colors order-2 sm:order-1 border border-border sm:border-transparent">
