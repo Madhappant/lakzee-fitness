@@ -18,6 +18,10 @@ export default function StaffPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
       setFormData({ userId: "", role: "receptionist" });
+      alert("Role assigned successfully!");
+    },
+    onError: (err: any) => {
+      alert(err.message || "Failed to assign role. Ensure the ID is correct.");
     }
   });
 
@@ -36,18 +40,18 @@ export default function StaffPage() {
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
       <div>
         <h1 className="text-3xl font-bold mb-2">Staff & Roles</h1>
-        <p className="text-muted-foreground">Assign roles to users. Ask each staff member to sign up first, then paste their UUID from their Profile page.</p>
+        <p className="text-muted-foreground">Assign roles to users. Ask each staff member to sign up first, then paste their UUID or Lakzee ID (LZ-XXXX) from their Profile page.</p>
       </div>
 
       {/* Assignment Form */}
       <form onSubmit={handleSubmit} className="glass-panel p-6 border border-border space-y-6">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">User UUID</label>
+          <label className="text-sm font-medium text-muted-foreground">User UUID or Lakzee ID</label>
           <input 
             required
             value={formData.userId}
             onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value }))}
-            placeholder="e.g. 8b8d..." 
+            placeholder="e.g. 8b8d... or LZ-1234" 
             className="w-full bg-card/50 border border-border rounded-lg px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none font-mono"
           />
         </div>

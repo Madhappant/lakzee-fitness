@@ -32,8 +32,17 @@ export const getStaff = async (req: Request, res: Response, next: NextFunction) 
 export const assignRole = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedData = assignRoleSchema.parse(req.body);
-    const { userId, role } = validatedData;
+    let { userId, role } = validatedData;
     
+    // Support lookup by Lakzee ID (e.g., LZ-1234) as well as UUID
+    if (userId.startsWith('LZ-')) {
+      const profile = await prisma.memberProfile.findUnique({ where: { memberId: userId } });
+      if (!profile) {
+        return res.status(404).json({ status: 'error', message: 'Lakzee ID not found' });
+      }
+      userId = profile.userId;
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       return res.status(404).json({ status: 'error', message: 'User UUID not found' });
