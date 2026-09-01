@@ -102,6 +102,15 @@ export default function AttendancePage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
+      {statusMessage && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 shadow-xl rounded-full font-medium text-center ${statusMessage.type === 'success' ? 'bg-green-500/10 border border-green-500/50 text-green-400 backdrop-blur-md' : 'bg-red-500/10 border border-red-500/50 text-red-400 backdrop-blur-md'}`}
+        >
+          {statusMessage.text}
+        </motion.div>
+      )}
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Daily Attendance</h1>
