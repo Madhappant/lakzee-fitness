@@ -19,7 +19,8 @@ export const getStaff = async (req: Request, res: Response, next: NextFunction) 
         lastName: true,
         email: true,
         role: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       },
       orderBy: { createdAt: 'desc' }
     });
