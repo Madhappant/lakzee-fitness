@@ -5,6 +5,18 @@ import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 
 const COLORS = ['#D4AF37', '#ffffff', '#eab308'];
 
+const getGenderColor = (name: string, index: number) => {
+  if (name === 'Male') return '#3b82f6';
+  if (name === 'Female') return '#ec4899';
+  return COLORS[index % COLORS.length];
+};
+
+const getPaymentColor = (name: string, index: number) => {
+  if (name?.toUpperCase() === 'CASH') return '#22c55e';
+  if (name?.toUpperCase() === 'UPI') return '#8b5cf6';
+  return COLORS[index % COLORS.length];
+};
+
 export default function ReportsCharts({ stats }: { stats: Record<string, any> }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
@@ -61,7 +73,7 @@ export default function ReportsCharts({ stats }: { stats: Record<string, any> })
             <PieChart>
               <Pie data={stats.paymentMix} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
                 {stats.paymentMix.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={getPaymentColor(entry.name, index)} />
                 ))}
               </Pie>
               <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px', color: 'var(--foreground)' }} />
@@ -71,7 +83,7 @@ export default function ReportsCharts({ stats }: { stats: Record<string, any> })
           <div className="absolute right-4 flex flex-col gap-3">
             {stats.paymentMix.map((item: any, i: number) => (
               <div key={item.name} className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getPaymentColor(item.name, i) }}></div>
                 <span className="text-muted-foreground">{item.name}</span>
                 <span className="font-bold text-foreground ml-2">{item.value}</span>
               </div>
@@ -88,7 +100,7 @@ export default function ReportsCharts({ stats }: { stats: Record<string, any> })
             <PieChart>
               <Pie data={stats.genderMix} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
                 {stats.genderMix.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={getGenderColor(entry.name, index)} />
                 ))}
               </Pie>
               <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px', color: 'var(--foreground)' }} />
@@ -97,7 +109,7 @@ export default function ReportsCharts({ stats }: { stats: Record<string, any> })
           <div className="absolute right-4 flex flex-col gap-3">
             {stats.genderMix.map((item: any, i: number) => (
               <div key={item.name} className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getGenderColor(item.name, i) }}></div>
                 <span className="text-muted-foreground">{item.name}</span>
                 <span className="font-bold text-foreground ml-2">{item.value}</span>
               </div>
