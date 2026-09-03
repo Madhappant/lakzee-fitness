@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardStats } from "@/lib/api/dashboard";
 import { Users, CreditCard, Activity, TrendingUp, Dumbbell, Loader2, QrCode, UserPlus, Wallet, Clock, XCircle, Cake, Receipt } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { PendingMembersModal } from "@/components/dashboard/PendingMembersModal";
 
 const DashboardChart = dynamic(() => import("@/components/charts/DashboardChart"), {
   ssr: false,
@@ -14,6 +16,8 @@ const DashboardChart = dynamic(() => import("@/components/charts/DashboardChart"
 });
 
 export default function DashboardOverview() {
+  const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ["dashboardStats"],
     queryFn: fetchDashboardStats,
@@ -31,7 +35,9 @@ export default function DashboardOverview() {
     todaysBirthdays: [] as {id: string, name: string, memberId: string}[],
     recentActivity: [],
     revenueLast14Days: [],
-    recentPaymentsList: []
+    recentPaymentsList: [],
+    totalPendingAmount: 0,
+    pendingMembersList: []
   };
 
   const statCards = [
@@ -82,6 +88,13 @@ export default function DashboardOverview() {
       value: (stats.birthdaysThisMonth || 0).toLocaleString(),
       change: "This month",
       icon: Cake,
+    },
+    {
+      title: "Pending Amount",
+      value: `₹${(stats.totalPendingAmount || 0).toLocaleString()}`,
+      change: "To collect",
+      icon: Receipt,
+      onClick: () => setIsPendingModalOpen(true),
     },
   ];
 
@@ -137,14 +150,17 @@ export default function DashboardOverview() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {statCards.map((stat, i) => (
           <motion.div
             key={stat.title}
+            onClick={stat.onClick}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass-card p-6 relative overflow-hidden group hover:border-brand-gold/30 transition-colors"
+            className={`glass-card p-6 relative overflow-hidden group transition-colors ${
+              stat.onClick ? "cursor-pointer hover:border-brand-gold/50 hover:bg-brand-gold/5" : "hover:border-brand-gold/30"
+            }`}
           >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
               <stat.icon className="w-24 h-24 text-brand-gold" />
@@ -249,6 +265,12 @@ export default function DashboardOverview() {
           </div>
         </div>
       </div>
+
+      <PendingMembersModal 
+        isOpen={isPendingModalOpen} 
+        onClose={() => setIsPendingModalOpen(false)} 
+        pendingMembers={stats.pendingMembersList} 
+      />
     </div>
   );
 }

@@ -161,6 +161,37 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       date: sub.createdAt.toISOString()
     }));
 
+    // Pending Subscriptions
+    const pendingSubs = await prisma.subscription.findMany({
+      where: { paymentStatus: 'PENDING' },
+      include: { 
+        plan: true,
+        member: {
+          include: { user: true }
+        }
+      }
+    });
+    
+    let totalPendingAmount = 0;
+    const pendingMembersList = pendingSubs.map(sub => {
+      const price = sub.plan?.price || 0;
+      let owes = price;
+      if (sub.balanceAmount > 0) {
+        owes = sub.balanceAmount;
+      }
+      totalPendingAmount += owes;
+
+      return {
+        id: sub.id,
+        memberId: sub.member.memberId,
+        name: `${sub.member.user.firstName} ${sub.member.user.lastName}`,
+        phone: sub.member.user.phone,
+        planName: sub.plan?.name || 'Unknown Plan',
+        balanceAmount: owes,
+        date: sub.createdAt.toISOString()
+      };
+    });
+
     res.json({
       status: 'success',
       data: {
@@ -175,7 +206,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         birthdaysThisMonth,
         todaysBirthdays,
         revenueLast14Days,
-        recentPaymentsList
+        recentPaymentsList,
+        totalPendingAmount,
+        pendingMembersList
       }
     });
   } catch (error) {
