@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Loader2, Sparkles, Settings2, ShieldCheck, Key } from "lucide-react";
+import { Send, Bot, User, Loader2, Sparkles, Settings2, ShieldCheck, CheckCircle2, XCircle } from "lucide-react";
 
 export default function AiAssistantPage() {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([
@@ -11,8 +11,8 @@ export default function AiAssistantPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState("google/gemma-4-31b-it:free");
-  const [apiKey, setApiKey] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [configStatus, setConfigStatus] = useState<'loading' | 'configured' | 'not_configured'>('loading');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -22,6 +22,28 @@ export default function AiAssistantPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    // Check if AI is configured on the backend
+    const checkStatus = async () => {
+      try {
+        const { API_URL } = await import('@/lib/api/config');
+        const token = localStorage.getItem("lakzee_token");
+        const res = await fetch(`${API_URL}/ai/status`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setConfigStatus(data.configured ? 'configured' : 'not_configured');
+        } else {
+          setConfigStatus('not_configured');
+        }
+      } catch (error) {
+        setConfigStatus('not_configured');
+      }
+    };
+    checkStatus();
+  }, []);
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -37,6 +59,7 @@ export default function AiAssistantPage() {
     try {
       const { API_URL } = await import('@/lib/api/config');
       const token = localStorage.getItem("lakzee_token");
+      
       const res = await fetch(`${API_URL}/ai/chat`, {
         method: "POST",
         headers: {
@@ -45,23 +68,37 @@ export default function AiAssistantPage() {
         },
         body: JSON.stringify({
           model,
-          apiKey,
           messages: newMessages.map(m => ({ role: m.role, content: m.content }))
         })
       });
 
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to get response");
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        // Backend returned HTML (e.g., 404, 502 proxy error)
+        throw new Error("AI_UPSTREAM_NON_JSON: AI provider returned an unexpected response.");
       }
 
-      const aiResponse = data.data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response.";
+      const data = await res.json();
+      
+      if (!res.ok || data.status === 'error') {
+        const errorCode = data.code || `HTTP_${res.status}`;
+        const errorMsg = data.message || "An error occurred.";
+        throw new Error(`${errorCode}: ${errorMsg}`);
+      }
+
+      const aiResponse = data.data.choices?.[0]?.message?.content;
+      if (!aiResponse) {
+        throw new Error("AI_INVALID_RESPONSE: AI returned an empty or invalid response.");
+      }
+      
       setMessages([...newMessages, { role: "assistant", content: aiResponse }]);
 
     } catch (error: any) {
       console.error(error);
-      setMessages([...newMessages, { role: "assistant", content: `Error: ${error.message}` }]);
+      setMessages([...newMessages, { 
+        role: "assistant", 
+        content: `Error: ${error.message || 'Unknown Error'}` 
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +116,7 @@ export default function AiAssistantPage() {
         </div>
         <button 
           onClick={() => setShowSettings(!showSettings)}
-          className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:border-brand-gold/50 transition-colors"
+          className={`flex items-center gap-2 px-4 py-2 bg-card border rounded-lg transition-colors ${showSettings ? 'border-brand-gold' : 'border-border hover:border-brand-gold/50'}`}
         >
           <Settings2 className="w-4 h-4 text-brand-gold" />
           Settings
@@ -92,36 +129,42 @@ export default function AiAssistantPage() {
             initial={{ opacity: 0, height: 0, marginBottom: 0 }}
             animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            className="glass-panel p-6 border border-brand-gold/30 rounded-xl overflow-hidden"
+            className="glass-panel p-6 border border-brand-gold/30 rounded-xl overflow-hidden shrink-0"
           >
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-brand-gold" /> AI Configuration
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Select AI Model</label>
                 <select 
                   className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:border-brand-gold outline-none"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
+                  disabled={isLoading}
                 >
-                  <option value="google/gemma-4-31b-it:free">Google: Gemma 4 31B (Free)</option>
-                  <option value="minimax/minimax-m3:free">MiniMax: M3 (Free)</option>
-                  <option value="nvidia/nemotron-3-ultra-550b-a55b:free">NVIDIA: Nemotron 3 Ultra (Free)</option>
+                  <option value="google/gemma-4-31b-it:free">Gemma 4 31B IT — Free</option>
+                  <option value="minimax/minimax-m3:free">MiniMax M3 — Free</option>
+                  <option value="nvidia/nemotron-3-ultra-550b-a55b:free">NVIDIA Nemotron 3 Ultra 550B — Free</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Key className="w-4 h-4" /> OpenRouter API Key (Optional)
-                </label>
-                <input 
-                  type="password"
-                  placeholder="sk-or-v1-..."
-                  className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:border-brand-gold outline-none"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">Leave blank if the server already has an API key configured.</p>
+                <label className="text-sm font-medium text-muted-foreground">Connection Status</label>
+                <div className="flex items-center gap-2 p-3 bg-background border border-border rounded-lg text-sm">
+                  {configStatus === 'loading' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                  {configStatus === 'configured' && (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>API Configuration: <strong className="text-green-500 font-semibold">Configured</strong></span>
+                    </>
+                  )}
+                  {configStatus === 'not_configured' && (
+                    <>
+                      <XCircle className="w-4 h-4 text-red-500" />
+                      <span>API Configuration: <strong className="text-red-500 font-semibold">Not Configured</strong></span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
@@ -147,7 +190,9 @@ export default function AiAssistantPage() {
               <div className={`max-w-[80%] rounded-2xl p-4 ${
                 msg.role === 'user' 
                   ? 'bg-brand-gold text-primary-foreground rounded-tr-sm' 
-                  : 'bg-muted/50 border border-border text-foreground rounded-tl-sm prose prose-invert max-w-none'
+                  : msg.content.startsWith('Error:') 
+                    ? 'bg-red-500/10 border border-red-500/30 text-red-400 rounded-tl-sm'
+                    : 'bg-muted/50 border border-border text-foreground rounded-tl-sm prose prose-invert max-w-none'
               }`}>
                 {msg.content.split('\n').map((line, j) => (
                   <p key={j} className={j > 0 ? 'mt-2' : ''}>{line}</p>
