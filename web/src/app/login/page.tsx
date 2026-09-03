@@ -46,7 +46,7 @@ export default function LoginPage() {
         <div className="glass-card p-6 sm:p-8 md:p-10 flex flex-col gap-6 w-full">
           <div className="flex flex-col items-center gap-2 text-center">
             <Image 
-              src="/logo.png" 
+              src="/logo.jpg" 
               alt="Lakzee Fitness" 
               width={80}
               height={80}

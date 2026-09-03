@@ -12,7 +12,7 @@ export default function Home() {
         
         <div className="flex items-center justify-center gap-4">
           <Image 
-            src="/logo.png" 
+            src="/logo.jpg" 
             alt="Lakzee Fitness Studio Logo" 
             width={128}
             height={128}
@@ -52,7 +52,7 @@ export default function Home() {
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
             "name": "Lakzee Fitness Studio",
-            "image": "https://lakzeefitness.com/logo.png",
+            "image": "https://lakzeefitness.com/logo.jpg",
             "url": "https://lakzeefitness.com",
             "telephone": "+1234567890",
             "description": "Enterprise Gym Membership Management Platform",

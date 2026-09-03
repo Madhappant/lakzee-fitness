@@ -146,7 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="h-20 flex items-center px-6 border-b border-border shrink-0">
           <Link href="/admin/dashboard" className="flex items-center gap-3 group">
             <Image 
-              src="/logo.png" 
+              src="/logo.jpg" 
               alt="Lakzee Fitness Admin Logo" 
               width={40}
               height={40}

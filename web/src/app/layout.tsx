@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     description: 'Premium Gym Management Platform providing membership, attendance, and analytics solutions.',
     siteName: 'Lakzee Fitness',
     images: [{
-      url: '/logo.png',
+      url: '/logo.jpg',
       width: 800,
       height: 600,
       alt: 'Lakzee Fitness Logo'
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Lakzee Fitness Studio',
     description: 'Premium Gym Management Platform',
-    images: ['/logo.png'],
+    images: ['/logo.jpg'],
   },
   icons: {
     icon: '/icon.png',
