@@ -36,7 +36,7 @@ export default function AiAssistantPage() {
 
     try {
       const { API_URL } = await import('@/lib/api/config');
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("lakzee_token");
       const res = await fetch(`${API_URL}/ai/chat`, {
         method: "POST",
         headers: {

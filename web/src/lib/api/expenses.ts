@@ -2,7 +2,7 @@ import { API_URL } from "./config";
 
 const getAuthToken = () => {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("token") || "";
+    return localStorage.getItem("lakzee_token") || "";
   }
   return "";
 };
