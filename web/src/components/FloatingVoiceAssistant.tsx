@@ -171,9 +171,12 @@ export default function FloatingVoiceAssistant() {
             className="mb-4 w-72 md:w-80 glass-panel border border-brand-gold/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl bg-black/80"
           >
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold text-brand-gold flex items-center gap-2">
-                Lakzee AI
-              </h3>
+              <div className="flex items-center gap-2">
+                <img src="/logo.jpg" alt="Lakzee Logo" className="w-8 h-8 rounded-full object-cover border border-brand-gold/30" />
+                <h3 className="font-bold text-brand-gold">
+                  Lakzee AI
+                </h3>
+              </div>
               <button onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
                 <X className="w-4 h-4" />
               </button>
