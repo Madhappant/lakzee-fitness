@@ -9,6 +9,7 @@ import { Users, CreditCard, Activity, TrendingUp, Dumbbell, Loader2, QrCode, Use
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PendingMembersModal } from "@/components/dashboard/PendingMembersModal";
+import { ExpiringMembersModal } from "@/components/dashboard/ExpiringMembersModal";
 
 const DashboardChart = dynamic(() => import("@/components/charts/DashboardChart"), {
   ssr: false,
@@ -17,6 +18,8 @@ const DashboardChart = dynamic(() => import("@/components/charts/DashboardChart"
 
 export default function DashboardOverview() {
   const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
+  const [isExpiringModalOpen, setIsExpiringModalOpen] = useState(false);
+  const [isExpiredModalOpen, setIsExpiredModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboardStats"],
@@ -37,7 +40,9 @@ export default function DashboardOverview() {
     revenueLast14Days: [],
     recentPaymentsList: [],
     totalPendingAmount: 0,
-    pendingMembersList: []
+    pendingMembersList: [],
+    expiringMembersList: [],
+    expiredMembersList: []
   };
 
   const statCards = [
@@ -70,12 +75,14 @@ export default function DashboardOverview() {
       value: (stats.expiringIn7Days || 0).toLocaleString(),
       change: "Next 7 days",
       icon: Clock,
+      onClick: () => setIsExpiringModalOpen(true),
     },
     {
       title: "Expired",
       value: (stats.expiredMembers || 0).toLocaleString(),
       change: "Total expired",
       icon: XCircle,
+      onClick: () => setIsExpiredModalOpen(true),
     },
     {
       title: "New This Month",
@@ -270,6 +277,20 @@ export default function DashboardOverview() {
         isOpen={isPendingModalOpen} 
         onClose={() => setIsPendingModalOpen(false)} 
         pendingMembers={stats.pendingMembersList} 
+      />
+
+      <ExpiringMembersModal
+        isOpen={isExpiringModalOpen}
+        onClose={() => setIsExpiringModalOpen(false)}
+        members={stats.expiringMembersList}
+        type="EXPIRING"
+      />
+
+      <ExpiringMembersModal
+        isOpen={isExpiredModalOpen}
+        onClose={() => setIsExpiredModalOpen(false)}
+        members={stats.expiredMembersList}
+        type="EXPIRED"
       />
     </div>
   );

@@ -74,22 +74,54 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // Expiring in 7 Days
     const sevenDaysFromNow = new Date(today);
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    const expiringIn7Days = await prisma.subscription.count({
+    const expiringSubs = await prisma.subscription.findMany({
       where: {
         status: 'ACTIVE',
         endDate: { gte: today, lte: sevenDaysFromNow }
-      }
+      },
+      include: {
+        plan: true,
+        member: {
+          include: { user: true }
+        }
+      },
+      orderBy: { endDate: 'asc' }
     });
+    const expiringIn7Days = expiringSubs.length;
+    const expiringMembersList = expiringSubs.map(sub => ({
+      id: sub.id,
+      memberId: sub.member.memberId,
+      name: `${sub.member.user.firstName} ${sub.member.user.lastName}`,
+      phone: sub.member.user.phone,
+      planName: sub.plan?.name || 'Unknown Plan',
+      date: sub.endDate.toISOString()
+    }));
 
     // Expired
-    const expiredMembers = await prisma.subscription.count({
+    const expiredSubs = await prisma.subscription.findMany({
       where: {
         OR: [
           { status: 'EXPIRED' },
           { endDate: { lt: today } }
         ]
-      }
+      },
+      include: {
+        plan: true,
+        member: {
+          include: { user: true }
+        }
+      },
+      orderBy: { endDate: 'desc' }
     });
+    const expiredMembers = expiredSubs.length;
+    const expiredMembersList = expiredSubs.map(sub => ({
+      id: sub.id,
+      memberId: sub.member.memberId,
+      name: `${sub.member.user.firstName} ${sub.member.user.lastName}`,
+      phone: sub.member.user.phone,
+      planName: sub.plan?.name || 'Unknown Plan',
+      date: sub.endDate.toISOString()
+    }));
 
     // Birthdays This Month and Today
     const currentMonth = today.getMonth(); // 0-11
@@ -208,7 +240,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         revenueLast14Days,
         recentPaymentsList,
         totalPendingAmount,
-        pendingMembersList
+        pendingMembersList,
+        expiringMembersList,
+        expiredMembersList
       }
     });
   } catch (error) {
