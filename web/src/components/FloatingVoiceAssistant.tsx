@@ -129,15 +129,45 @@ export default function FloatingVoiceAssistant() {
       if (data.status === 'success' && data.data?.choices?.[0]?.message) {
         const aiMessage = data.data.choices[0].message;
         
-        // Handle frontend tool execution (Navigation)
+        let audioPlayed = false;
+        if (aiMessage.audio && aiMessage.audio.data) {
+          try {
+            const audioSrc = `data:audio/wav;base64,${aiMessage.audio.data}`;
+            const audio = new Audio(audioSrc);
+            setIsSpeaking(true);
+            audio.onended = () => setIsSpeaking(false);
+            audio.onerror = () => setIsSpeaking(false);
+            audio.play();
+            audioPlayed = true;
+          } catch(e) { console.error("Audio play failed", e); }
+        }
+
+        // Handle frontend tool execution
         if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
+          setMessages([...newMessages, { role: "assistant", content: "Executing command..." }]);
           for (const call of aiMessage.tool_calls) {
             if (call.function.name === 'navigate_to_page') {
               try {
                 const args = JSON.parse(call.function.arguments);
-                if (args.path) {
+                const allowedPaths = ['/', '/pricing', '/about', '/contact', '/login'];
+                if (args.path && allowedPaths.includes(args.path)) {
                   router.push(args.path);
-                  speak("Navigating now.");
+                  if (!audioPlayed) speak("Navigating to " + args.path.replace('/', ''));
+                } else {
+                  if (!audioPlayed) speak("I cannot navigate to that page for security reasons.");
+                }
+              } catch (e) {
+                console.error("Failed to parse tool args", e);
+              }
+            } else if (call.function.name === 'scroll_to_section') {
+              try {
+                const args = JSON.parse(call.function.arguments);
+                const el = document.getElementById(args.sectionId);
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                  if (!audioPlayed) speak("Scrolling to " + args.sectionId);
+                } else {
+                  if (!audioPlayed) speak("I couldn't find that section on this page.");
                 }
               } catch (e) {
                 console.error("Failed to parse tool args", e);
@@ -147,7 +177,7 @@ export default function FloatingVoiceAssistant() {
         } 
         else if (aiMessage.content) {
           setMessages([...newMessages, { role: "assistant", content: aiMessage.content }]);
-          speak(aiMessage.content);
+          if (!audioPlayed) speak(aiMessage.content);
         }
       } else {
         speak("I'm sorry, I encountered an error connecting to the servers.");
@@ -161,14 +191,14 @@ export default function FloatingVoiceAssistant() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="mb-4 w-72 md:w-80 glass-panel border border-brand-gold/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl bg-black/80"
+            className="mb-4 w-72 md:w-80 glass-panel border border-brand-gold/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl bg-black/80 pointer-events-auto"
           >
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
@@ -218,7 +248,7 @@ export default function FloatingVoiceAssistant() {
 
       <button
         onClick={toggleAssistant}
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all z-50 ${
+        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all z-50 pointer-events-auto ${
           isOpen ? 'bg-muted border border-border scale-90' : 'bg-brand-gold text-black hover:scale-110 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]'
         }`}
       >

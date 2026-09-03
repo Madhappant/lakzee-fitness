@@ -365,13 +365,27 @@ const voiceTools = [
     type: "function",
     function: {
       name: "navigate_to_page",
-      description: "Navigates the user's browser to a specific page or section of the Lakzee website.",
+      description: "Navigates the user's browser to a specific page.",
       parameters: {
         type: "object",
         properties: {
-          path: { type: "string", description: "The path to navigate to. E.g., '/' (Home), '/pricing' (Membership Plans), '/about' (About Us), '/#trainers' (Trainers Section), '/contact' (Contact), '/login' (Login/Admin)" }
+          path: { type: "string", description: "The path to navigate to. MUST be one of: '/', '/pricing', '/about', '/contact', '/login'" }
         },
         required: ["path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "scroll_to_section",
+      description: "Scrolls the page to a specific section on the current page.",
+      parameters: {
+        type: "object",
+        properties: {
+          sectionId: { type: "string", description: "The ID of the section to scroll to. E.g., 'trainers', 'hero', 'features'" }
+        },
+        required: ["sectionId"]
       }
     }
   }
@@ -391,20 +405,19 @@ export const voiceAssistant = async (req: Request, res: Response) => {
       return res.status(503).json({ status: 'error', code: 'AI_CONFIG_MISSING', message: 'AI service not configured.' });
     }
 
-    // You specified fish-audio/s2.1-pro-free:free, but OpenRouter models are usually text. 
-    // We'll pass it to OpenRouter, if it's an LLM that returns text, the frontend will read it via TTS.
-    const targetModel = 'google/gemma-4-31b-it:free'; 
+    // User explicitly requested this model for voice assistant capabilities
+    const targetModel = 'fish-audio/s2.1-pro-free:free';
 
     const systemPrompt = {
       role: "system",
       content: `You are F.R.I.D.A.Y, the highly intelligent and conversational AI voice assistant for Lakzee Fitness Studio.
 Your responses should be natural, brief, and sound good when spoken aloud (no markdown, no code blocks).
-You can help users find information about the gym.
-If the user asks to see pricing, membership plans, or programs, call 'navigate_to_page' with path '/pricing'.
-If they ask to see trainers, call 'navigate_to_page' with path '/#trainers'.
-If they ask about contact or booking a consultation, call 'navigate_to_page' with path '/contact'.
-If they ask to go home or go back, call 'navigate_to_page' with path '/'.
-If they want to log in or see the admin panel, call 'navigate_to_page' with path '/login'.`
+Help users find information about the gym.
+- To see pricing/membership plans: call 'navigate_to_page' with path '/pricing'
+- To see trainers: call 'scroll_to_section' with sectionId 'trainers'
+- For contact/consultation: call 'navigate_to_page' with path '/contact'
+- To go home/back: call 'navigate_to_page' with path '/'
+- For admin login: call 'navigate_to_page' with path '/login'`
     };
     
     const formattedMessages = [systemPrompt, ...messages];
