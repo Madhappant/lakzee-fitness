@@ -359,3 +359,94 @@ export const chatWithAi = async (req: Request, res: Response) => {
     res.status(500).json({ status: 'error', code: 'AI_UNKNOWN_ERROR', message: 'An unexpected error occurred while communicating with the AI.' });
   }
 };
+
+const voiceTools = [
+  {
+    type: "function",
+    function: {
+      name: "navigate_to_page",
+      description: "Navigates the user's browser to a specific page or section of the Lakzee website.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "The path to navigate to. E.g., '/' (Home), '/pricing' (Membership Plans), '/about' (About Us), '/#trainers' (Trainers Section), '/contact' (Contact), '/login' (Login/Admin)" }
+        },
+        required: ["path"]
+      }
+    }
+  }
+];
+
+export const voiceAssistant = async (req: Request, res: Response) => {
+  try {
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ status: 'error', code: 'AI_BAD_REQUEST', message: 'Invalid messages array' });
+    }
+
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+
+    if (!openRouterApiKey) {
+      return res.status(503).json({ status: 'error', code: 'AI_CONFIG_MISSING', message: 'AI service not configured.' });
+    }
+
+    // You specified fish-audio/s2.1-pro-free:free, but OpenRouter models are usually text. 
+    // We'll pass it to OpenRouter, if it's an LLM that returns text, the frontend will read it via TTS.
+    const targetModel = 'google/gemma-4-31b-it:free'; 
+
+    const systemPrompt = {
+      role: "system",
+      content: `You are F.R.I.D.A.Y, the highly intelligent and conversational AI voice assistant for Lakzee Fitness Studio.
+Your responses should be natural, brief, and sound good when spoken aloud (no markdown, no code blocks).
+You can help users find information about the gym.
+If the user asks to see pricing, membership plans, or programs, call 'navigate_to_page' with path '/pricing'.
+If they ask to see trainers, call 'navigate_to_page' with path '/#trainers'.
+If they ask about contact or booking a consultation, call 'navigate_to_page' with path '/contact'.
+If they ask to go home or go back, call 'navigate_to_page' with path '/'.
+If they want to log in or see the admin panel, call 'navigate_to_page' with path '/login'.`
+    };
+    
+    const formattedMessages = [systemPrompt, ...messages];
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+    
+    let response;
+    try {
+      response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openRouterApiKey}`,
+          "HTTP-Referer": "https://lakzeefitness.com",
+          "X-Title": "Lakzee Voice Assistant",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: targetModel,
+          messages: formattedMessages,
+          tools: voiceTools
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+    } catch (err: any) {
+      clearTimeout(timeout);
+      if (err.name === 'AbortError') {
+        return res.status(504).json({ status: 'error', message: 'AI timeout.' });
+      }
+      return res.status(502).json({ status: 'error', message: 'Network error.' });
+    }
+
+    if (!response.ok) {
+      return res.status(response.status).json({ status: 'error', message: `Upstream error: ${response.statusText}` });
+    }
+
+    const data = await response.json();
+    return res.json({ status: 'success', data });
+
+  } catch (error: any) {
+    console.error('AI Voice Error:', error);
+    res.status(500).json({ status: 'error', message: 'An unexpected error occurred.' });
+  }
+};
