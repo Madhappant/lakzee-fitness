@@ -35,15 +35,22 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       where: {
         createdAt: {
           gte: firstDayOfMonth
-        },
-        paymentStatus: 'PAID'
+        }
       },
       include: {
         plan: true
       }
     });
 
-    const monthlyRevenue = recentSubscriptions.reduce((acc, sub) => acc + (sub.plan?.price || 0), 0);
+    const monthlyRevenue = recentSubscriptions.reduce((sum, sub) => {
+      const price = sub.plan?.price || 0;
+      if (sub.paymentStatus === 'PAID') return sum + price;
+      if (sub.paymentStatus === 'PENDING') {
+        if (sub.balanceAmount > 0) return sum + Math.max(0, price - sub.balanceAmount);
+        return sum;
+      }
+      return sum;
+    }, 0);
 
     // 5. Recent Activity (Latest 5 check-ins)
     const recentCheckIns = await prisma.attendance.findMany({
@@ -66,11 +73,18 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // NEW METRICS ADDED FROM LOVABLE UI:
     // Today's Collection (Revenue from subscriptions created today)
     const todaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: today }, paymentStatus: 'PAID' },
+      where: { createdAt: { gte: today } },
       include: { plan: true }
     });
-    const todaysCollection = todaysSubs.reduce((acc, sub) => acc + (sub.plan?.price || 0), 0);
-
+    const todaysCollection = todaysSubs.reduce((sum, sub) => {
+      const price = sub.plan?.price || 0;
+      if (sub.paymentStatus === 'PAID') return sum + price;
+      if (sub.paymentStatus === 'PENDING') {
+        if (sub.balanceAmount > 0) return sum + Math.max(0, price - sub.balanceAmount);
+        return sum;
+      }
+      return sum;
+    }, 0);
     // Expiring in 7 Days
     const sevenDaysFromNow = new Date(today);
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
@@ -148,7 +162,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
     
     const last14DaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: fourteenDaysAgo }, paymentStatus: 'PAID' },
+      where: { createdAt: { gte: fourteenDaysAgo } },
       include: { plan: true }
     });
 
@@ -163,7 +177,12 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     last14DaysSubs.forEach(sub => {
       const name = sub.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (revenueMap[name] !== undefined) {
-        revenueMap[name] += sub.plan?.price || 0;
+        const price = sub.plan?.price || 0;
+        let amount = 0;
+        if (sub.paymentStatus === 'PAID') amount = price;
+        else if (sub.paymentStatus === 'PENDING' && sub.balanceAmount > 0) amount = Math.max(0, price - sub.balanceAmount);
+        
+        revenueMap[name] += amount;
       }
     });
 
@@ -174,8 +193,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     // Recent Payments List (using subscriptions as proxy for payments for now)
     const recentSubsList = await prisma.subscription.findMany({
-      take: 5,
-      where: { paymentStatus: 'PAID' },
+      take: 10,
       orderBy: { createdAt: 'desc' },
       include: {
         plan: true,
@@ -185,13 +203,23 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    const recentPaymentsList = recentSubsList.map(sub => ({
-      id: sub.id,
-      amount: sub.plan?.price || 0,
-      planName: sub.plan?.name || 'Unknown Plan',
-      memberName: `${sub.member.user.firstName} ${sub.member.user.lastName}`,
-      date: sub.createdAt.toISOString()
-    }));
+    const recentPaymentsList = recentSubsList
+      .map(sub => {
+        const price = sub.plan?.price || 0;
+        let amount = 0;
+        if (sub.paymentStatus === 'PAID') amount = price;
+        else if (sub.paymentStatus === 'PENDING' && sub.balanceAmount > 0) amount = Math.max(0, price - sub.balanceAmount);
+        
+        return {
+          id: sub.id,
+          amount,
+          planName: sub.plan?.name || 'Unknown Plan',
+          memberName: `${sub.member.user.firstName} ${sub.member.user.lastName}`,
+          date: sub.createdAt.toISOString()
+        };
+      })
+      .filter(p => p.amount > 0)
+      .slice(0, 5);
 
     // Pending Subscriptions
     const pendingSubs = await prisma.subscription.findMany({
