@@ -32,6 +32,8 @@ export default function AiAssistantPage() {
     scrollToBottom();
   }, [messages, isLoading, selectedImage]);
 
+  const finalTranscriptRef = useRef<string>('');
+
   useEffect(() => {
     const checkStatus = async () => {
       try {
@@ -61,15 +63,15 @@ export default function AiAssistantPage() {
         recognitionRef.current.interimResults = true;
         
         recognitionRef.current.onresult = (event: any) => {
-          let currentTranscript = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            currentTranscript += event.results[i][0].transcript;
+          let interimTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscriptRef.current += event.results[i][0].transcript + ' ';
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
           }
-          setInput(prev => {
-            // Very basic replacement for continuous typing
-            const words = prev.split(' ');
-            return currentTranscript; 
-          });
+          setInput(finalTranscriptRef.current + interimTranscript);
         };
 
         recognitionRef.current.onerror = (event: any) => {
@@ -89,9 +91,11 @@ export default function AiAssistantPage() {
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
-      setInput(""); // clear input when starting dictation
-      recognitionRef.current?.start();
-      setIsListening(true);
+      if (recognitionRef.current) {
+        finalTranscriptRef.current = input ? input + ' ' : '';
+        recognitionRef.current.start();
+        setIsListening(true);
+      }
     }
   };
 

@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import { prisma } from '../app';
+import bcrypt from 'bcryptjs';
 
 export const checkAiStatus = async (req: Request, res: Response) => {
   try {
@@ -11,6 +13,125 @@ export const checkAiStatus = async (req: Request, res: Response) => {
     return res.status(500).json({ status: 'error', code: 'AI_UNKNOWN_ERROR', message: 'Failed to check AI status' });
   }
 };
+
+const tools = [
+  {
+    type: "function",
+    function: {
+      name: "add_member",
+      description: "Add a new member to the gym. Provide their details.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string", description: "Email address of the member" },
+          firstName: { type: "string", description: "First name" },
+          lastName: { type: "string", description: "Last name" },
+          phone: { type: "string", description: "Phone number (optional)" },
+          gender: { type: "string", enum: ["MALE", "FEMALE", "OTHER"], description: "Gender (optional)" }
+        },
+        required: ["email", "firstName", "lastName"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assign_plan",
+      description: "Assign a membership plan to a member by their email.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string", description: "Email address of the existing member" },
+          planName: { type: "string", description: "Name or keyword of the plan (e.g. 'Annual', 'Monthly', 'Gold')" }
+        },
+        required: ["email", "planName"]
+      }
+    }
+  }
+];
+
+async function handleToolCalls(toolCalls: any[]) {
+  const results = [];
+  
+  for (const call of toolCalls) {
+    try {
+      const args = JSON.parse(call.function.arguments);
+      
+      if (call.function.name === "add_member") {
+        const existing = await prisma.user.findUnique({ where: { email: args.email } });
+        if (existing) {
+          results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content: "Error: A member with this email already exists." });
+          continue;
+        }
+
+        const hashedPassword = await bcrypt.hash("lakzee123", 10);
+        const memberId = 'LZM' + Math.floor(1000 + Math.random() * 9000).toString();
+        
+        await prisma.user.create({
+          data: {
+            email: args.email,
+            firstName: args.firstName,
+            lastName: args.lastName,
+            phone: args.phone || null,
+            password: hashedPassword,
+            role: "MEMBER",
+            memberProfile: {
+              create: {
+                memberId: memberId,
+                gender: args.gender || null
+              }
+            }
+          }
+        });
+        
+        results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content: `Success: Member ${args.firstName} ${args.lastName} added with ID ${memberId} and default password lakzee123.` });
+      } 
+      
+      else if (call.function.name === "assign_plan") {
+        const user = await prisma.user.findUnique({ 
+          where: { email: args.email },
+          include: { memberProfile: true }
+        });
+        
+        if (!user || !user.memberProfile) {
+          results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: "Error: Member not found." });
+          continue;
+        }
+        
+        const plans = await prisma.membershipPlan.findMany();
+        const plan = plans.find(p => p.name.toLowerCase().includes(args.planName.toLowerCase()));
+        
+        if (!plan) {
+          results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: `Error: Plan matching '${args.planName}' not found. Available plans: ${plans.map(p => p.name).join(", ")}` });
+          continue;
+        }
+
+        const start = new Date();
+        const end = new Date(start);
+        end.setDate(end.getDate() + plan.durationDays);
+
+        await prisma.subscription.create({
+          data: {
+            memberId: user.memberProfile.id,
+            planId: plan.id,
+            startDate: start,
+            endDate: end,
+            status: "ACTIVE",
+            paymentStatus: "PAID",
+            paymentMethod: "CASH",
+            balanceAmount: 0
+          }
+        });
+        
+        results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: `Success: Plan '${plan.name}' assigned to ${user.firstName}. Valid until ${end.toDateString()}.` });
+      }
+    } catch (e: any) {
+      results.push({ tool_call_id: call.id, role: "tool", name: call.function.name, content: `Error executing tool: ${e.message}` });
+    }
+  }
+  
+  return results;
+}
 
 export const chatWithAi = async (req: Request, res: Response) => {
   try {
@@ -31,36 +152,52 @@ export const chatWithAi = async (req: Request, res: Response) => {
     }
 
     const targetModel = model || 'google/gemma-4-31b-it:free';
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+    
+    // Inject system prompt to guide the AI
+    const systemPrompt = {
+      role: "system",
+      content: "You are the Lakzee Fitness Studio AI Assistant. You have access to tools to manage the gym. When a user asks you to add a member or assign a plan, USE the provided tools. Do not just output JSON in chat, literally call the function. Be helpful, concise, and professional."
+    };
+    
+    const formattedMessages = [systemPrompt, ...messages];
+    
+    const makeRequest = async (currentMessages: any[]) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+      try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${openRouterApiKey}`,
+            "HTTP-Referer": "https://lakzeefitness.com",
+            "X-Title": "Lakzee Fitness Web App",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            messages: currentMessages,
+            tools: tools
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        return response;
+      } catch (err) {
+        clearTimeout(timeout);
+        throw err;
+      }
+    };
 
     let response;
     try {
-      response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openRouterApiKey}`,
-          "HTTP-Referer": "https://lakzeefitness.com",
-          "X-Title": "Lakzee Fitness Web App",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: targetModel,
-          messages: messages,
-        }),
-        signal: controller.signal
-      });
+      response = await makeRequest(formattedMessages);
     } catch (fetchError: any) {
-      clearTimeout(timeout);
       if (fetchError.name === 'AbortError') {
-        return res.status(504).json({ status: 'error', code: 'AI_TIMEOUT', message: 'AI request timed out. Please try again or select another model.' });
+        return res.status(504).json({ status: 'error', code: 'AI_TIMEOUT', message: 'AI request timed out. Please try again.' });
       }
       return res.status(502).json({ status: 'error', code: 'AI_NETWORK_ERROR', message: 'Failed to connect to AI provider.' });
     }
 
-    clearTimeout(timeout);
-
-    // Map HTTP status codes
     if (!response.ok) {
       let code = 'AI_UPSTREAM_ERROR';
       if (response.status === 400) code = 'AI_BAD_REQUEST';
@@ -87,22 +224,53 @@ export const chatWithAi = async (req: Request, res: Response) => {
       });
     }
 
-    let data;
-    try {
-      data = await response.json();
-    } catch (parseError) {
-      return res.status(502).json({
-        status: 'error',
-        code: 'AI_INVALID_RESPONSE',
-        message: 'Failed to parse JSON from AI provider.'
-      });
-    }
+    let data = await response.json();
 
-    if (!data || !data.choices || !Array.isArray(data.choices) || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+    if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
       return res.status(502).json({
         status: 'error',
         code: 'AI_INVALID_RESPONSE',
         message: 'AI provider returned an invalid response structure.'
+      });
+    }
+
+    const message = data.choices[0].message;
+
+    // Check if the AI wants to call tools
+    if (message.tool_calls && message.tool_calls.length > 0) {
+      const toolResults = await handleToolCalls(message.tool_calls);
+      
+      // Append assistant's tool call message and the results
+      const nextMessages = [
+        ...formattedMessages,
+        message,
+        ...toolResults
+      ];
+
+      // Call OpenRouter again with the tool results
+      try {
+        const secondResponse = await makeRequest(nextMessages);
+        if (secondResponse.ok) {
+          const secondData = await secondResponse.json();
+          if (secondData.choices?.[0]?.message) {
+            return res.json({ status: 'success', data: secondData, toolResults });
+          }
+        }
+      } catch (e) {
+        console.error("Second pass failed", e);
+      }
+      
+      // If second pass fails or doesn't return properly, we can just return a fallback message
+      return res.json({ 
+        status: 'success', 
+        data: { 
+          choices: [{ 
+            message: { 
+              role: 'assistant', 
+              content: `I executed the actions:\n${toolResults.map(r => r.content).join('\n')}` 
+            } 
+          }] 
+        } 
       });
     }
 
