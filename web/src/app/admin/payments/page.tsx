@@ -31,7 +31,7 @@ export default function PaymentsPage() {
   const { data: plansData } = useQuery({ queryKey: ["plans"], queryFn: fetchPlans });
 
   const subscriptions = subsData?.data || [];
-  const stats = statsData?.data || { todaysCollection: 0, thisMonth: 0, totalRecords: 0 };
+  const stats = statsData?.data || { todaysCollection: 0, thisMonth: 0, totalRecords: 0, totalPending: 0 };
   const members = membersData?.data || [];
   const plans = plansData?.data || [];
 
@@ -119,7 +119,7 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-8">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/30 transition-colors">
           <div className="flex justify-between items-start mb-4 relative z-10">
             <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Today&apos;s Collection</h3>
@@ -134,6 +134,14 @@ export default function PaymentsPage() {
             <CalendarRange className="w-5 h-5 text-brand-gold/50" />
           </div>
           <p className="text-3xl font-bold text-brand-gold">₹{stats.thisMonth.toLocaleString()}</p>
+        </div>
+
+        <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-red-500/30 transition-colors">
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Pending Amount</h3>
+            <Wallet className="w-5 h-5 text-red-500/50" />
+          </div>
+          <p className="text-3xl font-bold text-red-500">₹{(stats.totalPending || 0).toLocaleString()}</p>
         </div>
 
         <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/30 transition-colors">

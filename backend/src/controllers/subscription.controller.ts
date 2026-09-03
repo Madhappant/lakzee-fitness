@@ -88,12 +88,23 @@ export const getPaymentStats = async (req: Request, res: Response) => {
 
     const totalRecords = await prisma.subscription.count();
 
+    const pendingSubs = await prisma.subscription.findMany({
+      where: { paymentStatus: 'PENDING' },
+      include: { plan: true }
+    });
+    const totalPending = pendingSubs.reduce((sum, sub) => {
+      const price = sub.plan?.price || 0;
+      if (sub.balanceAmount > 0) return sum + sub.balanceAmount;
+      return sum + price;
+    }, 0);
+
     res.json({
       status: 'success',
       data: {
         todaysCollection,
         thisMonth,
-        totalRecords
+        totalRecords,
+        totalPending
       }
     });
   } catch (error) {
