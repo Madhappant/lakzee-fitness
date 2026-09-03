@@ -405,8 +405,10 @@ export const voiceAssistant = async (req: Request, res: Response) => {
       return res.status(503).json({ status: 'error', code: 'AI_CONFIG_MISSING', message: 'AI service not configured.' });
     }
 
-    // User explicitly requested this model for voice assistant capabilities
-    const targetModel = 'fish-audio/s2.1-pro-free:free';
+    // We use a fast capable model for the conversational logic and tool calling
+    const chatModel = 'google/gemma-4-31b-it:free'; 
+    // And fish-audio for TTS
+    const ttsModel = 'fish-audio/s2.1-pro-free:free';
 
     const systemPrompt = {
       role: "system",
@@ -423,11 +425,11 @@ Help users find information about the gym.
     const formattedMessages = [systemPrompt, ...messages];
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s for chat
     
-    let response;
+    let chatResponse;
     try {
-      response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      chatResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${openRouterApiKey}`,
@@ -436,7 +438,7 @@ Help users find information about the gym.
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: targetModel,
+          model: chatModel,
           messages: formattedMessages,
           tools: voiceTools
         }),
@@ -446,16 +448,60 @@ Help users find information about the gym.
     } catch (err: any) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        return res.status(504).json({ status: 'error', message: 'AI timeout.' });
+        return res.status(504).json({ status: 'error', message: 'AI chat timeout.' });
       }
-      return res.status(502).json({ status: 'error', message: 'Network error.' });
+      return res.status(502).json({ status: 'error', message: 'Network error connecting to chat API.' });
     }
 
-    if (!response.ok) {
-      return res.status(response.status).json({ status: 'error', message: `Upstream error: ${response.statusText}` });
+    if (!chatResponse.ok) {
+      const errorText = await chatResponse.text();
+      console.error("OpenRouter Chat Error:", chatResponse.status, errorText);
+      return res.status(chatResponse.status).json({ status: 'error', message: `Chat API error: ${chatResponse.statusText}` });
     }
 
-    const data = await response.json();
+    const data = await chatResponse.json();
+    
+    // Now, if there is a conversational response, we fetch TTS audio
+    const aiMessage = data.choices?.[0]?.message;
+    if (aiMessage && aiMessage.content) {
+      const ttsController = new AbortController();
+      const ttsTimeout = setTimeout(() => ttsController.abort(), 30000);
+      try {
+        const ttsResponse = await fetch("https://openrouter.ai/api/v1/audio/speech", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${openRouterApiKey}`,
+            "HTTP-Referer": "https://lakzeefitness.com",
+            "X-Title": "Lakzee Voice Assistant",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: ttsModel,
+            input: aiMessage.content,
+            response_format: 'mp3'
+          }),
+          signal: ttsController.signal
+        });
+        clearTimeout(ttsTimeout);
+
+        if (ttsResponse.ok) {
+          const arrayBuffer = await ttsResponse.arrayBuffer();
+          const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+          aiMessage.audio = {
+            data: base64Audio,
+            format: 'mp3'
+          };
+        } else {
+          console.error("OpenRouter TTS Error:", ttsResponse.status, await ttsResponse.text());
+          // We don't fail the request, we just fallback to browser TTS in frontend
+        }
+      } catch (err) {
+        clearTimeout(ttsTimeout);
+        console.error("TTS fetch failed", err);
+        // Fallback to browser TTS in frontend
+      }
+    }
+
     return res.json({ status: 'success', data });
 
   } catch (error: any) {

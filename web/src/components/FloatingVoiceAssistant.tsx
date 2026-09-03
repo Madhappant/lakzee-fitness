@@ -13,8 +13,49 @@ export default function FloatingVoiceAssistant() {
   const [transcript, setTranscript] = useState("");
   const [messages, setMessages] = useState<{role: string, content: string}[]>([]);
   
+  // Drag State
+  const [position, setPosition] = useState({ x: -24, y: -24 }); // Bottom right default
+  const [isMounted, setIsMounted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const dragStart = useRef({ x: 0, y: 0 });
+  const initialPos = useRef({ x: 0, y: 0 });
+  const dragTimeout = useRef<any>(null);
+
   const recognitionRef = useRef<any>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setIsMounted(true);
+    let savedPos = { x: -24, y: -24 };
+    const saved = localStorage.getItem('lakzee-ai-pos');
+    if (saved) {
+      try { savedPos = JSON.parse(saved); setPosition(savedPos); } catch (e) {}
+    }
+
+    const handleResize = () => {
+      setPosition(prev => {
+        const btnSize = 56;
+        const padding = 10;
+        const minX = -(window.innerWidth - btnSize - padding);
+        const minY = -(window.innerHeight - btnSize - padding);
+        
+        let newX = prev.x;
+        let newY = prev.y;
+        
+        if (newX > -padding) newX = -padding;
+        if (newX < minX) newX = minX;
+        
+        if (newY > -padding) newY = -padding;
+        if (newY < minY) newY = minY;
+        
+        return { x: newX, y: newY };
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -132,7 +173,7 @@ export default function FloatingVoiceAssistant() {
         let audioPlayed = false;
         if (aiMessage.audio && aiMessage.audio.data) {
           try {
-            const audioSrc = `data:audio/wav;base64,${aiMessage.audio.data}`;
+            const audioSrc = `data:audio/mp3;base64,${aiMessage.audio.data}`;
             const audio = new Audio(audioSrc);
             setIsSpeaking(true);
             audio.onended = () => setIsSpeaking(false);
@@ -190,8 +231,78 @@ export default function FloatingVoiceAssistant() {
     }
   };
 
+  // Pointer Drag Handlers
+  const onPointerDown = (e: React.PointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    initialPos.current = { ...position };
+    
+    dragTimeout.current = setTimeout(() => {
+      setIsDragging(true);
+      document.body.style.userSelect = 'none';
+      document.body.style.overflow = 'hidden';
+    }, 200);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) {
+       // if moved > 5px before timeout, trigger drag instantly
+       if (e.buttons && (Math.abs(e.clientX - dragStart.current.x) > 5 || Math.abs(e.clientY - dragStart.current.y) > 5)) {
+          clearTimeout(dragTimeout.current);
+          setIsDragging(true);
+          document.body.style.userSelect = 'none';
+          document.body.style.overflow = 'hidden';
+       } else {
+         return;
+       }
+    }
+    
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    
+    let newX = initialPos.current.x + dx;
+    let newY = initialPos.current.y + dy;
+
+    // Bounds check
+    const btnSize = 56;
+    const padding = 10;
+    const minX = -(window.innerWidth - btnSize - padding);
+    const minY = -(window.innerHeight - btnSize - padding);
+    
+    if (newX > -padding) newX = -padding;
+    if (newX < minX) newX = minX;
+    
+    if (newY > -padding) newY = -padding;
+    if (newY < minY) newY = minY;
+
+    setPosition({ x: newX, y: newY });
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    clearTimeout(dragTimeout.current);
+    document.body.style.userSelect = '';
+    document.body.style.overflow = '';
+    
+    if (isDragging) {
+      setTimeout(() => setIsDragging(false), 50);
+      localStorage.setItem('lakzee-ai-pos', JSON.stringify(position));
+    } else {
+      toggleAssistant();
+    }
+  };
+
+  if (!isMounted) return null;
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+    <div 
+      className="fixed z-50 flex flex-col items-end pointer-events-none"
+      style={{
+        right: 0,
+        bottom: 0,
+        transform: `translate(${position.x}px, ${position.y}px)`
+      }}
+    >
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -247,10 +358,12 @@ export default function FloatingVoiceAssistant() {
       </AnimatePresence>
 
       <button
-        onClick={toggleAssistant}
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all z-50 pointer-events-auto ${
-          isOpen ? 'bg-muted border border-border scale-90' : 'bg-brand-gold text-black hover:scale-110 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]'
-        }`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all z-50 pointer-events-auto select-none touch-none ${
+          isOpen ? 'bg-muted border border-border scale-90' : 'bg-brand-gold text-black'
+        } ${isDragging ? 'scale-110 shadow-[0_0_20px_rgba(234,179,8,0.4)] cursor-grabbing' : 'cursor-grab hover:scale-110 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]'}`}
       >
         {isOpen ? <X className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6" />}
       </button>
