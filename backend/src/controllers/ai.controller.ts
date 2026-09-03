@@ -26,10 +26,44 @@ const tools = [
           email: { type: "string", description: "Email address of the member" },
           firstName: { type: "string", description: "First name" },
           lastName: { type: "string", description: "Last name" },
+          password: { type: "string", description: "Optional password (defaults to lakzee123)" },
           phone: { type: "string", description: "Phone number (optional)" },
+          address: { type: "string", description: "Address (optional)" },
           gender: { type: "string", enum: ["MALE", "FEMALE", "OTHER"], description: "Gender (optional)" }
         },
         required: ["email", "firstName", "lastName"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_member",
+      description: "Update details of an existing member.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string", description: "Email address of the member to update" },
+          firstName: { type: "string" },
+          lastName: { type: "string" },
+          phone: { type: "string" },
+          address: { type: "string" }
+        },
+        required: ["email"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_member",
+      description: "Delete a member from the system permanently.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string", description: "Email address of the member to delete" }
+        },
+        required: ["email"]
       }
     }
   },
@@ -64,7 +98,8 @@ async function handleToolCalls(toolCalls: any[]) {
           continue;
         }
 
-        const hashedPassword = await bcrypt.hash("lakzee123", 10);
+        const pwd = args.password || "lakzee123";
+        const hashedPassword = await bcrypt.hash(pwd, 10);
         const memberId = 'LZM' + Math.floor(1000 + Math.random() * 9000).toString();
         
         await prisma.user.create({
@@ -78,15 +113,58 @@ async function handleToolCalls(toolCalls: any[]) {
             memberProfile: {
               create: {
                 memberId: memberId,
-                gender: args.gender || null
+                gender: args.gender || null,
+                address: args.address || null
               }
             }
           }
         });
         
-        results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content: `Success: Member ${args.firstName} ${args.lastName} added with ID ${memberId} and default password lakzee123.` });
+        results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content: `Success: Member ${args.firstName} ${args.lastName} added with ID ${memberId} and password ${pwd}.` });
       } 
       
+      else if (call.function.name === "update_member") {
+        const user = await prisma.user.findUnique({ 
+          where: { email: args.email },
+          include: { memberProfile: true }
+        });
+        
+        if (!user || !user.memberProfile) {
+          results.push({ tool_call_id: call.id, role: "tool", name: "update_member", content: "Error: Member not found." });
+          continue;
+        }
+        
+        await prisma.user.update({
+          where: { email: args.email },
+          data: {
+            firstName: args.firstName || user.firstName,
+            lastName: args.lastName || user.lastName,
+            phone: args.phone || user.phone,
+            memberProfile: {
+              update: {
+                address: args.address || user.memberProfile.address
+              }
+            }
+          }
+        });
+        
+        results.push({ tool_call_id: call.id, role: "tool", name: "update_member", content: `Success: Details for ${args.email} updated successfully.` });
+      }
+
+      else if (call.function.name === "delete_member") {
+        const user = await prisma.user.findUnique({ where: { email: args.email } });
+        
+        if (!user) {
+          results.push({ tool_call_id: call.id, role: "tool", name: "delete_member", content: "Error: Member not found." });
+          continue;
+        }
+        
+        // Prisma cascade deletes will handle memberProfile, subscriptions etc if configured correctly.
+        await prisma.user.delete({ where: { email: args.email } });
+        
+        results.push({ tool_call_id: call.id, role: "tool", name: "delete_member", content: `Success: Member ${args.email} deleted successfully.` });
+      }
+
       else if (call.function.name === "assign_plan") {
         const user = await prisma.user.findUnique({ 
           where: { email: args.email },
@@ -156,7 +234,7 @@ export const chatWithAi = async (req: Request, res: Response) => {
     // Inject system prompt to guide the AI
     const systemPrompt = {
       role: "system",
-      content: "You are the Lakzee Fitness Studio AI Assistant. You have access to tools to manage the gym. When a user asks you to add a member or assign a plan, USE the provided tools. Do not just output JSON in chat, literally call the function. Be helpful, concise, and professional."
+      content: "You are the Lakzee Fitness Studio AI Assistant. You have access to tools to manage the gym. When a user asks you to add, update, or delete a member, or assign a plan, USE the provided tools. Do not just output JSON in chat, literally call the function. Be helpful, concise, and professional."
     };
     
     const formattedMessages = [systemPrompt, ...messages];
