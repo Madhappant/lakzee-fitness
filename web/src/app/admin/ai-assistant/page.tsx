@@ -35,8 +35,9 @@ export default function AiAssistantPage() {
     setIsLoading(true);
 
     try {
+      const { API_URL } = await import('@/lib/api/config');
       const token = localStorage.getItem("token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/ai/chat`, {
+      const res = await fetch(`${API_URL}/ai/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
