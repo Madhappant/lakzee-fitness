@@ -218,3 +218,15 @@ model Announcement {
   author    User     @relation(fields: [authorId], references: [id])
   createdAt DateTime @default(now())
 }
+
+model Expense {
+  id            String   @id @default(uuid())
+  title         String
+  category      String   // SALARY, MAINTENANCE, RENT, WATER, ELECTRICITY, CLEANING, OTHER
+  amount        Float
+  date          DateTime @default(now())
+  paymentMethod String   @default("CASH") // CASH, UPI, BANK_TRANSFER, CREDIT_CARD
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
