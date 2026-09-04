@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Loader2, Volume2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -13,8 +13,19 @@ export default function FloatingVoiceAssistant() {
   const [transcript, setTranscript] = useState("");
   const [messages, setMessages] = useState<{role: string, content: string}[]>([]);
   
+  // Refs for closures
+  const messagesRef = useRef(messages);
+  const transcriptRef = useRef(transcript);
+  const isListeningRef = useRef(isListening);
+  
+  useEffect(() => {
+    messagesRef.current = messages;
+    transcriptRef.current = transcript;
+    isListeningRef.current = isListening;
+  }, [messages, transcript, isListening]);
+
   // Drag State
-  const [position, setPosition] = useState({ x: -24, y: -24 }); // Bottom right default
+  const [position, setPosition] = useState({ x: -24, y: -24 });
   const [isMounted, setIsMounted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
@@ -23,10 +34,13 @@ export default function FloatingVoiceAssistant() {
   const dragTimeout = useRef<any>(null);
 
   const recognitionRef = useRef<any>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
+    audioPlayerRef.current = new Audio(); // Create audio element on mount
+    
     let savedPos = { x: -24, y: -24 };
     const saved = localStorage.getItem('lakzee-ai-pos');
     if (saved) {
@@ -45,7 +59,6 @@ export default function FloatingVoiceAssistant() {
         
         if (newX > -padding) newX = -padding;
         if (newX < minX) newX = minX;
-        
         if (newY > -padding) newY = -padding;
         if (newY < minY) newY = minY;
         
@@ -57,76 +70,8 @@ export default function FloatingVoiceAssistant() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false; // Stop after a single command for a more assistant-like feel
-        recognitionRef.current.interimResults = true;
-        
-        recognitionRef.current.onresult = (event: any) => {
-          let current = "";
-          let isFinal = false;
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            current += event.results[i][0].transcript;
-            if (event.results[i].isFinal) isFinal = true;
-          }
-          
-          setTranscript(current);
-          
-          if (isFinal) {
-            setIsListening(false);
-            handleCommand(current);
-          }
-        };
-
-        recognitionRef.current.onerror = (event: any) => {
-          console.error("Speech recognition error", event.error);
-          setIsListening(false);
-        };
-
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-        };
-      }
-    }
-  }, []);
-
-  const toggleAssistant = () => {
-    if (!isOpen) {
-      setIsOpen(true);
-      startListening();
-    } else {
-      setIsOpen(false);
-      stopEverything();
-    }
-  };
-
-  const startListening = () => {
-    stopEverything();
-    setTranscript("");
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  };
-
-  const stopEverything = () => {
-    if (recognitionRef.current) recognitionRef.current.stop();
-    setIsListening(false);
-    setIsThinking(false);
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIsSpeaking(false);
-  };
-
-  const speak = (text: string) => {
+  // Using useCallback for handleCommand so it can be used inside the recognition effect safely without stale state
+  const speak = useCallback((text: string) => {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     
@@ -148,13 +93,13 @@ export default function FloatingVoiceAssistant() {
     utterance.onerror = () => setIsSpeaking(false);
     
     window.speechSynthesis.speak(utterance);
-  };
+  }, []);
 
-  const handleCommand = async (text: string) => {
+  const handleCommand = useCallback(async (text: string) => {
     if (!text.trim()) return;
     
     setIsThinking(true);
-    const newMessages = [...messages, { role: "user", content: text }];
+    const newMessages = [...messagesRef.current, { role: "user", content: text }];
     setMessages(newMessages);
     
     try {
@@ -171,21 +116,23 @@ export default function FloatingVoiceAssistant() {
         const aiMessage = data.data.choices[0].message;
         
         let audioPlayed = false;
-        if (aiMessage.audio && aiMessage.audio.data) {
+        if (aiMessage.audio && aiMessage.audio.data && audioPlayerRef.current) {
           try {
-            const audioSrc = `data:audio/mp3;base64,${aiMessage.audio.data}`;
-            const audio = new Audio(audioSrc);
+            audioPlayerRef.current.src = `data:audio/mp3;base64,${aiMessage.audio.data}`;
             setIsSpeaking(true);
-            audio.onended = () => setIsSpeaking(false);
-            audio.onerror = () => setIsSpeaking(false);
-            audio.play();
+            audioPlayerRef.current.onended = () => setIsSpeaking(false);
+            audioPlayerRef.current.onerror = () => setIsSpeaking(false);
+            const playPromise = audioPlayerRef.current.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(e => console.error("Audio playback prevented:", e));
+            }
             audioPlayed = true;
           } catch(e) { console.error("Audio play failed", e); }
         }
 
         // Handle frontend tool execution
         if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
-          setMessages([...newMessages, { role: "assistant", content: "Executing command..." }]);
+          setMessages(prev => [...prev, { role: "assistant", content: "Executing command..." }]);
           for (const call of aiMessage.tool_calls) {
             if (call.function.name === 'navigate_to_page') {
               try {
@@ -217,7 +164,7 @@ export default function FloatingVoiceAssistant() {
           }
         } 
         else if (aiMessage.content) {
-          setMessages([...newMessages, { role: "assistant", content: aiMessage.content }]);
+          setMessages(prev => [...prev, { role: "assistant", content: aiMessage.content }]);
           if (!audioPlayed) speak(aiMessage.content);
         }
       } else {
@@ -228,6 +175,107 @@ export default function FloatingVoiceAssistant() {
       speak("I'm sorry, I'm having trouble connecting right now.");
     } finally {
       setIsThinking(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false; // Stop after a single command
+        recognitionRef.current.interimResults = true;
+        
+        recognitionRef.current.onresult = (event: any) => {
+          let current = "";
+          let isFinal = false;
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            current += event.results[i][0].transcript;
+            if (event.results[i].isFinal) isFinal = true;
+          }
+          
+          setTranscript(current);
+          
+          // Some browsers fire isFinal correctly
+          if (isFinal) {
+            setIsListening(false);
+            recognitionRef.current.stop();
+            handleCommand(current);
+          }
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("Speech recognition error", event.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          // If the recognition ends and we have a transcript but isFinal didn't trigger
+          if (isListeningRef.current && transcriptRef.current.trim().length > 0) {
+            setIsListening(false);
+            handleCommand(transcriptRef.current);
+          } else {
+            setIsListening(false);
+          }
+        };
+      }
+    }
+  }, [handleCommand]);
+
+  const unlockAudio = () => {
+    // Attempt to unlock audio playback context on iOS/Android
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.play().catch(() => {});
+      audioPlayerRef.current.pause();
+    }
+    if ('speechSynthesis' in window) {
+       // Also initialize speech synthesis
+       const u = new SpeechSynthesisUtterance('');
+       u.volume = 0;
+       window.speechSynthesis.speak(u);
+    }
+  };
+
+  const toggleAssistant = () => {
+    unlockAudio();
+    if (!isOpen) {
+      setIsOpen(true);
+      startListening();
+    } else {
+      setIsOpen(false);
+      stopEverything();
+    }
+  };
+
+  const startListening = () => {
+    unlockAudio();
+    stopEverything();
+    setTranscript("");
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error("Failed to start recognition:", e);
+      }
+    } else {
+      console.warn("Speech recognition not supported");
+    }
+  };
+
+  const stopEverything = () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch(e){}
+    }
+    setIsListening(false);
+    setIsThinking(false);
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
     }
   };
 
