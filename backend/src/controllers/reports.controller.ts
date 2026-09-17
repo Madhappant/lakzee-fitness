@@ -14,11 +14,64 @@ export const getReports = async (req: Request, res: Response) => {
 
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
+    const [
+      recentSubs,
+      monthSubs,
+      activeMembersCount,
+      visits30d,
+      last7DaysSubs,
+      last7DaysVisits,
+      activeMembers
+    ] = await Promise.all([
+      // 1. Revenue 30d & Payment Mix
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+        include: { plan: true }
+      }),
+      // 2. Revenue This Month
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: firstDayOfMonth } },
+        include: { plan: true }
+      }),
+      // 3. Active Members
+      prisma.memberProfile.count({
+        where: {
+          subscriptions: {
+            some: {
+              endDate: { gte: new Date() },
+              status: 'ACTIVE'
+            }
+          }
+        }
+      }),
+      // 4. Visits 30d
+      prisma.attendance.count({
+        where: { checkIn: { gte: thirtyDaysAgo } }
+      }),
+      // 5. Daily Revenue (Last 7 Days)
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: sixDaysAgo } },
+        include: { plan: true }
+      }),
+      // 6. Daily Visits (Last 7 Days)
+      prisma.attendance.findMany({
+        where: { checkIn: { gte: sixDaysAgo } }
+      }),
+      // 7. Gender Mix
+      prisma.memberProfile.findMany({
+        where: {
+          subscriptions: {
+            some: {
+              endDate: { gte: new Date() },
+              status: 'ACTIVE'
+            }
+          }
+        },
+        select: { gender: true }
+      })
+    ]);
+
     // 1. Revenue 30d
-    const recentSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-      include: { plan: true }
-    });
     const revenue30d = recentSubs.reduce((sum, sub) => {
       const price = sub.plan?.price || 0;
       if (sub.paymentStatus === 'PAID') return sum + price;
@@ -30,10 +83,6 @@ export const getReports = async (req: Request, res: Response) => {
     }, 0);
 
     // 2. Revenue This Month
-    const monthSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: firstDayOfMonth } },
-      include: { plan: true }
-    });
     const revenueThisMonth = monthSubs.reduce((sum, sub) => {
       const price = sub.plan?.price || 0;
       if (sub.paymentStatus === 'PAID') return sum + price;
@@ -44,23 +93,6 @@ export const getReports = async (req: Request, res: Response) => {
       return sum;
     }, 0);
 
-    // 3. Active Members
-    const activeMembersCount = await prisma.memberProfile.count({
-      where: {
-        subscriptions: {
-          some: {
-            endDate: { gte: new Date() },
-            status: 'ACTIVE'
-          }
-        }
-      }
-    });
-
-    // 4. Visits 30d
-    const visits30d = await prisma.attendance.count({
-      where: { checkIn: { gte: thirtyDaysAgo } }
-    });
-
     // 1. Daily Revenue (Last 7 Days)
     const dailyRevenueMap: Record<string, number> = {};
     for (let i = 6; i >= 0; i--) {
@@ -69,11 +101,6 @@ export const getReports = async (req: Request, res: Response) => {
       const name = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       dailyRevenueMap[name] = 0;
     }
-
-    const last7DaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: sixDaysAgo } },
-      include: { plan: true }
-    });
 
     last7DaysSubs.forEach(sub => {
       const name = sub.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -98,10 +125,6 @@ export const getReports = async (req: Request, res: Response) => {
       dailyVisitsMap[name] = 0;
     }
 
-    const last7DaysVisits = await prisma.attendance.findMany({
-      where: { checkIn: { gte: sixDaysAgo } }
-    });
-
     last7DaysVisits.forEach(att => {
       const name = att.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (dailyVisitsMap[name] !== undefined) {
@@ -112,18 +135,6 @@ export const getReports = async (req: Request, res: Response) => {
     const dailyVisits = Object.keys(dailyVisitsMap).map(name => ({ name, visits: dailyVisitsMap[name] }));
 
     // 3. Gender Mix
-    const activeMembers = await prisma.memberProfile.findMany({
-      where: {
-        subscriptions: {
-          some: {
-            endDate: { gte: new Date() },
-            status: 'ACTIVE'
-          }
-        }
-      },
-      select: { gender: true }
-    });
-    
     let male = 0, female = 0, other = 0;
     activeMembers.forEach(m => {
       if (m.gender?.toUpperCase() === 'MALE') male++;
@@ -141,13 +152,8 @@ export const getReports = async (req: Request, res: Response) => {
     }
 
     // 4. Payment Mix
-    const payments30dForMix = await prisma.subscription.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-      include: { plan: true }
-    });
-    
     const paymentMap: Record<string, number> = {};
-    payments30dForMix.forEach(sub => {
+    recentSubs.forEach(sub => {
       const price = sub.plan?.price || 0;
       let paid = 0;
       if (sub.paymentStatus === 'PAID') {

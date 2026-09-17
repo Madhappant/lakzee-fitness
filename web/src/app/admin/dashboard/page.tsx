@@ -21,7 +21,7 @@ export default function DashboardOverview() {
   const [isExpiringModalOpen, setIsExpiringModalOpen] = useState(false);
   const [isExpiredModalOpen, setIsExpiredModalOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["dashboardStats"],
     queryFn: fetchDashboardStats,
   });
@@ -129,6 +129,31 @@ export default function DashboardOverview() {
           </Link>
         </div>
       </div>
+
+      {/* Connection / Fetch Error Banner */}
+      {isError && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl bg-destructive/10 border border-destructive/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-destructive"
+        >
+          <div className="flex items-center gap-3">
+            <XCircle className="w-5 h-5 shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">Failed to connect to backend service</p>
+              <p className="text-xs opacity-90 mt-0.5">
+                {error instanceof Error ? error.message : "Unable to reach server. Please ensure the backend server is running on port 5000."}
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => refetch()}
+            className="px-4 py-2 rounded-xl bg-destructive text-white text-xs font-semibold hover:bg-destructive/90 transition-colors shrink-0 self-start sm:self-auto"
+          >
+            Retry Connection
+          </button>
+        </motion.div>
+      )}
 
       {/* Birthday Notice */}
       {stats.todaysBirthdays && stats.todaysBirthdays.length > 0 && (

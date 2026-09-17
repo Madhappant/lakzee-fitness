@@ -6,49 +6,129 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 1. Active Members (Members with an active unexpired subscription, matching Reports)
-    const activeMembersCount = await prisma.memberProfile.count({
-      where: {
-        subscriptions: {
-          some: {
-            endDate: { gte: today },
-            status: 'ACTIVE'
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const fourteenDaysAgo = new Date(today);
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    const [
+      activeMembersCount,
+      checkInsCount,
+      newSignupsCount,
+      recentSubscriptions,
+      recentCheckIns,
+      todaysSubs,
+      expiringSubs,
+      expiredSubs,
+      allMembersWithDob,
+      last14DaysSubs,
+      recentSubsList,
+      pendingSubs
+    ] = await Promise.all([
+      // 1. Active Members
+      prisma.memberProfile.count({
+        where: {
+          subscriptions: {
+            some: {
+              endDate: { gte: today },
+              status: 'ACTIVE'
+            }
           }
         }
-      }
-    });
-
-    // 2. Today's Check-ins
-    const checkInsCount = await prisma.attendance.count({
-      where: {
-        date: {
-          gte: today,
+      }),
+      // 2. Today's Check-ins
+      prisma.attendance.count({
+        where: { date: { gte: today } }
+      }),
+      // 3. New Signups (this month)
+      prisma.user.count({
+        where: {
+          role: 'MEMBER',
+          createdAt: { gte: firstDayOfMonth }
         }
-      }
-    });
-
-    // 3. New Signups (this month)
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const newSignupsCount = await prisma.user.count({
-      where: {
-        role: 'MEMBER',
-        createdAt: {
-          gte: firstDayOfMonth
+      }),
+      // 4. Monthly Revenue (Estimated based on Active Subscriptions created this month)
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: firstDayOfMonth } },
+        include: { plan: true }
+      }),
+      // 5. Recent Activity (Latest 5 check-ins)
+      prisma.attendance.findMany({
+        take: 5,
+        orderBy: { checkIn: 'desc' },
+        include: {
+          member: { include: { user: true } }
         }
-      }
-    });
-
-    // 4. Monthly Revenue (Estimated based on Active Subscriptions created this month)
-    const recentSubscriptions = await prisma.subscription.findMany({
-      where: {
-        createdAt: {
-          gte: firstDayOfMonth
+      }),
+      // 6. Today's Collection
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: today } },
+        include: { plan: true }
+      }),
+      // 7. Expiring in 7 Days
+      prisma.subscription.findMany({
+        where: {
+          status: 'ACTIVE',
+          endDate: { gte: today, lte: sevenDaysFromNow }
+        },
+        include: {
+          plan: true,
+          member: { include: { user: true } }
+        },
+        orderBy: { endDate: 'asc' }
+      }),
+      // 8. Expired
+      prisma.subscription.findMany({
+        where: {
+          OR: [
+            { status: 'EXPIRED' },
+            { endDate: { lt: today } }
+          ],
+          member: {
+            subscriptions: {
+              none: {
+                endDate: { gte: today },
+                status: 'ACTIVE'
+              }
+            }
+          }
+        },
+        distinct: ['memberId'],
+        include: {
+          plan: true,
+          member: { include: { user: true } }
+        },
+        orderBy: { endDate: 'desc' }
+      }),
+      // 9. Members with DOB
+      prisma.memberProfile.findMany({
+        where: { dob: { not: null } },
+        include: { user: true }
+      }),
+      // 10. 14 Days Revenue
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: fourteenDaysAgo } },
+        include: { plan: true }
+      }),
+      // 11. Recent Payments List
+      prisma.subscription.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          plan: true,
+          member: { include: { user: true } }
         }
-      },
-      include: {
-        plan: true
-      }
-    });
+      }),
+      // 12. Pending Subscriptions
+      prisma.subscription.findMany({
+        where: { paymentStatus: 'PENDING' },
+        include: { 
+          plan: true,
+          member: { include: { user: true } }
+        }
+      })
+    ]);
 
     const monthlyRevenue = recentSubscriptions.reduce((sum, sub) => {
       const price = sub.plan?.price || 0;
@@ -60,17 +140,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       return sum;
     }, 0);
 
-    // 5. Recent Activity (Latest 5 check-ins)
-    const recentCheckIns = await prisma.attendance.findMany({
-      take: 5,
-      orderBy: { checkIn: 'desc' },
-      include: {
-        member: {
-          include: { user: true }
-        }
-      }
-    });
-
     const recentActivity = recentCheckIns.map(log => ({
       id: log.id,
       title: "Member checked in",
@@ -78,12 +147,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       time: log.checkIn.toISOString()
     }));
 
-    // NEW METRICS ADDED FROM LOVABLE UI:
-    // Today's Collection (Revenue from subscriptions created today)
-    const todaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: today } },
-      include: { plan: true }
-    });
     const todaysCollection = todaysSubs.reduce((sum, sub) => {
       const price = sub.plan?.price || 0;
       if (sub.paymentStatus === 'PAID') return sum + price;
@@ -93,22 +156,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
       return sum;
     }, 0);
-    // Expiring in 7 Days
-    const sevenDaysFromNow = new Date(today);
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    const expiringSubs = await prisma.subscription.findMany({
-      where: {
-        status: 'ACTIVE',
-        endDate: { gte: today, lte: sevenDaysFromNow }
-      },
-      include: {
-        plan: true,
-        member: {
-          include: { user: true }
-        }
-      },
-      orderBy: { endDate: 'asc' }
-    });
+
     const expiringIn7Days = expiringSubs.length;
     const expiringMembersList = expiringSubs.map(sub => ({
       id: sub.id,
@@ -119,31 +167,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       date: sub.endDate.toISOString()
     }));
 
-    // Expired (Members whose subscriptions have lapsed and do NOT have any active subscription)
-    const expiredSubs = await prisma.subscription.findMany({
-      where: {
-        OR: [
-          { status: 'EXPIRED' },
-          { endDate: { lt: today } }
-        ],
-        member: {
-          subscriptions: {
-            none: {
-              endDate: { gte: today },
-              status: 'ACTIVE'
-            }
-          }
-        }
-      },
-      distinct: ['memberId'],
-      include: {
-        plan: true,
-        member: {
-          include: { user: true }
-        }
-      },
-      orderBy: { endDate: 'desc' }
-    });
     const expiredMembers = expiredSubs.length;
     const expiredMembersList = expiredSubs.map(sub => ({
       id: sub.id,
@@ -158,11 +181,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const currentMonth = today.getMonth(); // 0-11
     const currentDate = today.getDate();
     
-    const allMembersWithDob = await prisma.memberProfile.findMany({
-      where: { dob: { not: null } },
-      include: { user: true }
-    });
-    
     // We use getUTCMonth/Date because dates saved from frontend (e.g. YYYY-MM-DD) are often stored as UTC midnight
     const birthdaysThisMonth = allMembersWithDob.filter(m => m.dob && m.dob.getUTCMonth() === currentMonth).length;
     
@@ -175,14 +193,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }));
 
     // 14 Days Revenue Chart Data
-    const fourteenDaysAgo = new Date(today);
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-    
-    const last14DaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: fourteenDaysAgo } },
-      include: { plan: true }
-    });
-
     const revenueMap: Record<string, number> = {};
     for (let i = 13; i >= 0; i--) {
       const d = new Date(today);
@@ -208,18 +218,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       revenue: revenueMap[name]
     }));
 
-    // Recent Payments List (using subscriptions as proxy for payments for now)
-    const recentSubsList = await prisma.subscription.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        plan: true,
-        member: {
-          include: { user: true }
-        }
-      }
-    });
-
+    // Recent Payments List
     const recentPaymentsList = recentSubsList
       .map(sub => {
         const price = sub.plan?.price || 0;
@@ -237,17 +236,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       })
       .filter(p => p.amount > 0)
       .slice(0, 5);
-
-    // Pending Subscriptions
-    const pendingSubs = await prisma.subscription.findMany({
-      where: { paymentStatus: 'PENDING' },
-      include: { 
-        plan: true,
-        member: {
-          include: { user: true }
-        }
-      }
-    });
     
     let totalPendingAmount = 0;
     const pendingMembersList = pendingSubs.map(sub => {
