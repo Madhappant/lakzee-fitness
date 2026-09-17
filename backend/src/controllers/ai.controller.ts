@@ -152,15 +152,33 @@ async function handleToolCalls(toolCalls: any[]) {
       }
 
       else if (call.function.name === "delete_member") {
-        const user = await prisma.user.findUnique({ where: { email: args.email } });
+        const user = await prisma.user.findUnique({ 
+          where: { email: args.email },
+          include: { memberProfile: true }
+        });
         
         if (!user) {
           results.push({ tool_call_id: call.id, role: "tool", name: "delete_member", content: "Error: Member not found." });
           continue;
         }
         
-        // Prisma cascade deletes will handle memberProfile, subscriptions etc if configured correctly.
-        await prisma.user.delete({ where: { email: args.email } });
+        if (user.memberProfile) {
+          const profileId = user.memberProfile.id;
+          const invoices = await prisma.invoice.findMany({ where: { memberId: profileId } });
+          const invoiceIds = invoices.map((i: any) => i.id);
+
+          await prisma.$transaction([
+            prisma.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } }),
+            prisma.invoice.deleteMany({ where: { memberId: profileId } }),
+            prisma.subscription.deleteMany({ where: { memberId: profileId } }),
+            prisma.attendance.deleteMany({ where: { memberId: profileId } }),
+            prisma.dietPlan.deleteMany({ where: { memberId: profileId } }),
+            prisma.workoutRoutine.deleteMany({ where: { memberId: profileId } }),
+            prisma.memberProfile.delete({ where: { id: profileId } })
+          ]);
+        }
+        
+        await prisma.user.delete({ where: { id: user.id } });
         
         results.push({ tool_call_id: call.id, role: "tool", name: "delete_member", content: `Success: Member ${args.email} deleted successfully.` });
       }

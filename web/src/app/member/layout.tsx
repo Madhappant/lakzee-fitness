@@ -60,7 +60,15 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     setPrevPath(pathname);
   }
   
-  const user = isClient ? JSON.parse(localStorage.getItem("lakzee_user") || "null") as User | null : null;
+  let user: User | null = null;
+  if (isClient) {
+    try {
+      const item = localStorage.getItem("lakzee_user");
+      user = item ? (JSON.parse(item) as User) : null;
+    } catch {
+      user = null;
+    }
+  }
 
   useEffect(() => {
     if (!isClient) return;
@@ -72,9 +80,13 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       return;
     }
 
-    const userData = JSON.parse(userStr);
-    if (userData.role !== 'MEMBER') {
-      router.push("/admin/dashboard");
+    try {
+      const userData = JSON.parse(userStr);
+      if (userData.role !== 'MEMBER') {
+        router.push("/admin/dashboard");
+      }
+    } catch {
+      router.push("/login");
     }
   }, [router, isClient]);
 

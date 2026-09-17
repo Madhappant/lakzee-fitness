@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { 
@@ -14,8 +13,6 @@ import {
   CalendarCheck, 
   Settings, 
   LogOut,
-  Dumbbell,
-  Bell,
   Menu,
   Package,
   BarChart3,
@@ -121,7 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         // Members belong in the member portal
         router.push("/member/dashboard");
       }
-    } catch (e) {
+    } catch {
       router.push("/login");
     }
   }, [router]);

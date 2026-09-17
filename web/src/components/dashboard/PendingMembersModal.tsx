@@ -1,7 +1,24 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Phone, Receipt } from "lucide-react";
 
-export function PendingMembersModal({ isOpen, onClose, pendingMembers }: { isOpen: boolean; onClose: () => void; pendingMembers: any[] }) {
+export interface PendingMember {
+  id: string;
+  name: string;
+  memberId: string;
+  planName: string;
+  balanceAmount: number;
+  phone?: string;
+}
+
+export function PendingMembersModal({
+  isOpen,
+  onClose,
+  pendingMembers,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  pendingMembers: PendingMember[];
+}) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -37,7 +54,7 @@ export function PendingMembersModal({ isOpen, onClose, pendingMembers }: { isOpe
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pendingMembers.map((member: any) => (
+                  {pendingMembers.map((member) => (
                     <div key={member.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-xl border border-border bg-background/50 hover:bg-muted/30 transition-colors">
                       <div>
                         <p className="font-bold text-foreground">{member.name}</p>

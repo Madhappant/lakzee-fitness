@@ -49,6 +49,7 @@ export default function AssignPlanPage() {
   const dietMutation = useMutation({
     mutationFn: (data: any) => assignDietPlan(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["member", id] });
       alert("Diet Plan assigned successfully!");
       router.push(`/admin/members`);
     },
@@ -58,6 +59,7 @@ export default function AssignPlanPage() {
   const workoutMutation = useMutation({
     mutationFn: (data: any) => assignWorkoutRoutine(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["member", id] });
       alert("Workout Routine assigned successfully!");
       router.push(`/admin/members`);
     },

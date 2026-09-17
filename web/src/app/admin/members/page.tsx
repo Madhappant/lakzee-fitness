@@ -18,7 +18,7 @@ function MembersContent() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [selectedMember, setSelectedMember] = useState<any>(null);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["members"],
     queryFn: fetchMembers,
   });

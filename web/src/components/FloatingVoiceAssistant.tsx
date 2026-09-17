@@ -1,9 +1,37 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Loader2, Volume2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: {
+      isFinal: boolean;
+      [index: number]: { transcript: string };
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+
+interface ISpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+const emptySubscribe = () => () => {};
 
 export default function FloatingVoiceAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,27 +53,30 @@ export default function FloatingVoiceAssistant() {
   }, [messages, transcript, isListening]);
 
   // Drag State
-  const [position, setPosition] = useState({ x: -24, y: -24 });
-  const [isMounted, setIsMounted] = useState(false);
+  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("lakzee-ai-pos");
+      if (saved) {
+        try {
+          return JSON.parse(saved) as { x: number; y: number };
+        } catch {}
+      }
+    }
+    return { x: -24, y: -24 };
+  });
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [isDragging, setIsDragging] = useState(false);
   
   const dragStart = useRef({ x: 0, y: 0 });
   const initialPos = useRef({ x: 0, y: 0 });
-  const dragTimeout = useRef<any>(null);
+  const dragTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    setIsMounted(true);
     audioPlayerRef.current = new Audio(); // Create audio element on mount
-    
-    let savedPos = { x: -24, y: -24 };
-    const saved = localStorage.getItem('lakzee-ai-pos');
-    if (saved) {
-      try { savedPos = JSON.parse(saved); setPosition(savedPos); } catch (e) {}
-    }
 
     const handleResize = () => {
       setPosition(prev => {
@@ -176,17 +207,19 @@ export default function FloatingVoiceAssistant() {
     } finally {
       setIsThinking(false);
     }
-  }, [router]);
+  }, [router, speak]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as unknown as { SpeechRecognition?: new () => ISpeechRecognition }).SpeechRecognition ||
+        (window as unknown as { webkitSpeechRecognition?: new () => ISpeechRecognition }).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = false; // Stop after a single command
         recognitionRef.current.interimResults = true;
         
-        recognitionRef.current.onresult = (event: any) => {
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let current = "";
           let isFinal = false;
           for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -199,12 +232,12 @@ export default function FloatingVoiceAssistant() {
           // Some browsers fire isFinal correctly
           if (isFinal) {
             setIsListening(false);
-            recognitionRef.current.stop();
+            recognitionRef.current?.stop();
             handleCommand(current);
           }
         };
 
-        recognitionRef.current.onerror = (event: any) => {
+        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error("Speech recognition error", event.error);
           setIsListening(false);
         };
@@ -265,7 +298,7 @@ export default function FloatingVoiceAssistant() {
 
   const stopEverything = () => {
     if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch(e){}
+      try { recognitionRef.current.stop(); } catch {}
     }
     setIsListening(false);
     setIsThinking(false);
@@ -295,14 +328,14 @@ export default function FloatingVoiceAssistant() {
   const onPointerMove = (e: React.PointerEvent) => {
     if (!isDragging) {
        // if moved > 5px before timeout, trigger drag instantly
-       if (e.buttons && (Math.abs(e.clientX - dragStart.current.x) > 5 || Math.abs(e.clientY - dragStart.current.y) > 5)) {
-          clearTimeout(dragTimeout.current);
-          setIsDragging(true);
-          document.body.style.userSelect = 'none';
-          document.body.style.overflow = 'hidden';
-       } else {
-         return;
-       }
+        if (e.buttons && (Math.abs(e.clientX - dragStart.current.x) > 5 || Math.abs(e.clientY - dragStart.current.y) > 5)) {
+           if (dragTimeout.current) clearTimeout(dragTimeout.current);
+           setIsDragging(true);
+           document.body.style.userSelect = 'none';
+           document.body.style.overflow = 'hidden';
+        } else {
+          return;
+        }
     }
     
     const dx = e.clientX - dragStart.current.x;
@@ -328,7 +361,7 @@ export default function FloatingVoiceAssistant() {
 
   const onPointerUp = (e: React.PointerEvent) => {
     e.currentTarget.releasePointerCapture(e.pointerId);
-    clearTimeout(dragTimeout.current);
+    if (dragTimeout.current) clearTimeout(dragTimeout.current);
     document.body.style.userSelect = '';
     document.body.style.overflow = '';
     
@@ -361,7 +394,13 @@ export default function FloatingVoiceAssistant() {
           >
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
-                <img src="/logo.jpg" alt="Lakzee Logo" className="w-8 h-8 rounded-full object-cover border border-brand-gold/30" />
+                <Image
+                  src="/logo.jpg"
+                  alt="Lakzee Logo"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full object-cover border border-brand-gold/30"
+                />
                 <h3 className="font-bold text-brand-gold">
                   Lakzee AI
                 </h3>

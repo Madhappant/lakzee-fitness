@@ -38,7 +38,7 @@ export default function MemberDietPage() {
   let mealsData: any = {};
   try {
     mealsData = JSON.parse(plan.mealsData);
-  } catch (_e) {}
+  } catch {}
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">

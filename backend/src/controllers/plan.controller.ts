@@ -17,7 +17,8 @@ export const createPlan = async (req: Request, res: Response, next: NextFunction
     // Assuming the API lib converts it or we need to preprocess:
     const rawData = { ...req.body, price: Number(req.body.price), durationDays: Number(req.body.durationDays) };
     const validatedData = planSchema.parse(rawData);
-    const plan = await prisma.membershipPlan.create({ data: validatedData });
+    const { features, ...planData } = validatedData;
+    const plan = await prisma.membershipPlan.create({ data: planData });
     res.status(201).json({ status: 'success', data: plan });
   } catch (error) {
     next(error);
@@ -43,10 +44,11 @@ export const updatePlan = async (req: Request, res: Response, next: NextFunction
     if (rawData.durationDays !== undefined) rawData.durationDays = Number(rawData.durationDays);
     
     const validatedData = planSchema.partial().parse(rawData);
+    const { features, ...planData } = validatedData;
     
     const plan = await prisma.membershipPlan.update({
       where: { id },
-      data: validatedData
+      data: planData
     });
     res.json({ status: 'success', data: plan });
   } catch (error) {

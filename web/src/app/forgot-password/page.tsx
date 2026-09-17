@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [_simulatedData, setSimulatedData] = useState<{otp: string, phone: string, previewUrl?: string} | null>(null);
+  const [simulatedData, setSimulatedData] = useState<{otp: string, phone: string, previewUrl?: string} | null>(null);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +155,12 @@ export default function ForgotPasswordPage() {
                   <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
                     {error}
                   </div>
+                )}
+
+                {simulatedData?.otp && (
+                  <p className="text-xs text-brand-gold bg-brand-gold/10 p-2 rounded-lg text-center">
+                    Demo OTP: {simulatedData.otp}
+                  </p>
                 )}
                 
                 <div>

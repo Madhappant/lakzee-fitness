@@ -14,15 +14,8 @@ const createAnnouncementSchema = z.object({
 // GET /api/announcements - Fetch all announcements
 router.get('/', authenticate, async (req: any, res, next) => {
   try {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
     const announcements = await prisma.announcement.findMany({
-      where: {
-        createdAt: {
-          gte: todayStart
-        }
-      },
+      take: 50,
       include: {
         author: {
           select: { firstName: true, lastName: true }

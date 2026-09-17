@@ -41,8 +41,23 @@ export const createMember = async (req: Request, res: Response, next: NextFuncti
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const memberId = `LZ-${Math.floor(1000 + Math.random() * 9000)}`;
-    const photoUrl = req.file ? req.file.path : undefined;
+    
+    // Generate collision-safe unique member ID
+    let memberId = `LZ-${Math.floor(1000 + Math.random() * 9000)}`;
+    for (let attempts = 0; attempts < 10; attempts++) {
+      const existing = await prisma.memberProfile.findUnique({ where: { memberId } });
+      if (!existing) break;
+      memberId = `LZ-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    let photoUrl: string | undefined = undefined;
+    if (req.file) {
+      if ((process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) && req.file.path.startsWith('http')) {
+        photoUrl = req.file.path;
+      } else {
+        photoUrl = `/uploads/${req.file.filename}`;
+      }
+    }
 
     const newMember = await prisma.user.create({
       data: {
@@ -184,7 +199,10 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
     };
 
     if (req.file) {
-      updateData.memberProfile.update.photoUrl = req.file.path;
+      const pUrl = ((process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) && req.file.path.startsWith('http'))
+        ? req.file.path
+        : `/uploads/${req.file.filename}`;
+      updateData.memberProfile.update.photoUrl = pUrl;
     }
 
     if (email) updateData.email = email;

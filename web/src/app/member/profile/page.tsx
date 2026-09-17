@@ -19,6 +19,9 @@ export default function MemberProfilePage() {
     queryFn: fetchMyProfile,
   });
 
+  const profile = profileData?.data;
+  const user = profile?.user;
+
   const uploadMutation = useMutation({
     mutationFn: uploadMyPhoto,
     onSuccess: () => {
@@ -122,8 +125,6 @@ export default function MemberProfilePage() {
     );
   }
 
-  const profile = profileData?.data;
-  const user = profile?.user;
   const base = API_URL.replace("/api", "");
   const photoUrl = profile?.photoUrl ? (profile.photoUrl.startsWith('http') ? profile.photoUrl : `${base}${profile.photoUrl}`) : null;
 

@@ -3,14 +3,22 @@ import { prisma } from '../app';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
-    // 1. Active Members
-    const activeMembersCount = await prisma.user.count({
-      where: { role: 'MEMBER' }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 1. Active Members (Members with an active unexpired subscription, matching Reports)
+    const activeMembersCount = await prisma.memberProfile.count({
+      where: {
+        subscriptions: {
+          some: {
+            endDate: { gte: today },
+            status: 'ACTIVE'
+          }
+        }
+      }
     });
 
     // 2. Today's Check-ins
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     const checkInsCount = await prisma.attendance.count({
       where: {
         date: {
@@ -111,14 +119,23 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       date: sub.endDate.toISOString()
     }));
 
-    // Expired
+    // Expired (Members whose subscriptions have lapsed and do NOT have any active subscription)
     const expiredSubs = await prisma.subscription.findMany({
       where: {
         OR: [
           { status: 'EXPIRED' },
           { endDate: { lt: today } }
-        ]
+        ],
+        member: {
+          subscriptions: {
+            none: {
+              endDate: { gte: today },
+              status: 'ACTIVE'
+            }
+          }
+        }
       },
+      distinct: ['memberId'],
       include: {
         plan: true,
         member: {

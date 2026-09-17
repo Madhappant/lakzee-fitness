@@ -79,7 +79,13 @@ export default function MemberSubscriptions() {
                       </td>
                       <td className="py-4 px-4">
                         <p className="font-bold text-lg">₹{sub.plan?.price}</p>
-                        <span className="text-xs text-green-400">Paid</span>
+                        {sub.invoice && sub.invoice.balanceAmount > 0 ? (
+                          <span className="text-xs text-red-400 font-medium">
+                            Pending ₹{sub.invoice.balanceAmount.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-green-400">Paid</span>
+                        )}
                       </td>
                       <td className="py-4 px-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${

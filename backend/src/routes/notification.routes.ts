@@ -27,14 +27,23 @@ router.get('/', authenticate, async (req: any, res) => {
     if (userRole === 'ADMIN' || userRole === 'RECEPTIONIST') {
       // ADMIN NOTIFICATIONS
 
-      // 1. Pending Payments
+      // 1. Pending Payments (Invoices or Pending Subscriptions)
       const pendingInvoices = await prisma.invoice.findMany({
         where: { status: 'PENDING' },
         include: { member: { include: { user: true } } },
         orderBy: { createdAt: 'desc' }
       });
 
+      const pendingSubs = await prisma.subscription.findMany({
+        where: { paymentStatus: 'PENDING' },
+        include: { member: { include: { user: true } }, plan: true },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const seenMemberPaymentIds = new Set<string>();
+
       pendingInvoices.forEach(invoice => {
+        seenMemberPaymentIds.add(invoice.memberId);
         notifications.push({
           id: `inv-${invoice.id}`,
           type: 'PAYMENT',
@@ -44,6 +53,22 @@ router.get('/', authenticate, async (req: any, res) => {
           link: `/admin/payments`,
           read: false
         });
+      });
+
+      pendingSubs.forEach(sub => {
+        if (!seenMemberPaymentIds.has(sub.memberId)) {
+          seenMemberPaymentIds.add(sub.memberId);
+          const amount = sub.balanceAmount > 0 ? sub.balanceAmount : (sub.plan?.price || 0);
+          notifications.push({
+            id: `sub-pay-${sub.id}`,
+            type: 'PAYMENT',
+            title: 'Pending Subscription Payment',
+            message: `${sub.member.user.firstName} ${sub.member.user.lastName} has a pending payment of ₹${amount} for ${sub.plan?.name || 'plan'}.`,
+            date: sub.createdAt,
+            link: `/admin/payments`,
+            read: false
+          });
+        }
       });
 
       // 2. Expiring / Expired Subscriptions
@@ -111,14 +136,36 @@ router.get('/', authenticate, async (req: any, res) => {
           orderBy: { createdAt: 'desc' }
         });
 
+        const myPendingSubs = await prisma.subscription.findMany({
+          where: { memberId: memberProfile.id, paymentStatus: 'PENDING' },
+          include: { plan: true },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        const seenMyPayment = new Set<string>();
+
         myPendingInvoices.forEach(invoice => {
+          seenMyPayment.add(invoice.id);
           notifications.push({
             id: `inv-${invoice.id}`,
             type: 'PAYMENT',
             title: 'Pending Payment',
             message: `You have a pending invoice of ₹${invoice.totalAmount}. Please complete your payment.`,
             date: invoice.createdAt,
-            link: `/member/dashboard`, // Or somewhere specific for member payments if it existed
+            link: `/member/subscriptions`,
+            read: false
+          });
+        });
+
+        myPendingSubs.forEach(sub => {
+          const amount = sub.balanceAmount > 0 ? sub.balanceAmount : (sub.plan?.price || 0);
+          notifications.push({
+            id: `sub-pay-${sub.id}`,
+            type: 'PAYMENT',
+            title: 'Pending Plan Payment',
+            message: `You have a pending payment of ₹${amount} for your ${sub.plan?.name || 'membership'} plan.`,
+            date: sub.createdAt,
+            link: `/member/subscriptions`,
             read: false
           });
         });

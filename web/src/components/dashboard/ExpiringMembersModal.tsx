@@ -1,6 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Phone, Clock, XCircle } from "lucide-react";
 
+export interface ExpiringMember {
+  id: string;
+  name: string;
+  memberId: string;
+  planName: string;
+  date: string;
+  phone?: string;
+}
+
 export function ExpiringMembersModal({ 
   isOpen, 
   onClose, 
@@ -9,7 +18,7 @@ export function ExpiringMembersModal({
 }: { 
   isOpen: boolean; 
   onClose: () => void; 
-  members: any[];
+  members: ExpiringMember[];
   type: "EXPIRING" | "EXPIRED"
 }) {
   const Icon = type === "EXPIRING" ? Clock : XCircle;
@@ -54,7 +63,7 @@ export function ExpiringMembersModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {members.map((member: any) => (
+                  {members.map((member) => (
                     <div key={member.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-xl border border-border bg-background/50 hover:bg-muted/30 transition-colors">
                       <div>
                         <p className="font-bold text-foreground">{member.name}</p>

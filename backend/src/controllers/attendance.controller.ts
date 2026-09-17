@@ -45,11 +45,25 @@ export const checkIn = async (req: Request, res: Response) => {
       where: {
         memberId: member.id,
         checkOut: null
-      }
+      },
+      orderBy: { checkIn: 'desc' }
     });
 
     if (existingCheckIn) {
-      return res.status(400).json({ status: 'error', message: 'Member is already checked in and has not checked out' });
+      const now = new Date();
+      const diffHours = (now.getTime() - new Date(existingCheckIn.checkIn).getTime()) / (1000 * 60 * 60);
+      
+      // If check-in was within the last 16 hours, consider it an active ongoing workout session
+      if (diffHours < 16) {
+        return res.status(400).json({ status: 'error', message: 'Member is already checked in and has not checked out' });
+      } else {
+        // Auto-close forgotten session from previous day so member is never permanently locked out
+        const autoCheckOut = new Date(new Date(existingCheckIn.checkIn).getTime() + 2 * 60 * 60 * 1000);
+        await prisma.attendance.update({
+          where: { id: existingCheckIn.id },
+          data: { checkOut: autoCheckOut }
+        });
+      }
     }
 
     // Create checkin record

@@ -46,11 +46,14 @@ import aiRoutes from './routes/ai.routes';
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// Trust reverse proxy (Render, Vercel, Nginx) so client IP is accurately recognized
+app.set('trust proxy', 1);
+
 // Routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: { status: 'error', message: 'Too many requests, please try again later.' }
+  max: 15, // limit each IP to 15 requests per windowMs
+  message: { status: 'error', message: 'Too many login attempts. Please try again in 15 minutes.' }
 });
 
 app.use('/api/auth/login', authLimiter);

@@ -18,7 +18,8 @@ type Notification = {
   read: boolean;
 };
 
-export function NotificationDropdown({ role: _role }: { role: "ADMIN" | "MEMBER" }) {
+export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {}) {
+  void role;
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

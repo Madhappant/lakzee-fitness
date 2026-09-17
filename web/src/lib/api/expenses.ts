@@ -21,7 +21,15 @@ export const fetchExpenses = async (month?: number, year?: number) => {
   return res.json();
 };
 
-export const createExpense = async (data: any) => {
+export interface ExpenseData {
+  title: string;
+  category: string;
+  amount: number;
+  date?: string;
+  notes?: string;
+}
+
+export const createExpense = async (data: ExpenseData) => {
   const token = getAuthToken();
   const res = await fetch(`${API_URL}/expenses`, {
     method: "POST",
@@ -38,7 +46,7 @@ export const createExpense = async (data: any) => {
   return res.json();
 };
 
-export const updateExpense = async (id: string, data: any) => {
+export const updateExpense = async (id: string, data: Partial<ExpenseData>) => {
   const token = getAuthToken();
   const res = await fetch(`${API_URL}/expenses/${id}`, {
     method: "PUT",

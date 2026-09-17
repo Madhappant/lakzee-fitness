@@ -2,7 +2,32 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Loader2, Sparkles, Settings2, ShieldCheck, CheckCircle2, XCircle, Mic, Paperclip, X, Image as ImageIcon, Volume2, MicOff } from "lucide-react";
+import { Send, Bot, User, Loader2, Sparkles, Settings2, ShieldCheck, CheckCircle2, XCircle, Mic, Paperclip, X, Volume2, MicOff } from "lucide-react";
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: {
+      isFinal: boolean;
+      [index: number]: { transcript: string };
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+
+interface ISpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
 
 type ContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 type ChatMessage = { role: 'user' | 'assistant', content: string | ContentPart[] };
@@ -22,7 +47,7 @@ export default function AiAssistantPage() {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,7 +73,7 @@ export default function AiAssistantPage() {
         } else {
           setConfigStatus('not_configured');
         }
-      } catch (error) {
+      } catch {
         setConfigStatus('not_configured');
       }
     };
@@ -56,13 +81,15 @@ export default function AiAssistantPage() {
 
     // Initialize Speech Recognition
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as unknown as { SpeechRecognition?: new () => ISpeechRecognition }).SpeechRecognition ||
+        (window as unknown as { webkitSpeechRecognition?: new () => ISpeechRecognition }).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
         recognitionRef.current.interimResults = true;
         
-        recognitionRef.current.onresult = (event: any) => {
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let interimTranscript = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
@@ -74,7 +101,7 @@ export default function AiAssistantPage() {
           setInput(finalTranscriptRef.current + interimTranscript);
         };
 
-        recognitionRef.current.onerror = (event: any) => {
+        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error("Speech recognition error", event.error);
           setIsListening(false);
         };
@@ -195,11 +222,12 @@ export default function AiAssistantPage() {
       
       setMessages([...newMessages, { role: "assistant", content: aiResponse }]);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
+      const errMsg = error instanceof Error ? error.message : "Unknown Error";
       setMessages([...newMessages, { 
         role: "assistant", 
-        content: `Error: ${error.message || 'Unknown Error'}` 
+        content: `Error: ${errMsg}` 
       }]);
     } finally {
       setIsLoading(false);

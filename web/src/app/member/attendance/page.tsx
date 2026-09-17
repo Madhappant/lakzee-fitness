@@ -49,6 +49,7 @@ export default function MemberAttendance() {
           <div className="space-y-4">
             {attendanceLogs.map((log: any, i: number) => {
               const checkIn = new Date(log.checkIn);
+              const checkOut = log.checkOut ? new Date(log.checkOut) : null;
               return (
                 <motion.div
                   key={log.id}
@@ -67,15 +68,22 @@ export default function MemberAttendance() {
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" /> Lakzee Studio
                         </span>
-                        <span>{checkIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>
+                          In: {checkIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {checkOut ? ` • Out: ${checkOut.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : " • Active"}
+                        </span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="hidden sm:flex flex-col items-end">
                     <span className="text-xs text-brand-gold uppercase tracking-wider font-bold mb-1">Status</span>
-                    <span className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/20 rounded-full text-xs font-bold">
-                      Verified
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                      checkOut
+                        ? "bg-green-500/20 text-green-400 border-green-500/20"
+                        : "bg-brand-gold/20 text-brand-gold border-brand-gold/30"
+                    }`}>
+                      {checkOut ? "Completed" : "Checked In"}
                     </span>
                   </div>
                 </motion.div>

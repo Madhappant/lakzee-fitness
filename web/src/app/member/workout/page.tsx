@@ -38,7 +38,7 @@ export default function MemberWorkoutPage() {
   let exercisesData: any = {};
   try {
     exercisesData = JSON.parse(routine.exercisesData);
-  } catch (_e) {}
+  } catch {}
 
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Save } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,47 +9,70 @@ const categories = [
 ];
 const paymentMethods = ["CASH", "UPI", "BANK_TRANSFER", "CREDIT_CARD"];
 
-export function ExpenseModal({ isOpen, onClose, expense = null }: { isOpen: boolean; onClose: () => void; expense?: any }) {
+export interface ExpenseItem {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  date: string;
+  paymentMethod: string;
+  notes?: string;
+}
+
+interface ExpenseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  expense?: ExpenseItem | null;
+}
+
+export function ExpenseModal({ isOpen, onClose, expense = null }: ExpenseModalProps) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <ExpenseModalContent
+          key={expense ? expense.id : "new"}
+          onClose={onClose}
+          expense={expense}
+        />
+      )}
+    </AnimatePresence>
+  );
+}
+
+function ExpenseModalContent({
+  onClose,
+  expense,
+}: {
+  onClose: () => void;
+  expense: ExpenseItem | null;
+}) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    title: "",
-    category: "OTHER",
-    amount: "",
-    date: new Date().toISOString().split("T")[0],
-    paymentMethod: "CASH",
-    notes: ""
+    title: expense?.title || "",
+    category: expense?.category || "OTHER",
+    amount: expense ? expense.amount.toString() : "",
+    date: expense
+      ? new Date(expense.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
+    paymentMethod: expense?.paymentMethod || "CASH",
+    notes: expense?.notes || "",
   });
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (expense) {
-      setFormData({
-        title: expense.title,
-        category: expense.category,
-        amount: expense.amount.toString(),
-        date: new Date(expense.date).toISOString().split("T")[0],
-        paymentMethod: expense.paymentMethod,
-        notes: expense.notes || ""
-      });
-    } else {
-      setFormData({
-        title: "",
-        category: "OTHER",
-        amount: "",
-        date: new Date().toISOString().split("T")[0],
-        paymentMethod: "CASH",
-        notes: ""
-      });
-    }
-  }, [expense, isOpen]);
-
   const mutation = useMutation({
-    mutationFn: (data: any) => expense ? updateExpense(expense.id, data) : createExpense(data),
+    mutationFn: (data: {
+      title: string;
+      category: string;
+      amount: number;
+      date: string;
+      notes?: string;
+    }) =>
+      expense ? updateExpense(expense.id, data) : createExpense(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onClose();
     },
-    onError: (err: any) => setError(err.message)
+    onError: (err: Error) => setError(err.message),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,21 +81,19 @@ export function ExpenseModal({ isOpen, onClose, expense = null }: { isOpen: bool
     mutation.mutate({
       ...formData,
       amount: Number(formData.amount),
-      date: new Date(formData.date).toISOString()
+      date: new Date(formData.date).toISOString(),
     });
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
-            onClick={onClose}
-          />
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+        onClick={onClose}
+      />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -174,8 +195,6 @@ export function ExpenseModal({ isOpen, onClose, expense = null }: { isOpen: bool
               </button>
             </form>
           </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    </>
   );
 }

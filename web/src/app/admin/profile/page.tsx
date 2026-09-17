@@ -3,7 +3,7 @@
 import { API_URL } from "@/lib/api/config";
 
 import { useEffect, useState } from "react";
-import { UserCircle, Mail, ShieldCheck, Copy, CheckCircle2, Phone, X, Loader2, MessageSquare } from "lucide-react";
+import { UserCircle, Mail, ShieldCheck, Copy, CheckCircle2, Phone, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type PhoneStep = "IDLE" | "REQUEST_OTP" | "VERIFY_OTP" | "SUCCESS";
@@ -26,7 +26,7 @@ export default function ProfilePage() {
       try {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser(JSON.parse(userStr));
-      } catch (_e) {}
+      } catch {}
     }
   }, []);
 
@@ -274,7 +274,12 @@ export default function ProfilePage() {
                   <form onSubmit={handleVerifyOtp} className="space-y-6">
                     <div>
                       <h3 className="text-xl font-bold text-foreground mb-2">Verify Phone Number</h3>
-                      <p className="text-sm text-muted-foreground mb-6">Enter the 6-digit code sent to your phone.</p>
+                      <p className="text-sm text-muted-foreground mb-4">Enter the 6-digit code sent to your phone.</p>
+                      {simulatedData?.otp && (
+                        <p className="text-xs text-brand-gold bg-brand-gold/10 p-2 rounded-lg text-center mb-4">
+                          Demo OTP: {simulatedData.otp}
+                        </p>
+                      )}
                     </div>
 
                     {error && (

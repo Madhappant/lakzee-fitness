@@ -25,7 +25,8 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return res.status(401).json({ status: 'error', message: 'Unauthorized, invalid token' });
     }
 
-    req.user = decoded;
+    // Attach current database user details so role changes reflect immediately
+    req.user = { id: user.id, role: user.role };
     next();
   } catch (error: any) {
     console.error("Auth Middleware Error:", error);

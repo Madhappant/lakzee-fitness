@@ -5,7 +5,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardStats } from "@/lib/api/dashboard";
-import { Users, CreditCard, Activity, TrendingUp, Dumbbell, Loader2, QrCode, UserPlus, Wallet, Clock, XCircle, Cake, Receipt } from "lucide-react";
+import { Users, Activity, TrendingUp, Dumbbell, Loader2, QrCode, UserPlus, Wallet, Clock, XCircle, Cake, Receipt } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PendingMembersModal } from "@/components/dashboard/PendingMembersModal";

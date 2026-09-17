@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchExpenses, deleteExpense } from "@/lib/api/expenses";
-import { ExpenseModal } from "@/components/expenses/ExpenseModal";
+import { ExpenseModal, ExpenseItem } from "@/components/expenses/ExpenseModal";
 import { Plus, Receipt, IndianRupee, Trash2, Edit2, Loader2, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -21,7 +21,7 @@ export default function ExpensesPage() {
     queryFn: () => fetchExpenses(selectedMonth, selectedYear),
   });
 
-  const expenses = data?.data || [];
+  const expenses: ExpenseItem[] = data?.data || [];
 
   const deleteMut = useMutation({
     mutationFn: deleteExpense,
@@ -34,7 +34,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleEdit = (expense: any) => {
+  const handleEdit = (expense: ExpenseItem) => {
     setEditingExpense(expense);
     setIsModalOpen(true);
   };
@@ -44,7 +44,7 @@ export default function ExpensesPage() {
     setIsModalOpen(true);
   };
 
-  const totalAmount = expenses.reduce((sum: number, exp: any) => sum + exp.amount, 0);
+  const totalAmount = expenses.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -139,7 +139,7 @@ export default function ExpensesPage() {
                 </tr>
               )}
 
-              {!isLoading && expenses.map((exp: any) => (
+              {!isLoading && expenses.map((exp) => (
                 <motion.tr 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

@@ -25,6 +25,41 @@ export const createSubscription = async (req: Request, res: Response) => {
       }
     });
 
+    // Generate corresponding Invoice and Payment record
+    try {
+      const gstRate = (plan.gstPercentage || 18.0) / 100;
+      const basePrice = plan.price / (1 + gstRate);
+      const gstAmount = plan.price - basePrice;
+      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+
+      const invoice = await prisma.invoice.create({
+        data: {
+          invoiceNumber,
+          memberId,
+          subscriptionId: subscription.id,
+          subtotal: Math.round(basePrice * 100) / 100,
+          discount: 0,
+          gstAmount: Math.round(gstAmount * 100) / 100,
+          totalAmount: plan.price,
+          status: paymentStatus === 'PAID' ? 'COMPLETED' : 'PENDING',
+        }
+      });
+
+      const paidAmount = paymentStatus === 'PAID' ? plan.price : Math.max(0, plan.price - (Number(balanceAmount) || 0));
+      if (paidAmount > 0) {
+        await prisma.payment.create({
+          data: {
+            invoiceId: invoice.id,
+            amount: paidAmount,
+            method: paymentMethod || 'CASH',
+            status: 'COMPLETED'
+          }
+        });
+      }
+    } catch (invErr) {
+      console.error("Warning: Failed to auto-generate invoice:", invErr);
+    }
+
     res.status(201).json({ status: 'success', data: subscription });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to create subscription' });
@@ -127,15 +162,19 @@ export const updateSubscription = async (req: Request, res: Response) => {
       dataToUpdate.balanceAmount = Number(balanceAmount);
     }
 
-    if (startDate && planId) {
-      const plan = await prisma.membershipPlan.findUnique({ where: { id: planId } });
-      if (plan) {
-        const start = new Date(startDate);
-        const end = new Date(start);
-        end.setDate(end.getDate() + plan.durationDays);
-        dataToUpdate.startDate = start;
-        dataToUpdate.endDate = end;
-        dataToUpdate.planId = planId;
+    if (startDate || planId) {
+      const currentSub = await prisma.subscription.findUnique({ where: { id }, include: { plan: true } });
+      if (currentSub) {
+        const effectivePlanId = planId || currentSub.planId;
+        const effectivePlan = planId ? await prisma.membershipPlan.findUnique({ where: { id: planId } }) : currentSub.plan;
+        if (effectivePlan) {
+          const start = startDate ? new Date(startDate) : new Date(currentSub.startDate);
+          const end = new Date(start);
+          end.setDate(end.getDate() + effectivePlan.durationDays);
+          dataToUpdate.startDate = start;
+          dataToUpdate.endDate = end;
+          dataToUpdate.planId = effectivePlanId;
+        }
       }
     }
 
@@ -151,6 +190,18 @@ export const updateSubscription = async (req: Request, res: Response) => {
 export const deleteSubscription = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
+    
+    // Clean up associated invoice and payments first to avoid foreign key violation
+    const sub = await prisma.subscription.findUnique({
+      where: { id },
+      include: { invoice: true }
+    });
+
+    if (sub?.invoice) {
+      await prisma.payment.deleteMany({ where: { invoiceId: sub.invoice.id } });
+      await prisma.invoice.delete({ where: { id: sub.invoice.id } });
+    }
+
     await prisma.subscription.delete({ where: { id } });
     res.json({ status: 'success', message: 'Subscription deleted successfully' });
   } catch (error) {
