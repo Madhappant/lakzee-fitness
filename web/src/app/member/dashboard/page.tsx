@@ -7,6 +7,7 @@ import { fetchMyProfile, fetchMyAttendance } from "@/lib/api/portal";
 import { Loader2, CalendarCheck, Clock, ShieldCheck, Dumbbell, ArrowRight, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
 
 export default function MemberDashboard() {
   const { data: profileData, isLoading: profileLoading } = useQuery({
@@ -210,6 +211,18 @@ export default function MemberDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Activity Heatmap Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+      >
+        <ActivityHeatmap
+          activityDates={recentAttendance.map((a: any) => a.date || a.checkIn)}
+          weeksCount={24}
+        />
+      </motion.div>
     </div>
   );
 }
