@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchSubscriptions, createSubscription, fetchPaymentStats, updateSubscription, deleteSubscription } from "@/lib/api/subscriptions";
 import { fetchMembers } from "@/lib/api/members";
 import { fetchPlans } from "@/lib/api/plans";
-import { Plus, X, Loader2, Calendar as CalendarIcon, CheckCircle2, CalendarRange, Wallet, ListTree, Edit2, Trash2, Save } from "lucide-react";
+import { Plus, X, Loader2, Calendar as CalendarIcon, CheckCircle2, CalendarRange, Wallet, ListTree, Edit2, Trash2, Save, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PaymentsPage() {
@@ -24,8 +24,15 @@ export default function PaymentsPage() {
     balanceAmount: "",
   });
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [paymentFilter, setPaymentFilter] = useState("All Payments");
+
   // Fetching Data
-  const { data: subsData, isLoading: loadingSubs } = useQuery({ queryKey: ["subscriptions"], queryFn: fetchSubscriptions });
+  const { data: subsData, isLoading: loadingSubs } = useQuery({ 
+    queryKey: ["subscriptions"], 
+    queryFn: () => fetchSubscriptions() 
+  });
   const { data: statsData } = useQuery({ queryKey: ["paymentStats"], queryFn: fetchPaymentStats });
   const { data: membersData } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
   const { data: plansData } = useQuery({ queryKey: ["plans"], queryFn: fetchPlans });
@@ -34,6 +41,36 @@ export default function PaymentsPage() {
   const stats = statsData?.data || { todaysCollection: 0, thisMonth: 0, totalRecords: 0, totalPending: 0 };
   const members = membersData?.data || [];
   const plans = plansData?.data || [];
+
+  const filteredSubscriptions = subscriptions.filter((sub: any) => {
+    const q = searchQuery.toLowerCase().trim();
+    const firstName = sub.member?.user?.firstName || "";
+    const lastName = sub.member?.user?.lastName || "";
+    const fullName = `${firstName} ${lastName}`.toLowerCase();
+    const memberId = (sub.member?.memberId || "").toLowerCase();
+    const email = (sub.member?.user?.email || "").toLowerCase();
+    const phone = (sub.member?.user?.phone || "").toLowerCase();
+    const planName = (sub.plan?.name || "").toLowerCase();
+    const method = (sub.paymentMethod || "").toLowerCase();
+
+    const matchesSearch = !q || 
+      fullName.includes(q) || 
+      memberId.includes(q) || 
+      email.includes(q) || 
+      phone.includes(q) || 
+      planName.includes(q) || 
+      method.includes(q);
+
+    let matchesStatus = true;
+    if (statusFilter === "Active") matchesStatus = sub.status === "ACTIVE";
+    if (statusFilter === "Expired") matchesStatus = sub.status === "EXPIRED";
+
+    let matchesPayment = true;
+    if (paymentFilter === "Paid") matchesPayment = sub.paymentStatus === "PAID";
+    if (paymentFilter === "Pending") matchesPayment = sub.paymentStatus === "PENDING";
+
+    return matchesSearch && matchesStatus && matchesPayment;
+  });
 
   const mutation = useMutation({
     mutationFn: createSubscription,
@@ -171,6 +208,52 @@ export default function PaymentsPage() {
         </button>
       </div>
 
+      {/* Filters & Search */}
+      <div className="glass-panel p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full md:w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search by member, plan, ID, or phone..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-card/50 border border-border rounded-lg pl-10 pr-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none transition-colors"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <select 
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value)}
+            className="bg-card/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none w-full sm:w-auto cursor-pointer"
+          >
+            <option>All Payments</option>
+            <option>Paid</option>
+            <option>Pending</option>
+          </select>
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-card/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none w-full sm:w-auto cursor-pointer"
+          >
+            <option>All Status</option>
+            <option>Active</option>
+            <option>Expired</option>
+          </select>
+          {(searchQuery || statusFilter !== "All Status" || paymentFilter !== "All Payments") && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("All Status");
+                setPaymentFilter("All Payments");
+              }}
+              className="text-xs text-brand-gold hover:underline px-2 py-1 font-medium transition-colors"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Subscriptions Table */}
       <div className="glass-panel overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
@@ -190,7 +273,7 @@ export default function PaymentsPage() {
             <tbody className="divide-y divide-border">
               {loadingSubs && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-brand-gold mx-auto mb-4" />
                   </td>
                 </tr>
@@ -198,13 +281,32 @@ export default function PaymentsPage() {
 
               {!loadingSubs && subscriptions.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                     No active subscriptions found.
                   </td>
                 </tr>
               )}
 
-              {subscriptions.map((sub: any, i: number) => {
+              {!loadingSubs && subscriptions.length > 0 && filteredSubscriptions.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
+                    <p className="text-base font-semibold mb-1 text-foreground">No matching subscriptions found</p>
+                    <p className="text-xs mb-3 text-muted-foreground">Try adjusting your search query or filter criteria.</p>
+                    <button
+                      onClick={() => {
+                        setSearchQuery("");
+                        setStatusFilter("All Status");
+                        setPaymentFilter("All Payments");
+                      }}
+                      className="px-4 py-1.5 rounded-lg border border-brand-gold text-brand-gold hover:bg-brand-gold/10 text-xs font-semibold transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  </td>
+                </tr>
+              )}
+
+              {filteredSubscriptions.map((sub: any, i: number) => {
                 const isActive = sub.status === 'ACTIVE';
                 
                 return (

@@ -68,6 +68,8 @@ export const createSubscription = async (req: Request, res: Response) => {
 
 export const getSubscriptions = async (req: Request, res: Response) => {
   try {
+    const { search, status, paymentStatus } = req.query;
+
     const today = new Date();
     await prisma.subscription.updateMany({
       where: {
@@ -77,8 +79,32 @@ export const getSubscriptions = async (req: Request, res: Response) => {
       data: { status: 'EXPIRED' }
     });
 
+    const where: any = {};
+
+    if (status && status !== 'All Status' && status !== 'ALL') {
+      where.status = String(status).toUpperCase();
+    }
+
+    if (paymentStatus && paymentStatus !== 'All Payments' && paymentStatus !== 'ALL') {
+      where.paymentStatus = String(paymentStatus).toUpperCase();
+    }
+
+    if (search) {
+      const searchStr = String(search).trim();
+      where.OR = [
+        { member: { memberId: { contains: searchStr, mode: 'insensitive' } } },
+        { member: { user: { firstName: { contains: searchStr, mode: 'insensitive' } } } },
+        { member: { user: { lastName: { contains: searchStr, mode: 'insensitive' } } } },
+        { member: { user: { email: { contains: searchStr, mode: 'insensitive' } } } },
+        { member: { user: { phone: { contains: searchStr, mode: 'insensitive' } } } },
+        { plan: { name: { contains: searchStr, mode: 'insensitive' } } },
+      ];
+    }
+
     const subscriptions = await prisma.subscription.findMany({
-      include: { plan: true, member: { include: { user: true } } }
+      where,
+      include: { plan: true, member: { include: { user: true } } },
+      orderBy: { createdAt: 'desc' }
     });
     res.json({ status: 'success', data: subscriptions });
   } catch (error) {
@@ -93,10 +119,22 @@ export const getPaymentStats = async (req: Request, res: Response) => {
 
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const todaysSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: today } },
-      include: { plan: true }
-    });
+    const [todaysSubs, monthSubs, totalRecords, pendingSubs] = await Promise.all([
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: today } },
+        include: { plan: true }
+      }),
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: firstDayOfMonth } },
+        include: { plan: true }
+      }),
+      prisma.subscription.count(),
+      prisma.subscription.findMany({
+        where: { paymentStatus: 'PENDING' },
+        include: { plan: true }
+      })
+    ]);
+
     const todaysCollection = todaysSubs.reduce((sum, sub) => {
       const price = sub.plan?.price || 0;
       if (sub.paymentStatus === 'PAID') return sum + price;
@@ -107,10 +145,6 @@ export const getPaymentStats = async (req: Request, res: Response) => {
       return sum;
     }, 0);
 
-    const monthSubs = await prisma.subscription.findMany({
-      where: { createdAt: { gte: firstDayOfMonth } },
-      include: { plan: true }
-    });
     const thisMonth = monthSubs.reduce((sum, sub) => {
       const price = sub.plan?.price || 0;
       if (sub.paymentStatus === 'PAID') return sum + price;
@@ -121,12 +155,6 @@ export const getPaymentStats = async (req: Request, res: Response) => {
       return sum;
     }, 0);
 
-    const totalRecords = await prisma.subscription.count();
-
-    const pendingSubs = await prisma.subscription.findMany({
-      where: { paymentStatus: 'PENDING' },
-      include: { plan: true }
-    });
     const totalPending = pendingSubs.reduce((sum, sub) => {
       const price = sub.plan?.price || 0;
       if (sub.balanceAmount > 0) return sum + sub.balanceAmount;
