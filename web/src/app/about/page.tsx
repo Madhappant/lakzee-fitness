@@ -20,17 +20,10 @@ const trainers = [
     image: "/logo.jpg"
   },
   {
-    name: "Vikram Raj",
-    role: "Senior Functional & Conditioning Coach",
-    specialty: "Kettlebells, HIIT, Athletic Mobility",
-    bio: "Passionate about building functional cardiovascular endurance and injury resilience.",
-    image: "/logo.jpg"
-  },
-  {
-    name: "Ananya Sharma",
-    role: "Head Nutritionist & Female Wellness Lead",
-    specialty: "Macro Coaching, Body Recomposition, Posture",
-    bio: "Certified clinical sports nutritionist dedicated to sustainable wellness and fat loss.",
+    name: "Sakthi vel",
+    role: "Main Coach",
+    specialty: "Strength, Conditioning & Physique Transformation",
+    bio: "Master coach specializing in athletic performance, biomechanical lifting technique, and high-impact body transformations.",
     image: "/logo.jpg"
   }
 ];
@@ -116,7 +109,7 @@ export default function AboutPage() {
               <p className="text-muted-foreground">Certified specialists dedicated to unlocking your peak potential safely and sustainably.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
               {trainers.map((t, i) => (
                 <div key={i} className="group rounded-3xl overflow-hidden border border-border bg-card/80 hover:border-brand-gold/40 transition-all p-6 space-y-4">
                   <div className="relative h-64 w-full rounded-2xl overflow-hidden bg-muted">
@@ -124,7 +117,7 @@ export default function AboutPage() {
                       src={t.image}
                       alt={t.name}
                       fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>

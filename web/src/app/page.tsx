@@ -125,10 +125,10 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
             <div className="p-6 rounded-3xl bg-card border border-border/80 hover:border-brand-gold/40 transition-all space-y-4">
               <div className="relative h-64 w-full rounded-2xl overflow-hidden bg-muted">
-                <Image src="/logo.jpg" alt="Madhappan D" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                <Image src="/logo.jpg" alt="Madhappan D" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-foreground">Madhappan D</h3>
@@ -142,29 +142,15 @@ export default function Home() {
 
             <div className="p-6 rounded-3xl bg-card border border-border/80 hover:border-brand-gold/40 transition-all space-y-4">
               <div className="relative h-64 w-full rounded-2xl overflow-hidden bg-muted">
-                <Image src="/logo.jpg" alt="Vikram Raj" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                <Image src="/logo.jpg" alt="Sakthi vel" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-foreground">Vikram Raj</h3>
-                <p className="text-xs text-brand-gold font-semibold uppercase tracking-wider">Functional Agility Coach</p>
-                <p className="text-xs text-muted-foreground mt-1">Specialty: HIIT, Kettlebell & Mobility</p>
+                <h3 className="text-xl font-bold text-foreground">Sakthi vel</h3>
+                <p className="text-xs text-brand-gold font-semibold uppercase tracking-wider">Main Coach</p>
+                <p className="text-xs text-muted-foreground mt-1">Specialty: Strength, Conditioning & Physique Transformation</p>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Specialized in functional joint longevity, metabolic conditioning, and athletic injury prevention.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-3xl bg-card border border-border/80 hover:border-brand-gold/40 transition-all space-y-4">
-              <div className="relative h-64 w-full rounded-2xl overflow-hidden bg-muted">
-                <Image src="/logo.jpg" alt="Ananya Sharma" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground">Ananya Sharma</h3>
-                <p className="text-xs text-brand-gold font-semibold uppercase tracking-wider">Clinical Sports Nutritionist</p>
-                <p className="text-xs text-muted-foreground mt-1">Specialty: Macro Cycling & Fat Loss</p>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Empowering members with custom metabolic meal plans that fuel high performance without restrictive dieting.
+                Master coach specializing in athletic performance, biomechanical lifting technique, and high-impact body transformations.
               </p>
             </div>
           </div>
