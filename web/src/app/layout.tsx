@@ -3,7 +3,6 @@ import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import { Toaster } from "sonner";
-import FloatingVoiceAssistant from "@/components/FloatingVoiceAssistant";
 
 const manrope = Manrope({
   variable: "--font-heading",
@@ -73,7 +72,6 @@ export default function RootLayout({
       <body className="h-full bg-background text-foreground selection:bg-brand-gold/30">
         <Providers>
           {children}
-          <FloatingVoiceAssistant />
           <Toaster richColors position="top-right" />
         </Providers>
       </body>

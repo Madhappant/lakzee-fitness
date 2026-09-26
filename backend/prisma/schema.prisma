@@ -39,6 +39,9 @@ model User {
 
   // Authored announcements
   announcements Announcement[]
+
+  @@index([role])
+  @@index([phone])
 }
 
 model StaffProfile {
@@ -82,6 +85,9 @@ model MemberProfile {
   invoices       Invoice[]
   dietPlans      DietPlan[]
   workoutRoutines WorkoutRoutine[]
+
+  @@index([trainerId])
+  @@index([joiningDate])
 }
 
 model MembershipPlan {
@@ -119,6 +125,11 @@ model Subscription {
   updatedAt     DateTime           @updatedAt
 
   invoice       Invoice?
+
+  @@index([memberId])
+  @@index([status, endDate])
+  @@index([paymentStatus])
+  @@index([createdAt])
 }
 
 model Invoice {
@@ -138,6 +149,10 @@ model Invoice {
   createdAt     DateTime      @default(now())
   
   payments      Payment[]
+
+  @@index([memberId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Payment {
@@ -150,6 +165,9 @@ model Payment {
   status        String        @default("COMPLETED")
   paymentDate   DateTime      @default(now())
   notes         String?
+
+  @@index([invoiceId])
+  @@index([paymentDate])
 }
 
 model Attendance {
@@ -229,4 +247,7 @@ model Expense {
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([date])
+  @@index([category])
 }

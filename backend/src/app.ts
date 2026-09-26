@@ -31,13 +31,17 @@ app.use(cors({
   },
   credentials: true
 }));
+app.disable('x-powered-by');
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 import path from 'path';
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+  maxAge: '7d',
+  etag: true,
+}));
 
 import authRoutes from './routes/auth.routes';
 import memberRoutes from './routes/member.routes';

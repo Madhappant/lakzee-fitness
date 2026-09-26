@@ -2,6 +2,12 @@
 
 import { isServer, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
+import dynamic from 'next/dynamic';
+
+const FloatingVoiceAssistant = dynamic(
+  () => import('@/components/FloatingVoiceAssistant'),
+  { ssr: false }
+);
 
 function makeQueryClient() {
   return new QueryClient({
@@ -10,6 +16,7 @@ function makeQueryClient() {
         staleTime: 5 * 60 * 1000, // Cache for 5 minutes
         refetchOnWindowFocus: false,
         gcTime: 10 * 60 * 1000, // Keep in garbage collection for 10 minutes
+        retry: 1,
       },
     },
   });
@@ -33,6 +40,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         {children}
+        <FloatingVoiceAssistant />
       </QueryClientProvider>
     </ThemeProvider>
   );
