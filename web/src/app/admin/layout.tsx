@@ -24,8 +24,7 @@ import {
   ShieldCheck,
   UserCircle,
   Megaphone,
-  Receipt,
-  Sparkles
+  Receipt
 } from "lucide-react";
 
 const sidebarGroups = [
@@ -33,12 +32,6 @@ const sidebarGroups = [
     title: "Overview",
     items: [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: "Artificial Intelligence",
-    items: [
-      { name: "AI Assistant", href: "/admin/ai-assistant", icon: Sparkles },
     ],
   },
   {
