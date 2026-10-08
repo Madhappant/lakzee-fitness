@@ -32,6 +32,44 @@ async function main() {
     console.log(`ℹ️ Admin user already exists. Email: ${emailToUse}`);
   }
 
+  // Seed Receptionist
+  const receptionistEmail = 'sakthihari777@gmail.com';
+  const existingReceptionist = await prisma.user.findUnique({
+    where: { email: receptionistEmail }
+  });
+
+  const salt = await bcrypt.genSalt(10);
+  const receptionistPassword = await bcrypt.hash('Sakthibhuvana', salt);
+
+  if (!existingReceptionist) {
+    await prisma.user.create({
+      data: {
+        email: receptionistEmail,
+        password: receptionistPassword,
+        role: 'RECEPTIONIST',
+        firstName: 'Sakthi',
+        lastName: 'Hari',
+        roleAssignedAt: new Date(),
+        staffProfile: {
+          create: {
+            designation: 'Receptionist'
+          }
+        }
+      }
+    });
+    console.log(`✅ Receptionist user seeded successfully! Email: ${receptionistEmail}`);
+  } else {
+    await prisma.user.update({
+      where: { email: receptionistEmail },
+      data: {
+        password: receptionistPassword,
+        role: 'RECEPTIONIST',
+        roleAssignedAt: new Date()
+      }
+    });
+    console.log(`✅ Receptionist user updated successfully! Email: ${receptionistEmail}`);
+  }
+
   // Seed Default Plans
   const plansToSeed = [
     { name: "Student", durationDays: 30, price: 999, description: "Gym Access, Cardio, Locker" },
