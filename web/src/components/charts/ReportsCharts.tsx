@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useState } from "react";
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Maximize2 } from "lucide-react";
+import { EntireDailyRevenueModal } from "@/components/reports/EntireDailyRevenueModal";
 
 const COLORS = ['#D4AF37', '#ffffff', '#eab308'];
 
@@ -18,11 +21,36 @@ const getPaymentColor = (name: string, index: number) => {
 };
 
 export default function ReportsCharts({ stats }: { stats: Record<string, any> }) {
+  const [isEntireRevenueModalOpen, setIsEntireRevenueModalOpen] = useState(false);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-      {/* Daily Revenue Chart */}
-      <div className="glass-panel p-6 border border-border h-80 flex flex-col">
-        <h2 className="text-lg font-bold mb-4">Daily Revenue</h2>
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        {/* Daily Revenue Chart */}
+        <div 
+          onClick={() => setIsEntireRevenueModalOpen(true)}
+          className="glass-panel p-6 border border-border h-80 flex flex-col cursor-pointer hover:border-brand-gold/50 transition-all group"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold group-hover:text-brand-gold transition-colors">Daily Revenue</h2>
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground group-hover:text-brand-gold/80 transition-colors">
+                (Click to expand)
+              </span>
+            </div>
+            <button 
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEntireRevenueModalOpen(true);
+              }} 
+              className="flex items-center gap-1.5 text-xs text-brand-gold bg-brand-gold/10 hover:bg-brand-gold/20 px-2.5 py-1 rounded-lg border border-brand-gold/20 transition-all cursor-pointer"
+              title="View entire revenue earliest to latest"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span>Entire Timeline</span>
+            </button>
+          </div>
         <div className="flex-1 w-full h-full min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={stats.dailyRevenue} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -118,5 +146,12 @@ export default function ReportsCharts({ stats }: { stats: Record<string, any> })
         </div>
       </div>
     </div>
-  );
+
+    <EntireDailyRevenueModal
+      isOpen={isEntireRevenueModalOpen}
+      onClose={() => setIsEntireRevenueModalOpen(false)}
+      data={stats.entireDailyRevenue || []}
+    />
+  </>
+);
 }
