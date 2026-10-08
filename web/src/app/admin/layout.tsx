@@ -9,6 +9,8 @@ import { fetchDashboardStats } from "@/lib/api/dashboard";
 import { fetchMembers } from "@/lib/api/members";
 import { fetchPlans } from "@/lib/api/plans";
 import { fetchSubscriptions } from "@/lib/api/subscriptions";
+import { fetchReports } from "@/lib/api/reports";
+import { fetchExpenses } from "@/lib/api/expenses";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { 
@@ -139,6 +141,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         queryClient.prefetchQuery({ queryKey: ["plans"], queryFn: fetchPlans });
       } else if (href === "/admin/payments") {
         queryClient.prefetchQuery({ queryKey: ["subscriptions"], queryFn: () => fetchSubscriptions() });
+      } else if (href === "/admin/reports") {
+        queryClient.prefetchQuery({ queryKey: ["reports"], queryFn: fetchReports });
+      } else if (href === "/admin/expenses") {
+        queryClient.prefetchQuery({ queryKey: ["expenses"], queryFn: () => fetchExpenses() });
       }
     } catch {
       // Ignore prefetch errors

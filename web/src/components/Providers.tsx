@@ -9,6 +9,8 @@ function makeQueryClient() {
       queries: {
         staleTime: 5 * 60 * 1000, // Cache for 5 minutes
         refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
         gcTime: 10 * 60 * 1000, // Keep in garbage collection for 10 minutes
         retry: 1,
       },

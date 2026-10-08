@@ -10,7 +10,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
-import { fetchMyProfile, fetchMyAttendance, fetchMyWorkoutRoutine, fetchMyDietPlan } from "@/lib/api/portal";
+import { fetchMyProfile, fetchMyAttendance, fetchMyWorkoutRoutine, fetchMyDietPlan, fetchMySubscriptions } from "@/lib/api/portal";
 import { 
   LayoutDashboard, 
   CalendarCheck, 
@@ -109,6 +109,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         queryClient.prefetchQuery({ queryKey: ["myWorkoutRoutine"], queryFn: fetchMyWorkoutRoutine });
       } else if (href === "/member/diet") {
         queryClient.prefetchQuery({ queryKey: ["myDietPlan"], queryFn: fetchMyDietPlan });
+      } else if (href === "/member/subscriptions") {
+        queryClient.prefetchQuery({ queryKey: ["mySubscriptions"], queryFn: fetchMySubscriptions });
       }
     } catch {
       // Ignore prefetch errors

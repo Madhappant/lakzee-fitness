@@ -8,9 +8,9 @@ import { fetchDashboardStats } from "@/lib/api/dashboard";
 import { Users, Activity, TrendingUp, Dumbbell, Loader2, QrCode, UserPlus, Wallet, Clock, XCircle, Cake, Receipt } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { PendingMembersModal } from "@/components/dashboard/PendingMembersModal";
-import { ExpiringMembersModal } from "@/components/dashboard/ExpiringMembersModal";
-import { DashboardMembersModal } from "@/components/dashboard/DashboardMembersModal";
+const PendingMembersModal = dynamic(() => import("@/components/dashboard/PendingMembersModal").then((m) => m.PendingMembersModal), { ssr: false });
+const ExpiringMembersModal = dynamic(() => import("@/components/dashboard/ExpiringMembersModal").then((m) => m.ExpiringMembersModal), { ssr: false });
+const DashboardMembersModal = dynamic(() => import("@/components/dashboard/DashboardMembersModal").then((m) => m.DashboardMembersModal), { ssr: false });
 
 const DashboardChart = dynamic(() => import("@/components/charts/DashboardChart"), {
   ssr: false,

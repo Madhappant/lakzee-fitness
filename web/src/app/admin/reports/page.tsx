@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchReports } from "@/lib/api/reports";
 import { TrendingUp, Wallet, Users, CalendarCheck, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { Revenue30dModal } from "@/components/reports/Revenue30dModal";
-import { ThisMonthPaymentsModal } from "@/components/reports/ThisMonthPaymentsModal";
-import { ActiveMembersModal } from "@/components/reports/ActiveMembersModal";
+const Revenue30dModal = dynamic(() => import("@/components/reports/Revenue30dModal").then((m) => m.Revenue30dModal), { ssr: false });
+const ThisMonthPaymentsModal = dynamic(() => import("@/components/reports/ThisMonthPaymentsModal").then((m) => m.ThisMonthPaymentsModal), { ssr: false });
+const ActiveMembersModal = dynamic(() => import("@/components/reports/ActiveMembersModal").then((m) => m.ActiveMembersModal), { ssr: false });
 
 const ReportsCharts = dynamic(() => import("@/components/charts/ReportsCharts"), {
   ssr: false,

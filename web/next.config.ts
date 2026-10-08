@@ -7,7 +7,16 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion", "@tanstack/react-query", "date-fns"],
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "@tanstack/react-query",
+      "date-fns",
+      "recharts",
+      "sonner",
+      "clsx",
+      "tailwind-merge"
+    ],
   },
   images: {
     formats: ["image/avif", "image/webp"],
@@ -22,6 +31,19 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/:all*(svg|jpg|png|webp|avif|ico)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
   },
 };
 

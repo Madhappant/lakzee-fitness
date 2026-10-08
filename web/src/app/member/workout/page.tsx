@@ -16,11 +16,13 @@ import {
   Flame,
   Award,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import BodyMap from "@/components/BodyMap";
 import RestTimer from "@/components/RestTimer";
-import ExerciseLibraryModal from "@/components/ExerciseLibraryModal";
-import GymToolsModal from "@/components/GymToolsModal";
 import { detectMusclesFromText } from "@/data/muscles";
+
+const ExerciseLibraryModal = dynamic(() => import("@/components/ExerciseLibraryModal"), { ssr: false });
+const GymToolsModal = dynamic(() => import("@/components/GymToolsModal"), { ssr: false });
 import { toast } from "sonner";
 
 interface ActiveSetRow {

@@ -16,9 +16,11 @@ import {
   Sparkles,
   PlusCircle,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import BodyMap from "@/components/BodyMap";
-import ExerciseLibraryModal from "@/components/ExerciseLibraryModal";
 import { detectMusclesFromText } from "@/data/muscles";
+
+const ExerciseLibraryModal = dynamic(() => import("@/components/ExerciseLibraryModal"), { ssr: false });
 
 export default function AssignPlanPage() {
   const router = useRouter();

@@ -7,11 +7,13 @@ import { Toaster } from "sonner";
 const manrope = Manrope({
   variable: "--font-heading",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

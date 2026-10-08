@@ -8,7 +8,13 @@ import { fetchMembers } from "@/lib/api/members";
 import { fetchPlans } from "@/lib/api/plans";
 import { Plus, X, Loader2, Calendar as CalendarIcon, CheckCircle2, CalendarRange, Wallet, ListTree, Edit2, Trash2, Save, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PaymentDetailsModal, PaymentModalType } from "@/components/payments/PaymentDetailsModal";
+import dynamic from "next/dynamic";
+import type { PaymentModalType } from "@/components/payments/PaymentDetailsModal";
+
+const PaymentDetailsModal = dynamic(
+  () => import("@/components/payments/PaymentDetailsModal").then((mod) => mod.PaymentDetailsModal),
+  { ssr: false }
+);
 
 export default function PaymentsPage() {
   const queryClient = useQueryClient();
