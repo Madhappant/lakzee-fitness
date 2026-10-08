@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, TrendingUp, Calendar, Zap, IndianRupee } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -27,6 +27,17 @@ export function Revenue30dModal({
   data = [],
   totalRevenue = 0,
 }: Revenue30dModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => setMounted(true), 80);
+      return () => clearTimeout(timer);
+    } else {
+      setMounted(false);
+    }
+  }, [isOpen]);
+
   const { peakRevenue, peakDayName, avgRevenue, earningDays } = useMemo(() => {
     let maxRev = 0;
     let maxDay = "N/A";
@@ -67,7 +78,7 @@ export function Revenue30dModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-[50%] top-[50%] z-50 w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] p-6 md:p-8 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="fixed left-[50%] top-[50%] z-50 w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] p-6 md:p-8 rounded-2xl bg-card border border-border shadow-2xl overflow-y-auto custom-scrollbar flex flex-col max-h-[92vh]"
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-6 shrink-0">
@@ -77,10 +88,10 @@ export function Revenue30dModal({
                 </div>
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                    Revenue (Last 30 Days)
+                    Daily Revenue Trajectory
                   </h2>
                   <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                    Day-by-day revenue graph and performance trend
+                    30 Days Timeline • Revenue performance overview
                   </p>
                 </div>
               </div>
@@ -140,7 +151,7 @@ export function Revenue30dModal({
             </div>
 
             {/* Interactive Graph */}
-            <div className="flex-1 min-h-[300px] md:min-h-[360px] w-full p-4 rounded-xl bg-muted/20 border border-border flex flex-col">
+            <div className="w-full p-4 rounded-xl bg-muted/20 border border-border flex flex-col shrink-0">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
                   Daily Revenue Trajectory
@@ -149,55 +160,63 @@ export function Revenue30dModal({
                   30 Days Timeline
                 </span>
               </div>
-              <div className="flex-1 w-full h-full min-h-[260px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorRevenue30dModal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#D4AF37" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis
-                      dataKey="name"
-                      stroke="var(--muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="var(--muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `₹${value}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--card)",
-                        borderColor: "var(--border)",
-                        borderRadius: "10px",
-                        color: "var(--foreground)",
-                        boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-                      }}
-                      itemStyle={{ color: "#D4AF37", fontWeight: "bold" }}
-                      formatter={(value: any) => [`₹${Number(value).toLocaleString()}`, "Revenue"]}
-                      labelFormatter={(label, payload) => {
-                        const item = payload?.[0]?.payload;
-                        return item?.fullDate || label;
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#D4AF37"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorRevenue30dModal)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div className="w-full h-[320px] md:h-[360px] relative">
+                {mounted ? (
+                  <ResponsiveContainer key={`rev30-${isOpen}-${data.length}`} width="100%" height={340}>
+                    <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRevenue30dModal" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#D4AF37" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                        domain={[0, (dataMax: number) => (dataMax > 0 ? dataMax : 1000)]}
+                        tickFormatter={(value) => `₹${value}`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--card)",
+                          borderColor: "var(--border)",
+                          borderRadius: "10px",
+                          color: "var(--foreground)",
+                          boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+                        }}
+                        itemStyle={{ color: "#D4AF37", fontWeight: "bold" }}
+                        formatter={(value: any) => [`₹${Number(value).toLocaleString()}`, "Revenue"]}
+                        labelFormatter={(label, payload) => {
+                          const item = payload?.[0]?.payload;
+                          return item?.fullDate || label;
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#D4AF37"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorRevenue30dModal)"
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                    Loading graph...
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
