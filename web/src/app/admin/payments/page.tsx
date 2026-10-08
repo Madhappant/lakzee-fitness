@@ -8,12 +8,14 @@ import { fetchMembers } from "@/lib/api/members";
 import { fetchPlans } from "@/lib/api/plans";
 import { Plus, X, Loader2, Calendar as CalendarIcon, CheckCircle2, CalendarRange, Wallet, ListTree, Edit2, Trash2, Save, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PaymentDetailsModal, PaymentModalType } from "@/components/payments/PaymentDetailsModal";
 
 export default function PaymentsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"ASSIGN" | "EDIT">("ASSIGN");
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
+  const [activeDetailsModal, setActiveDetailsModal] = useState<PaymentModalType | null>(null);
   const [formData, setFormData] = useState({
     memberId: "",
     planId: "",
@@ -157,36 +159,52 @@ export default function PaymentsPage() {
     <div className="space-y-8">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/30 transition-colors">
+        <div 
+          onClick={() => setActiveDetailsModal("TODAY")}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-green-500/50 hover:bg-green-500/5 cursor-pointer transition-all"
+        >
           <div className="flex justify-between items-start mb-4 relative z-10">
             <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Today&apos;s Collection</h3>
-            <Wallet className="w-5 h-5 text-green-500/50" />
+            <Wallet className="w-5 h-5 text-green-500/50 group-hover:text-green-500 transition-colors" />
           </div>
           <p className="text-3xl font-bold text-green-500">₹{stats.todaysCollection.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-green-400 transition-colors">Click to view members & payments →</p>
         </div>
         
-        <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/30 transition-colors">
+        <div 
+          onClick={() => setActiveDetailsModal("THIS_MONTH")}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/50 hover:bg-brand-gold/5 cursor-pointer transition-all"
+        >
           <div className="flex justify-between items-start mb-4 relative z-10">
             <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">This Month</h3>
-            <CalendarRange className="w-5 h-5 text-brand-gold/50" />
+            <CalendarRange className="w-5 h-5 text-brand-gold/50 group-hover:text-brand-gold transition-colors" />
           </div>
           <p className="text-3xl font-bold text-brand-gold">₹{stats.thisMonth.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-brand-gold transition-colors">Click to view members & payments →</p>
         </div>
 
-        <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-red-500/30 transition-colors">
+        <div 
+          onClick={() => setActiveDetailsModal("PENDING")}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-red-500/50 hover:bg-red-500/5 cursor-pointer transition-all"
+        >
           <div className="flex justify-between items-start mb-4 relative z-10">
             <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Pending Amount</h3>
-            <Wallet className="w-5 h-5 text-red-500/50" />
+            <Wallet className="w-5 h-5 text-red-500/50 group-hover:text-red-500 transition-colors" />
           </div>
           <p className="text-3xl font-bold text-red-500">₹{(stats.totalPending || 0).toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-red-400 transition-colors">Click to view pending members →</p>
         </div>
 
-        <div className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/30 transition-colors">
+        <div 
+          onClick={() => setActiveDetailsModal("TOTAL")}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/50 hover:bg-brand-gold/5 cursor-pointer transition-all"
+        >
           <div className="flex justify-between items-start mb-4 relative z-10">
             <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Total Records</h3>
-            <ListTree className="w-5 h-5 text-white/50" />
+            <ListTree className="w-5 h-5 text-white/50 group-hover:text-brand-gold transition-colors" />
           </div>
           <p className="text-3xl font-bold text-foreground">{stats.totalRecords.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-brand-gold transition-colors">Click to view all record details →</p>
         </div>
       </div>
 
@@ -545,6 +563,13 @@ export default function PaymentsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <PaymentDetailsModal
+        isOpen={activeDetailsModal !== null}
+        onClose={() => setActiveDetailsModal(null)}
+        type={activeDetailsModal}
+        subscriptions={subscriptions}
+      />
     </div>
   );
 }
