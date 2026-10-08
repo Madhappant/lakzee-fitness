@@ -19,9 +19,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
     const [
-      activeMembersCount,
+      activeMembersData,
       checkInsCount,
-      newSignupsCount,
+      newMembersData,
       recentSubscriptions,
       recentCheckIns,
       todaysSubs,
@@ -33,7 +33,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       pendingSubs
     ] = await Promise.all([
       // 1. Active Members
-      prisma.memberProfile.count({
+      prisma.memberProfile.findMany({
         where: {
           subscriptions: {
             some: {
@@ -41,18 +41,78 @@ export const getDashboardStats = async (req: Request, res: Response) => {
               status: 'ACTIVE'
             }
           }
-        }
+        },
+        select: {
+          id: true,
+          memberId: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              email: true
+            }
+          },
+          subscriptions: {
+            where: {
+              endDate: { gte: today },
+              status: 'ACTIVE'
+            },
+            take: 1,
+            orderBy: { endDate: 'desc' },
+            select: {
+              startDate: true,
+              endDate: true,
+              plan: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { memberId: 'asc' }
       }),
       // 2. Today's Check-ins
       prisma.attendance.count({
         where: { date: { gte: today } }
       }),
       // 3. New Signups (this month)
-      prisma.user.count({
+      prisma.memberProfile.findMany({
         where: {
-          role: 'MEMBER',
-          createdAt: { gte: firstDayOfMonth }
-        }
+          user: {
+            role: 'MEMBER',
+            createdAt: { gte: firstDayOfMonth }
+          }
+        },
+        select: {
+          id: true,
+          memberId: true,
+          joiningDate: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              email: true,
+              createdAt: true
+            }
+          },
+          subscriptions: {
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+            select: {
+              plan: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { joiningDate: 'desc' }
       }),
       // 4. Monthly Revenue (Estimated based on Active Subscriptions created this month)
       prisma.subscription.findMany({
@@ -276,12 +336,38 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       };
     });
 
+    const activeMembersCount = activeMembersData.length;
+    const activeMembersList = activeMembersData.map(m => ({
+      id: m.id,
+      userId: m.user.id,
+      memberId: m.memberId,
+      name: `${m.user.firstName} ${m.user.lastName}`.trim(),
+      phone: m.user.phone,
+      email: m.user.email,
+      planName: m.subscriptions[0]?.plan?.name || 'Active Plan',
+      date: m.subscriptions[0]?.endDate ? m.subscriptions[0].endDate.toISOString() : undefined
+    }));
+
+    const newSignupsCount = newMembersData.length;
+    const newMembersList = newMembersData.map(m => ({
+      id: m.id,
+      userId: m.user.id,
+      memberId: m.memberId,
+      name: `${m.user.firstName} ${m.user.lastName}`.trim(),
+      phone: m.user.phone,
+      email: m.user.email,
+      planName: m.subscriptions[0]?.plan?.name || 'No Plan Assigned',
+      date: (m.joiningDate || m.user.createdAt).toISOString()
+    }));
+
     const responsePayload = {
       status: 'success',
       data: {
         activeMembers: activeMembersCount,
+        activeMembersList,
         todaysCheckIns: checkInsCount,
         newSignups: newSignupsCount,
+        newMembersList,
         monthlyRevenue: monthlyRevenue,
         recentActivity: recentActivity,
         todaysCollection,

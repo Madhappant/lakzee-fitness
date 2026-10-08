@@ -10,6 +10,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PendingMembersModal } from "@/components/dashboard/PendingMembersModal";
 import { ExpiringMembersModal } from "@/components/dashboard/ExpiringMembersModal";
+import { DashboardMembersModal } from "@/components/dashboard/DashboardMembersModal";
 
 const DashboardChart = dynamic(() => import("@/components/charts/DashboardChart"), {
   ssr: false,
@@ -20,6 +21,8 @@ export default function DashboardOverview() {
   const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
   const [isExpiringModalOpen, setIsExpiringModalOpen] = useState(false);
   const [isExpiredModalOpen, setIsExpiredModalOpen] = useState(false);
+  const [isActiveMembersModalOpen, setIsActiveMembersModalOpen] = useState(false);
+  const [isNewMembersModalOpen, setIsNewMembersModalOpen] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["dashboardStats"],
@@ -28,9 +31,11 @@ export default function DashboardOverview() {
 
   const stats = data?.data || {
     activeMembers: 0,
+    activeMembersList: [],
     monthlyRevenue: 0,
     todaysCheckIns: 0,
     newSignups: 0,
+    newMembersList: [],
     todaysCollection: 0,
     expiringIn7Days: 0,
     expiredMembers: 0,
@@ -51,6 +56,7 @@ export default function DashboardOverview() {
       value: stats.activeMembers.toLocaleString(),
       change: "Current total",
       icon: Users,
+      onClick: () => setIsActiveMembersModalOpen(true),
     },
     {
       title: "Today's Attendance",
@@ -89,6 +95,7 @@ export default function DashboardOverview() {
       value: stats.newSignups.toLocaleString(),
       change: "This month",
       icon: UserPlus,
+      onClick: () => setIsNewMembersModalOpen(true),
     },
     {
       title: "Birthdays This Month",
@@ -316,6 +323,20 @@ export default function DashboardOverview() {
         onClose={() => setIsExpiredModalOpen(false)}
         members={stats.expiredMembersList}
         type="EXPIRED"
+      />
+
+      <DashboardMembersModal
+        isOpen={isActiveMembersModalOpen}
+        onClose={() => setIsActiveMembersModalOpen(false)}
+        members={stats.activeMembersList || []}
+        type="ACTIVE"
+      />
+
+      <DashboardMembersModal
+        isOpen={isNewMembersModalOpen}
+        onClose={() => setIsNewMembersModalOpen(false)}
+        members={stats.newMembersList || []}
+        type="NEW"
       />
     </div>
   );
