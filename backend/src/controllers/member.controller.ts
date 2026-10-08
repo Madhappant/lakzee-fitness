@@ -18,6 +18,7 @@ const createMemberSchema = z.object({
 });
 
 const updateMemberSchema = z.object({
+  memberId: z.string().min(1).optional(),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   phone: z.string().optional(),
@@ -176,7 +177,7 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
   try {
     const id = req.params.id as string;
     const validatedData = updateMemberSchema.parse(req.body);
-    const { firstName, lastName, phone, email, password, ...profileData } = validatedData;
+    const { firstName, lastName, phone, email, password, memberId, ...profileData } = validatedData;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ 
@@ -195,6 +196,16 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
       }
     }
 
+    if (memberId) {
+      const trimmedMemberId = memberId.trim();
+      const existingProfile = await prisma.memberProfile.findUnique({
+        where: { memberId: trimmedMemberId }
+      });
+      if (existingProfile && existingProfile.userId !== id) {
+        return res.status(400).json({ status: 'error', message: 'Member No. already exists. Please choose a unique Member No.' });
+      }
+    }
+
     let updateData: any = {
       firstName,
       lastName,
@@ -202,6 +213,7 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
       memberProfile: {
         update: {
           ...profileData,
+          ...(memberId ? { memberId: memberId.trim() } : {}),
           dob: profileData.dob ? new Date(profileData.dob) : undefined
         }
       }
@@ -225,6 +237,8 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
       },
       omit: { password: true }
     });
+
+    memoryCache.delete('dashboard_stats');
 
     res.json({ status: 'success', data: updatedMember });
   } catch (error) {

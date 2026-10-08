@@ -22,6 +22,7 @@ export default function EditMemberPage() {
   });
 
   const [formData, setFormData] = useState({
+    memberId: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -42,6 +43,7 @@ export default function EditMemberPage() {
       const { email, firstName, lastName, phone, memberProfile } = memberData.data;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
+        memberId: memberProfile?.memberId || "",
         firstName: firstName || "",
         lastName: lastName || "",
         email: email || "",
@@ -147,6 +149,14 @@ export default function EditMemberPage() {
           <h2 className="text-xl font-semibold border-b border-border pb-4 text-brand-gold">Account Details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Member No. <span className="text-brand-gold">*</span></label>
+              <input required name="memberId" value={formData.memberId} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors font-medium" placeholder="e.g. 101 or LZ-1234" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Email Address <span className="text-brand-gold">*</span></label>
+              <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">First Name <span className="text-brand-gold">*</span></label>
               <input required name="firstName" value={formData.firstName} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
@@ -154,11 +164,7 @@ export default function EditMemberPage() {
               <label className="text-sm font-medium text-muted-foreground">Last Name <span className="text-brand-gold">*</span></label>
               <input required name="lastName" value={formData.lastName} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Email Address <span className="text-brand-gold">*</span></label>
-              <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
-            </div>
-            <div className="space-y-2">
+            <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-muted-foreground">New Password (leave blank to keep current)</label>
               <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" placeholder="••••••••" />
             </div>

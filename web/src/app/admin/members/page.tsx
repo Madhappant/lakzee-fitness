@@ -4,12 +4,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { fetchMembers, deleteMember, API_URL } from "@/lib/api/members";
+import { fetchMembers, updateMember, deleteMember, API_URL } from "@/lib/api/members";
 const BASE_URL = API_URL.replace('/api', '');
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Loader2, Trash2, Edit2, FileText, X } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, Edit2, FileText, X, Check } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 
 function MembersContent() {
   const queryClient = useQueryClient();
@@ -17,6 +18,8 @@ function MembersContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editNumberValue, setEditNumberValue] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["members"],
@@ -34,6 +37,28 @@ function MembersContent() {
       }
     }
   }, [viewMemberId, data]);
+
+  const updateNumberMutation = useMutation({
+    mutationFn: ({ id, memberNo }: { id: string; memberNo: string }) =>
+      updateMember(id, { memberId: memberNo }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      setEditingMemberId(null);
+      toast.success(`Member No. updated to ${variables.memberNo}`);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update Member No.");
+    }
+  });
+
+  const handleSaveMemberNo = (id: string) => {
+    if (!editNumberValue.trim()) {
+      toast.error("Member No. cannot be empty");
+      return;
+    }
+    updateNumberMutation.mutate({ id, memberNo: editNumberValue.trim() });
+  };
 
   const deleteMutation = useMutation({
     mutationFn: deleteMember,
@@ -86,7 +111,7 @@ function MembersContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input 
             type="text" 
-            placeholder="Search by name, email, or ID..." 
+            placeholder="Search by name, email, or Member No..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-card/50 border border-border rounded-lg pl-10 pr-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none transition-colors"
@@ -111,7 +136,7 @@ function MembersContent() {
           <table className="w-full text-left text-sm">
             <thead className="bg-muted/50 border-b border-border text-muted-foreground">
               <tr>
-                <th className="px-6 py-4 font-medium">Lakzee ID</th>
+                <th className="px-6 py-4 font-medium">Member No.</th>
                 <th className="px-6 py-4 font-medium">Member Name</th>
                 <th className="px-6 py-4 font-medium">Email & Phone</th>
                 <th className="px-6 py-4 font-medium">Gender</th>
@@ -164,7 +189,73 @@ function MembersContent() {
                   className="hover:bg-muted/50 transition-colors group"
                 >
                   <td className="px-6 py-4 font-medium text-brand-gold">
-                    {member.memberProfile?.memberId || 'N/A'}
+                    {editingMemberId === member.id ? (
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="text"
+                          value={editNumberValue}
+                          onChange={(e) => setEditNumberValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleSaveMemberNo(member.id);
+                            } else if (e.key === "Escape") {
+                              setEditingMemberId(null);
+                            }
+                          }}
+                          autoFocus
+                          disabled={updateNumberMutation.isPending}
+                          className="w-28 bg-background border border-brand-gold rounded-lg px-2.5 py-1 text-xs text-foreground focus:outline-none shadow-sm"
+                          placeholder="e.g. 101"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveMemberNo(member.id)}
+                          disabled={updateNumberMutation.isPending}
+                          className="p-1.5 text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors"
+                          title="Save (Enter)"
+                        >
+                          {updateNumberMutation.isPending ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingMemberId(null)}
+                          disabled={updateNumberMutation.isPending}
+                          className="p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors"
+                          title="Cancel (Esc)"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 group/id">
+                        <span 
+                          onClick={() => {
+                            setEditingMemberId(member.id);
+                            setEditNumberValue(member.memberProfile?.memberId || '');
+                          }}
+                          className="font-bold tracking-wide cursor-pointer hover:underline"
+                          title="Click to edit Member No."
+                        >
+                          {member.memberProfile?.memberId || 'N/A'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingMemberId(member.id);
+                            setEditNumberValue(member.memberProfile?.memberId || '');
+                          }}
+                          className="opacity-0 group-hover/id:opacity-100 p-1 text-muted-foreground hover:text-brand-gold hover:bg-brand-gold/10 rounded transition-all"
+                          title="Edit Member No."
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <button 

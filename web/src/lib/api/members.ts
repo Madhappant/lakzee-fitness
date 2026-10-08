@@ -75,7 +75,10 @@ export const updateMember = async (id: string, memberData: any) => {
     body: isFormData ? memberData : JSON.stringify(memberData),
   });
   
-  if (!res.ok) throw new Error("Failed to update member");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update member");
+  }
   return res.json();
 };
 
