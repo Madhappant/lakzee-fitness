@@ -116,11 +116,19 @@ export default function PlansPage() {
               key={plan.id}
               className="glass-panel p-8 relative overflow-hidden group hover:border-brand-gold/50 transition-colors"
             >
-              <div className="absolute top-4 right-4 flex items-center gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => handleEdit(plan)} className="p-2 bg-black/40 hover:bg-brand-gold/20 text-foreground hover:text-brand-gold rounded-lg backdrop-blur-md transition-colors" title="Edit Plan">
+              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                <button 
+                  onClick={() => handleEdit(plan)} 
+                  className="p-2 bg-card/90 border border-border/80 shadow-sm hover:border-brand-gold/50 hover:bg-brand-gold/20 text-foreground/80 hover:text-brand-gold rounded-lg backdrop-blur-md transition-all cursor-pointer" 
+                  title="Edit Plan"
+                >
                   <Edit2 className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleDelete(plan.id)} className="p-2 bg-black/40 hover:bg-red-500/20 text-foreground hover:text-red-400 rounded-lg backdrop-blur-md transition-colors" title="Delete Plan">
+                <button 
+                  onClick={() => handleDelete(plan.id)} 
+                  className="p-2 bg-card/90 border border-border/80 shadow-sm hover:border-red-500/50 hover:bg-red-500/20 text-foreground/80 hover:text-red-400 rounded-lg backdrop-blur-md transition-all cursor-pointer" 
+                  title="Delete Plan"
+                >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
