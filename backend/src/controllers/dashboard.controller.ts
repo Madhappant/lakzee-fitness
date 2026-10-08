@@ -1,8 +1,14 @@
 import { Request, Response } from 'express';
 import { prisma } from '../app';
+import { memoryCache } from '../utils/cache';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
+    const cached = memoryCache.get<any>('dashboard_stats');
+    if (cached) {
+      return res.json(cached);
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -51,7 +57,11 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       // 4. Monthly Revenue (Estimated based on Active Subscriptions created this month)
       prisma.subscription.findMany({
         where: { createdAt: { gte: firstDayOfMonth } },
-        include: { plan: true }
+        select: {
+          paymentStatus: true,
+          balanceAmount: true,
+          plan: { select: { price: true } }
+        }
       }),
       // 5. Recent Activity (Latest 5 check-ins)
       prisma.attendance.findMany({
@@ -64,7 +74,11 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       // 6. Today's Collection
       prisma.subscription.findMany({
         where: { createdAt: { gte: today } },
-        include: { plan: true }
+        select: {
+          paymentStatus: true,
+          balanceAmount: true,
+          plan: { select: { price: true } }
+        }
       }),
       // 7. Expiring in 7 Days
       prisma.subscription.findMany({
@@ -109,7 +123,12 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       // 10. 14 Days Revenue
       prisma.subscription.findMany({
         where: { createdAt: { gte: fourteenDaysAgo } },
-        include: { plan: true }
+        select: {
+          createdAt: true,
+          paymentStatus: true,
+          balanceAmount: true,
+          plan: { select: { price: true } }
+        }
       }),
       // 11. Recent Payments List
       prisma.subscription.findMany({
@@ -257,7 +276,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       };
     });
 
-    res.json({
+    const responsePayload = {
       status: 'success',
       data: {
         activeMembers: activeMembersCount,
@@ -277,7 +296,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         expiringMembersList,
         expiredMembersList
       }
-    });
+    };
+
+    memoryCache.set('dashboard_stats', responsePayload, 30);
+    res.json(responsePayload);
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: 'error', message: 'Failed to fetch dashboard stats' });

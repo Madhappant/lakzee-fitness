@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchDashboardStats } from "@/lib/api/dashboard";
+import { fetchMembers } from "@/lib/api/members";
+import { fetchPlans } from "@/lib/api/plans";
+import { fetchSubscriptions } from "@/lib/api/subscriptions";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { 
@@ -129,6 +134,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/login");
   };
 
+  const queryClient = useQueryClient();
+
+  const handlePrefetch = (href: string) => {
+    try {
+      if (href === "/admin/dashboard") {
+        queryClient.prefetchQuery({ queryKey: ["dashboardStats"], queryFn: fetchDashboardStats });
+      } else if (href === "/admin/members") {
+        queryClient.prefetchQuery({ queryKey: ["members"], queryFn: fetchMembers });
+      } else if (href === "/admin/plans") {
+        queryClient.prefetchQuery({ queryKey: ["plans"], queryFn: fetchPlans });
+      } else if (href === "/admin/payments") {
+        queryClient.prefetchQuery({ queryKey: ["subscriptions"], queryFn: () => fetchSubscriptions() });
+      }
+    } catch {
+      // Ignore prefetch errors
+    }
+  };
+
   if (!isClient) return null;
 
   return (
@@ -175,6 +198,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={link.name}
                     href={link.href}
+                    onMouseEnter={() => handlePrefetch(link.href)}
+                    onTouchStart={() => handlePrefetch(link.href)}
                     className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 text-sm ${
                       isActive 
                         ? "bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/20" 

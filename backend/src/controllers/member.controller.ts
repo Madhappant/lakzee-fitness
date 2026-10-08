@@ -82,11 +82,14 @@ export const createMember = async (req: Request, res: Response, next: NextFuncti
       omit: { password: true }
     });
 
+    memoryCache.delete('dashboard_stats');
     res.status(201).json({ status: 'success', data: newMember });
   } catch (error) {
     next(error);
   }
 };
+
+import { memoryCache } from '../utils/cache';
 
 export const getMembers = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -95,7 +98,11 @@ export const getMembers = async (req: Request, res: Response, next: NextFunction
       include: { 
         memberProfile: {
           include: {
-            subscriptions: true
+            subscriptions: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+              include: { plan: { select: { id: true, name: true, price: true } } }
+            }
           }
         } 
       },
@@ -156,6 +163,8 @@ export const deleteMember = async (req: Request, res: Response, next: NextFuncti
     await prisma.user.delete({
       where: { id }
     });
+
+    memoryCache.delete('dashboard_stats');
 
     res.json({ status: 'success', message: 'Member deleted successfully' });
   } catch (error) {

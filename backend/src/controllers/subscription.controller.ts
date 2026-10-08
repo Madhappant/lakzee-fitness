@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../app';
+import { memoryCache } from '../utils/cache';
 
 export const createSubscription = async (req: Request, res: Response) => {
   try {
@@ -24,6 +25,9 @@ export const createSubscription = async (req: Request, res: Response) => {
         balanceAmount: Number(balanceAmount) || 0
       }
     });
+
+    // Invalidate dashboard stats cache
+    memoryCache.delete('dashboard_stats');
 
     // Generate corresponding Invoice and Payment record
     try {
@@ -210,6 +214,10 @@ export const updateSubscription = async (req: Request, res: Response) => {
       where: { id },
       data: dataToUpdate
     });
+    
+    // Invalidate dashboard stats cache
+    memoryCache.delete('dashboard_stats');
+
     res.json({ status: 'success', data: updated });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to update subscription' });
@@ -231,6 +239,10 @@ export const deleteSubscription = async (req: Request, res: Response) => {
     }
 
     await prisma.subscription.delete({ where: { id } });
+    
+    // Invalidate dashboard stats cache
+    memoryCache.delete('dashboard_stats');
+
     res.json({ status: 'success', message: 'Subscription deleted successfully' });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to delete subscription' });

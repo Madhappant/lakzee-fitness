@@ -9,6 +9,8 @@ import { useState, useEffect, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchMyProfile, fetchMyAttendance, fetchMyWorkoutRoutine, fetchMyDietPlan } from "@/lib/api/portal";
 import { 
   LayoutDashboard, 
   CalendarCheck, 
@@ -96,6 +98,23 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     router.push("/login");
   };
 
+  const queryClient = useQueryClient();
+
+  const handlePrefetch = (href: string) => {
+    try {
+      if (href === "/member/dashboard") {
+        queryClient.prefetchQuery({ queryKey: ["myProfile"], queryFn: fetchMyProfile });
+        queryClient.prefetchQuery({ queryKey: ["myAttendance"], queryFn: fetchMyAttendance });
+      } else if (href === "/member/workout") {
+        queryClient.prefetchQuery({ queryKey: ["myWorkoutRoutine"], queryFn: fetchMyWorkoutRoutine });
+      } else if (href === "/member/diet") {
+        queryClient.prefetchQuery({ queryKey: ["myDietPlan"], queryFn: fetchMyDietPlan });
+      }
+    } catch {
+      // Ignore prefetch errors
+    }
+  };
+
   if (!isClient || !user) return null;
 
   return (
@@ -142,6 +161,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                 <Link
                   key={link.name}
                   href={link.href}
+                  onMouseEnter={() => handlePrefetch(link.href)}
+                  onTouchStart={() => handlePrefetch(link.href)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm ${
                     isActive 
                       ? "bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/20" 
