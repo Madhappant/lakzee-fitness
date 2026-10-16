@@ -146,7 +146,7 @@ export default function PaymentsPage() {
     setFormData({
       memberId: sub.memberId,
       planId: sub.planId,
-      startDate: new Date(sub.startDate).toISOString().split('T')[0],
+      startDate: sub.startDate && !isNaN(new Date(sub.startDate).getTime()) ? new Date(sub.startDate).toISOString().split('T')[0] : "",
       status: sub.status,
       paymentStatus: sub.paymentStatus || "PAID",
       paymentMethod: sub.paymentMethod || "CASH",

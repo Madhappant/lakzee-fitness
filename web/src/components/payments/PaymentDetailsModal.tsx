@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Search, Phone, Wallet, CalendarRange, ListTree, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { X, Search, Phone, Wallet, CalendarRange, ListTree, AlertCircle, Clock } from "lucide-react";
 
 export type PaymentModalType = "TODAY" | "THIS_MONTH" | "PENDING" | "TOTAL";
 

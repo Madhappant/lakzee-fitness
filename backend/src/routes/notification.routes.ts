@@ -44,11 +44,14 @@ router.get('/', authenticate, async (req: any, res) => {
 
       pendingInvoices.forEach(invoice => {
         seenMemberPaymentIds.add(invoice.memberId);
+        const memberName = invoice.member?.user
+          ? `${invoice.member.user.firstName} ${invoice.member.user.lastName}`.trim()
+          : 'Member';
         notifications.push({
           id: `inv-${invoice.id}`,
           type: 'PAYMENT',
           title: 'Pending Payment',
-          message: `${invoice.member.user.firstName} ${invoice.member.user.lastName} has a pending invoice of ₹${invoice.totalAmount}.`,
+          message: `${memberName} has a pending invoice of ₹${invoice.totalAmount}.`,
           date: invoice.createdAt,
           link: `/admin/payments`,
           read: false
@@ -59,11 +62,14 @@ router.get('/', authenticate, async (req: any, res) => {
         if (!seenMemberPaymentIds.has(sub.memberId)) {
           seenMemberPaymentIds.add(sub.memberId);
           const amount = sub.balanceAmount > 0 ? sub.balanceAmount : (sub.plan?.price || 0);
+          const memberName = sub.member?.user
+            ? `${sub.member.user.firstName} ${sub.member.user.lastName}`.trim()
+            : 'Member';
           notifications.push({
             id: `sub-pay-${sub.id}`,
             type: 'PAYMENT',
             title: 'Pending Subscription Payment',
-            message: `${sub.member.user.firstName} ${sub.member.user.lastName} has a pending payment of ₹${amount} for ${sub.plan?.name || 'plan'}.`,
+            message: `${memberName} has a pending payment of ₹${amount} for ${sub.plan?.name || 'plan'}.`,
             date: sub.createdAt,
             link: `/admin/payments`,
             read: false
@@ -83,13 +89,18 @@ router.get('/', authenticate, async (req: any, res) => {
 
       expiringSubscriptions.forEach(sub => {
         const isExpired = sub.endDate < now;
+        const memberName = sub.member?.user
+          ? `${sub.member.user.firstName} ${sub.member.user.lastName}`.trim()
+          : 'Member';
+        const planName = sub.plan?.name || 'Membership';
+        const memberProfileId = sub.member?.id;
         notifications.push({
           id: `sub-${sub.id}`,
           type: 'EXPIRY',
           title: isExpired ? 'Membership Expired' : 'Membership Expiring Soon',
-          message: `${sub.member.user.firstName} ${sub.member.user.lastName}'s ${sub.plan.name} plan ${isExpired ? 'expired on' : 'will expire on'} ${sub.endDate.toLocaleDateString()}.`,
+          message: `${memberName}'s ${planName} plan ${isExpired ? 'expired on' : 'will expire on'} ${sub.endDate.toLocaleDateString()}.`,
           date: sub.endDate,
-          link: `/admin/members/${sub.member.id}/plan`,
+          link: memberProfileId ? `/admin/members/${memberProfileId}/plan` : `/admin/members`,
           read: false
         });
       });
@@ -109,11 +120,14 @@ router.get('/', authenticate, async (req: any, res) => {
           // Check if birthday matches today's exact date (ignoring year)
           // We use getUTCMonth/Date because dates saved from frontend (e.g. YYYY-MM-DD) are often stored as UTC midnight
           if (member.dob.getUTCMonth() === currentMonth && member.dob.getUTCDate() === currentDay) {
+            const memberName = member.user
+              ? `${member.user.firstName} ${member.user.lastName}`.trim()
+              : 'Member';
             notifications.push({
               id: `bday-${member.id}`,
               type: 'SYSTEM',
               title: 'Member Birthday Today! 🎉',
-              message: `It's ${member.user.firstName} ${member.user.lastName}'s birthday today! Don't forget to wish them.`,
+              message: `It's ${memberName}'s birthday today! Don't forget to wish them.`,
               date: now,
               link: `/admin/members?viewMember=${member.userId}`,
               read: false
@@ -187,7 +201,7 @@ router.get('/', authenticate, async (req: any, res) => {
             id: `sub-${sub.id}`,
             type: 'EXPIRY',
             title: isExpired ? 'Membership Expired' : 'Membership Expiring Soon',
-            message: `Your ${sub.plan.name} plan ${isExpired ? 'expired on' : 'will expire on'} ${sub.endDate.toLocaleDateString()}. Please renew it to continue accessing the gym.`,
+            message: `Your ${sub.plan?.name || 'membership'} plan ${isExpired ? 'expired on' : 'will expire on'} ${sub.endDate.toLocaleDateString()}. Please renew it to continue accessing the gym.`,
             date: sub.endDate,
             link: `/member/subscriptions`,
             read: false

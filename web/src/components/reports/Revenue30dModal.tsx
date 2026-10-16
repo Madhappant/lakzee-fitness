@@ -30,12 +30,14 @@ export function Revenue30dModal({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
     if (isOpen) {
-      const timer = setTimeout(() => setMounted(true), 80);
-      return () => clearTimeout(timer);
-    } else {
-      setMounted(false);
+      timer = setTimeout(() => setMounted(true), 80);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+      setMounted(false);
+    };
   }, [isOpen]);
 
   const { peakRevenue, peakDayName, avgRevenue, earningDays } = useMemo(() => {

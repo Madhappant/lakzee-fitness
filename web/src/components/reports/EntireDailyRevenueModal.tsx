@@ -28,12 +28,14 @@ export function EntireDailyRevenueModal({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
     if (isOpen) {
-      const timer = setTimeout(() => setMounted(true), 80);
-      return () => clearTimeout(timer);
-    } else {
-      setMounted(false);
+      timer = setTimeout(() => setMounted(true), 80);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+      setMounted(false);
+    };
   }, [isOpen]);
 
   const { totalRevenue, peakRevenue, peakDayName, earliestDate, latestDate } = useMemo(() => {

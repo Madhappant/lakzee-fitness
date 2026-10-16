@@ -53,7 +53,7 @@ export default function EditMemberPage() {
         bloodGroup: memberProfile?.bloodGroup || "",
         address: memberProfile?.address || "",
         emergencyContact: memberProfile?.emergencyContact || "",
-        dob: memberProfile?.dob ? new Date(memberProfile.dob).toISOString().split('T')[0] : "",
+        dob: memberProfile?.dob && !isNaN(new Date(memberProfile.dob).getTime()) ? new Date(memberProfile.dob).toISOString().split('T')[0] : "",
       });
       if (memberProfile?.photoUrl) setPhotoPreview(memberProfile.photoUrl);
     }

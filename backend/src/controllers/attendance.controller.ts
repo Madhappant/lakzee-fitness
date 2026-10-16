@@ -5,14 +5,19 @@ export const checkIn = async (req: Request, res: Response) => {
   try {
     const { lakzeeId } = req.body; // e.g. LZ-1234
     
+    if (!lakzeeId || typeof lakzeeId !== 'string' || !lakzeeId.trim()) {
+      return res.status(400).json({ status: 'error', message: 'Member ID or QR code is required' });
+    }
+    const sanitizedId = lakzeeId.trim();
+
     // Find member by Lakzee ID, QR Code UUID, or Name
     const members = await prisma.memberProfile.findMany({
       where: {
         OR: [
-          { memberId: lakzeeId },
-          { qrCode: lakzeeId.toLowerCase() },
-          { user: { firstName: { contains: lakzeeId, mode: 'insensitive' } } },
-          { user: { lastName: { contains: lakzeeId, mode: 'insensitive' } } }
+          { memberId: sanitizedId },
+          { qrCode: sanitizedId.toLowerCase() },
+          { user: { firstName: { contains: sanitizedId, mode: 'insensitive' } } },
+          { user: { lastName: { contains: sanitizedId, mode: 'insensitive' } } }
         ]
       },
       include: { user: true }
@@ -124,13 +129,18 @@ export const checkOut = async (req: Request, res: Response) => {
   try {
     const { lakzeeId } = req.body;
     
+    if (!lakzeeId || typeof lakzeeId !== 'string' || !lakzeeId.trim()) {
+      return res.status(400).json({ status: 'error', message: 'Member ID or QR code is required' });
+    }
+    const sanitizedId = lakzeeId.trim();
+
     const members = await prisma.memberProfile.findMany({
       where: {
         OR: [
-          { memberId: lakzeeId },
-          { qrCode: lakzeeId.toLowerCase() },
-          { user: { firstName: { contains: lakzeeId, mode: 'insensitive' } } },
-          { user: { lastName: { contains: lakzeeId, mode: 'insensitive' } } }
+          { memberId: sanitizedId },
+          { qrCode: sanitizedId.toLowerCase() },
+          { user: { firstName: { contains: sanitizedId, mode: 'insensitive' } } },
+          { user: { lastName: { contains: sanitizedId, mode: 'insensitive' } } }
         ]
       },
       include: { user: true }
