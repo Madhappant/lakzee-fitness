@@ -52,21 +52,30 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* 1. Revenue (30D) - Clickable for 30D Graph */}
             <div 
+              role="button"
+              tabIndex={0}
+              aria-label="View 30-day revenue trajectory graph"
               onClick={() => setIsRevenue30dModalOpen(true)}
-              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 transition-all group"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIsRevenue30dModalOpen(true);
+                }
+              }}
+              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 transition-all duration-300 group focus-gold rounded-2xl"
               title="Click to view 30-day revenue graph"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase group-hover:text-brand-gold transition-colors">
+                  <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase group-hover:text-brand-gold transition-colors">
                     REVENUE (30D)
                   </h3>
-                  <span className="text-[10px] text-muted-foreground group-hover:text-brand-gold/80 transition-colors">
+                  <span className="text-[10px] text-muted-foreground group-hover:text-brand-gold/80 transition-colors font-medium">
                     Click to view graph ↗
                   </span>
                 </div>
-                <div className="p-2 rounded-lg bg-brand-gold/10 group-hover:bg-brand-gold/20 transition-colors">
-                  <TrendingUp className="w-5 h-5 text-brand-gold" />
+                <div className="p-2.5 rounded-xl bg-brand-gold/10 group-hover:bg-brand-gold/20 transition-colors">
+                  <TrendingUp className="w-5 h-5 text-brand-gold" aria-hidden="true" />
                 </div>
               </div>
               <p className="text-3xl font-bold text-brand-gold">₹{stats.revenue30d.toLocaleString()}</p>
@@ -74,21 +83,30 @@ export default function ReportsPage() {
             
             {/* 2. This Month - Clickable for Members & Payments */}
             <div 
+              role="button"
+              tabIndex={0}
+              aria-label="View this month's members and payments"
               onClick={() => setIsThisMonthModalOpen(true)}
-              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 transition-all group"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIsThisMonthModalOpen(true);
+                }
+              }}
+              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 transition-all duration-300 group focus-gold rounded-2xl"
               title="Click to view members and payments"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase group-hover:text-brand-gold transition-colors">
+                  <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase group-hover:text-brand-gold transition-colors">
                     THIS MONTH
                   </h3>
-                  <span className="text-[10px] text-muted-foreground group-hover:text-brand-gold/80 transition-colors">
+                  <span className="text-[10px] text-muted-foreground group-hover:text-brand-gold/80 transition-colors font-medium">
                     Click to view members & payments ↗
                   </span>
                 </div>
-                <div className="p-2 rounded-lg bg-brand-gold/10 group-hover:bg-brand-gold/20 transition-colors">
-                  <Wallet className="w-5 h-5 text-brand-gold" />
+                <div className="p-2.5 rounded-xl bg-brand-gold/10 group-hover:bg-brand-gold/20 transition-colors">
+                  <Wallet className="w-5 h-5 text-brand-gold" aria-hidden="true" />
                 </div>
               </div>
               <p className="text-3xl font-bold text-brand-gold">₹{stats.revenueThisMonth.toLocaleString()}</p>
@@ -96,37 +114,46 @@ export default function ReportsPage() {
 
             {/* 3. Active Members - Clickable for Active Members Details */}
             <div 
+              role="button"
+              tabIndex={0}
+              aria-label="View active members details"
               onClick={() => setIsActiveMembersModalOpen(true)}
-              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 transition-all group"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIsActiveMembersModalOpen(true);
+                }
+              }}
+              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 transition-all duration-300 group focus-gold rounded-2xl"
               title="Click to view active members details"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase group-hover:text-brand-gold transition-colors">
+                  <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase group-hover:text-brand-gold transition-colors">
                     ACTIVE MEMBERS
                   </h3>
-                  <span className="text-[10px] text-muted-foreground group-hover:text-brand-gold/80 transition-colors">
+                  <span className="text-[10px] text-muted-foreground group-hover:text-brand-gold/80 transition-colors font-medium">
                     Click to view details ↗
                   </span>
                 </div>
-                <div className="p-2 rounded-lg bg-white/5 group-hover:bg-brand-gold/15 transition-colors">
-                  <Users className="w-5 h-5 text-foreground group-hover:text-brand-gold transition-colors" />
+                <div className="p-2.5 rounded-xl bg-white/5 group-hover:bg-brand-gold/15 transition-colors">
+                  <Users className="w-5 h-5 text-foreground group-hover:text-brand-gold transition-colors" aria-hidden="true" />
                 </div>
               </div>
               <p className="text-3xl font-bold text-foreground">{stats.activeMembers.toLocaleString()}</p>
             </div>
 
             {/* 4. Visits (30D) */}
-            <div className="glass-panel p-6 border border-border relative overflow-hidden">
+            <div className="glass-panel p-6 border border-border relative overflow-hidden rounded-2xl">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">VISITS (30D)</h3>
+                  <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">VISITS (30D)</h3>
                 </div>
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <CalendarCheck className="w-5 h-5 text-green-500" />
+                <div className="p-2.5 rounded-xl bg-green-500/10">
+                  <CalendarCheck className="w-5 h-5 text-green-500" aria-hidden="true" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-green-500">{stats.visits30d.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-green-400">{stats.visits30d.toLocaleString()}</p>
             </div>
           </div>
 

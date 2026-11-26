@@ -10,6 +10,25 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
+
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+
+const sanitizeImageExt = (originalName: string, mimeType: string) => {
+  const ext = path.extname(originalName).toLowerCase();
+  if (ALLOWED_EXTENSIONS.has(ext)) return ext;
+  if (mimeType === 'image/png') return '.png';
+  if (mimeType === 'image/webp') return '.webp';
+  if (mimeType === 'image/gif') return '.gif';
+  return '.jpg';
+};
+
 let storage: multer.StorageEngine;
 
 if (process.env.CLOUDINARY_URL || (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)) {
@@ -37,21 +56,22 @@ if (process.env.CLOUDINARY_URL || (process.env.CLOUDINARY_CLOUD_NAME && process.
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+      const safeExt = sanitizeImageExt(file.originalname, file.mimetype);
+      cb(null, file.fieldname + '-' + uniqueSuffix + safeExt);
     }
   });
 }
 
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  if (file.mimetype.startsWith('image/')) {
+  if (ALLOWED_MIME_TYPES.has(file.mimetype.toLowerCase())) {
     cb(null, true);
   } else {
-    cb(new Error('Not an image! Please upload an image.'));
+    cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'));
   }
 };
 
 export const upload = multer({
   storage,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter
 });

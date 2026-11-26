@@ -27,7 +27,7 @@ export default function MemberDietPage() {
       <div className="max-w-4xl mx-auto space-y-8 pb-12">
         <h1 className="text-3xl font-bold mb-2">My Diet Plan</h1>
         <div className="glass-panel p-12 text-center border-t-4 border-brand-gold">
-          <Utensils className="w-16 h-16 text-white/20 mx-auto mb-4" />
+          <Utensils className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground mb-2">No Active Diet Plan</h2>
           <p className="text-muted-foreground">You do not have an active diet plan assigned. Please speak to your trainer or the front desk to get a personalized plan.</p>
         </div>
@@ -80,7 +80,7 @@ export default function MemberDietPage() {
                 </div>
                 {meal}
               </h3>
-              <p className="text-white/70 whitespace-pre-wrap leading-relaxed">{content}</p>
+              <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{content}</p>
             </motion.div>
           );
         })}

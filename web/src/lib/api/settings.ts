@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_URL, getAuthToken } from "./members";
+import { API_URL, getAuthToken, handleApiResponse } from "./config";
 
 export const fetchSettings = async () => {
   const res = await fetch(`${API_URL}/settings`);
-  if (!res.ok) throw new Error("Failed to fetch settings");
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch settings");
 };
 
 export const updateSettings = async (settingsData: any) => {
@@ -17,7 +16,5 @@ export const updateSettings = async (settingsData: any) => {
     },
     body: JSON.stringify(settingsData),
   });
-  
-  if (!res.ok) throw new Error("Failed to update settings");
-  return res.json();
+  return handleApiResponse(res, "Failed to update settings");
 };

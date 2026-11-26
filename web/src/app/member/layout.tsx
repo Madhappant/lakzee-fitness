@@ -165,14 +165,14 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                   href={link.href}
                   onMouseEnter={() => handlePrefetch(link.href)}
                   onTouchStart={() => handlePrefetch(link.href)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm ${
+                  className={`flex items-center gap-3 px-4 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-gold ${
                     isActive 
-                      ? "bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/20" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-card"
+                      ? "bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold shadow-lg shadow-brand-gold/25" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5 active:scale-[0.98]"
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{link.name}</span>
+                  <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
+                  <span className="font-medium tracking-tight">{link.name}</span>
                 </Link>
               );
             })}
@@ -183,10 +183,11 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         <div className="p-4 border-t border-border shrink-0">
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-sm"
+            className="flex items-center gap-3 px-4 min-h-[44px] w-full rounded-xl text-red-500 hover:bg-red-500/10 active:scale-[0.98] transition-colors text-sm focus-gold"
+            aria-label="Log out of member session"
           >
-            <LogOut className="w-4 h-4" />
-            <span className="font-medium">Logout</span>
+            <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="font-semibold">Logout</span>
           </button>
         </div>
       </aside>
@@ -197,9 +198,9 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         <header className="h-20 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-8 z-40 sticky top-0 shrink-0">
           <div className="flex items-center gap-4">
             <button 
-              className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+              className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-xl focus-gold"
               onClick={() => setIsMobileMenuOpen(true)}
-              aria-label="Open mobile menu"
+              aria-label="Open mobile navigation menu"
             >
               <Menu className="w-6 h-6" aria-hidden="true" />
             </button>

@@ -43,9 +43,13 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
+      const token = localStorage.getItem("lakzee_token");
       const res = await fetch(`${API_URL}/auth/request-phone-otp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ email: user.email, newPhone }),
       });
       
@@ -68,9 +72,13 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
+      const token = localStorage.getItem("lakzee_token");
       const res = await fetch(`${API_URL}/auth/verify-phone`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ email: user.email, otp }),
       });
       
@@ -174,7 +182,7 @@ export default function ProfilePage() {
                 </div>
                 <button 
                   onClick={() => setPhoneStep("REQUEST_OTP")}
-                  className="px-4 py-2 bg-background hover:bg-muted border border-border text-foreground rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-background hover:bg-muted border border-border text-foreground rounded-xl text-sm font-medium transition-all focus-gold touch-target"
                 >
                   {user.phone ? "Update" : "Add Phone"}
                 </button>
@@ -196,7 +204,8 @@ export default function ProfilePage() {
               </div>
               <button 
                 onClick={copyToClipboard}
-                className="flex items-center gap-2 px-6 py-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shrink-0 shadow-lg shadow-brand-gold/20"
+                aria-label="Copy User ID to clipboard"
+                className="flex items-center gap-2 px-6 py-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 shrink-0 shadow-lg shadow-brand-gold/20 focus-gold touch-target"
               >
                 {copied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                 <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
@@ -219,6 +228,9 @@ export default function ProfilePage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="phone-modal-title"
               className="bg-card border border-border rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden"
             >
               {/* Dynamic Background for Modal */}
@@ -226,7 +238,8 @@ export default function ProfilePage() {
               
               <button 
                 onClick={resetPhoneFlow}
-                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors z-10"
+                aria-label="Close dialog"
+                className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors z-10 focus-gold"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -235,12 +248,12 @@ export default function ProfilePage() {
                 {phoneStep === "REQUEST_OTP" && (
                   <form onSubmit={handleRequestOtp} className="space-y-6">
                     <div>
-                      <h3 className="text-xl font-bold text-foreground mb-2">Update Phone Number</h3>
+                      <h3 id="phone-modal-title" className="text-xl font-bold text-foreground mb-2">Update Phone Number</h3>
                       <p className="text-sm text-muted-foreground mb-6">Enter your new phone number. We will send an OTP to verify it.</p>
                     </div>
 
                     {error && (
-                      <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
+                      <div role="alert" className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
                         {error}
                       </div>
                     )}
@@ -254,7 +267,7 @@ export default function ProfilePage() {
                         required
                         value={newPhone}
                         onChange={(e) => setNewPhone(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-gold/50 transition-all"
+                        className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus-gold outline-none transition-all"
                         placeholder="+1 (555) 000-0000"
                       />
                     </div>
@@ -262,7 +275,7 @@ export default function ProfilePage() {
                     <button
                       type="submit"
                       disabled={isLoading || newPhone.length < 5}
-                      className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
                     >
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                       Send OTP
@@ -273,7 +286,7 @@ export default function ProfilePage() {
                 {phoneStep === "VERIFY_OTP" && (
                   <form onSubmit={handleVerifyOtp} className="space-y-6">
                     <div>
-                      <h3 className="text-xl font-bold text-foreground mb-2">Verify Phone Number</h3>
+                      <h3 id="phone-modal-title" className="text-xl font-bold text-foreground mb-2">Verify Phone Number</h3>
                       <p className="text-sm text-muted-foreground mb-4">Enter the 6-digit code sent to your phone.</p>
                       {simulatedData?.otp && (
                         <p className="text-xs text-brand-gold bg-brand-gold/10 p-2 rounded-lg text-center mb-4">
@@ -283,7 +296,7 @@ export default function ProfilePage() {
                     </div>
 
                     {error && (
-                      <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
+                      <div role="alert" className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
                         {error}
                       </div>
                     )}
@@ -293,12 +306,13 @@ export default function ProfilePage() {
                         Enter 6-Digit OTP
                       </label>
                       <input
+                        id="otp"
                         type="text"
                         required
                         maxLength={6}
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                        className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-gold/50 transition-all font-mono tracking-widest text-center text-xl"
+                        className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus-gold outline-none transition-all font-mono tracking-widest text-center text-xl"
                         placeholder="------"
                       />
                     </div>
@@ -306,7 +320,7 @@ export default function ProfilePage() {
                     <button
                       type="submit"
                       disabled={isLoading || otp.length !== 6}
-                      className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
                     >
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                       Verify & Save

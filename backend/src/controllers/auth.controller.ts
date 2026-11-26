@@ -1,41 +1,44 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../app';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { generateToken } from '../utils/jwt';
+import { AuthRequest } from '../middlewares/auth.middleware';
 import { z } from 'zod';
-import nodemailer from 'nodemailer';
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   password: z.string().min(6),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  firstName: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   password: z.string(),
 });
 
 const requestOtpSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
 });
 
 const resetSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   otp: z.string().length(6),
   newPassword: z.string().min(6),
 });
 
 const requestPhoneOtpSchema = z.object({
-  email: z.string().email(),
-  newPhone: z.string().min(5),
+  email: z.string().trim().toLowerCase().email().optional(),
+  newPhone: z.string().trim().min(5),
 });
 
 const verifyPhoneSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email().optional(),
   otp: z.string().length(6),
 });
+
+const generateSecureOtp = () => crypto.randomInt(100000, 1000000).toString();
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -117,12 +120,8 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
       return res.status(200).json({ status: 'success', message: 'If the email exists, an OTP has been sent.' });
     }
     
-    // Check if phone exists (for a real SMS system, we'd need this)
-    // For now we simulate it even if phone is null, but we can mention it
-    const phone = user.phone || "XXXXXX1234";
-
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate cryptographically secure 6-digit OTP
+    const otp = generateSecureOtp();
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     await prisma.user.update({
@@ -133,7 +132,6 @@ export const requestOtp = async (req: Request, res: Response, next: NextFunction
       }
     });
 
-    let previewUrl = "";
     if (process.env.GOOGLE_SCRIPT_URL) {
       try {
         const resetHtml = `
@@ -244,20 +242,29 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const requestPhoneOtp = async (req: Request, res: Response, next: NextFunction) => {
+export const requestPhoneOtp = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+    }
+
     const { email, newPhone } = requestPhoneOtpSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { id: authUserId } });
     if (!user) {
       return res.status(404).json({ status: 'error', message: 'User not found' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    if (email && email !== user.email.toLowerCase()) {
+      return res.status(403).json({ status: 'error', message: 'Forbidden: You can only update your own phone number' });
+    }
+
+    const otp = generateSecureOtp();
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     await prisma.user.update({
-      where: { email },
+      where: { id: user.id },
       data: {
         pendingPhone: newPhone,
         phoneOtp: otp,
@@ -300,7 +307,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
           },
           body: JSON.stringify({
             secret: process.env.GOOGLE_SCRIPT_SECRET,
-            to: email,
+            to: user.email,
             subject: 'Verify Your New Phone Number',
             html: phoneHtml
           })
@@ -312,7 +319,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
            throw new Error(data.error);
         }
 
-        console.log(`[HTTP] Real email sent to ${email} via Google Apps Script`);
+        console.log(`[HTTP] Real email sent to ${user.email} via Google Apps Script`);
       } catch (mailError: any) {
         console.error("Failed to send real email via Google Script API", mailError);
         return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
@@ -328,7 +335,7 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
     res.status(200).json({
       status: 'success',
       message: 'OTP has been sent to your registered email address.',
-      phoneMasked: email
+      phoneMasked: user.email
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -338,12 +345,25 @@ export const requestPhoneOtp = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const verifyPhoneOtp = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyPhoneOtp = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const authUserId = req.user?.id;
+    if (!authUserId) {
+      return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+    }
+
     const { email, otp } = verifyPhoneSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.phoneOtp !== otp) {
+    const user = await prisma.user.findUnique({ where: { id: authUserId } });
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'User not found' });
+    }
+
+    if (email && email !== user.email.toLowerCase()) {
+      return res.status(403).json({ status: 'error', message: 'Forbidden: You can only verify your own phone number' });
+    }
+
+    if (!user.phoneOtp || user.phoneOtp !== otp) {
       return res.status(400).json({ status: 'error', message: 'Invalid OTP' });
     }
 
@@ -356,7 +376,7 @@ export const verifyPhoneOtp = async (req: Request, res: Response, next: NextFunc
     }
 
     const updatedUser = await prisma.user.update({
-      where: { email },
+      where: { id: user.id },
       data: { 
         phone: user.pendingPhone,
         pendingPhone: null,

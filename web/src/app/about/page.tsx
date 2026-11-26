@@ -52,7 +52,7 @@ export default function AboutPage() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((stat, i) => (
-              <div key={i} className="p-8 rounded-3xl bg-card border border-border/80 text-center space-y-2">
+              <div key={i} className="p-8 rounded-3xl bg-card border border-border/80 hover:border-brand-gold/30 transition-all duration-200 text-center space-y-2">
                 <p className="text-4xl sm:text-5xl font-extrabold font-heading text-brand-gold">{stat.value}</p>
                 <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
               </div>
@@ -143,13 +143,13 @@ export default function AboutPage() {
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
               <Link
                 href="/contact"
-                className="px-8 py-3.5 rounded-xl bg-brand-gold text-primary-foreground font-bold hover:bg-yellow-500 transition-colors shadow-lg shadow-brand-gold/25 inline-flex items-center justify-center gap-2"
+                className="px-8 py-3.5 rounded-xl bg-brand-gold text-black font-bold hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/25 inline-flex items-center justify-center gap-2 focus-gold touch-target"
               >
                 Book Free Consultation <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/pricing"
-                className="px-8 py-3.5 rounded-xl border border-border bg-secondary text-foreground font-semibold hover:bg-muted transition-colors inline-flex items-center justify-center"
+                className="px-8 py-3.5 rounded-xl border border-border bg-secondary text-foreground font-semibold hover:bg-muted active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center focus-gold touch-target"
               >
                 View Plans
               </Link>

@@ -4,21 +4,23 @@ import { z } from 'zod';
 import { memoryCache } from '../utils/cache';
 
 const planSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   description: z.string().optional(),
-  price: z.number().min(0),
-  durationDays: z.number().min(1),
-  features: z.array(z.string()).optional(),
+  price: z.number().finite().min(0),
+  durationDays: z.number().int().min(1),
+  gstPercentage: z.number().finite().min(0).max(100).optional(),
   isActive: z.boolean().optional()
 });
 
 export const createPlan = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Cast numeric fields from form if needed, but since it's JSON from UI, they are usually strings if not converted
-    // Assuming the API lib converts it or we need to preprocess:
-    const rawData = { ...req.body, price: Number(req.body.price), durationDays: Number(req.body.durationDays) };
-    const validatedData = planSchema.parse(rawData);
-    const { features, ...planData } = validatedData;
+    const rawData = {
+      ...req.body,
+      price: Number(req.body.price),
+      durationDays: Number(req.body.durationDays),
+      ...(req.body.gstPercentage !== undefined && { gstPercentage: Number(req.body.gstPercentage) })
+    };
+    const planData = planSchema.parse(rawData);
     const plan = await prisma.membershipPlan.create({ data: planData });
     
     // Invalidate plans and dashboard cache
@@ -54,9 +56,9 @@ export const updatePlan = async (req: Request, res: Response, next: NextFunction
     const rawData = { ...req.body };
     if (rawData.price !== undefined) rawData.price = Number(rawData.price);
     if (rawData.durationDays !== undefined) rawData.durationDays = Number(rawData.durationDays);
+    if (rawData.gstPercentage !== undefined) rawData.gstPercentage = Number(rawData.gstPercentage);
     
-    const validatedData = planSchema.partial().parse(rawData);
-    const { features, ...planData } = validatedData;
+    const planData = planSchema.partial().parse(rawData);
     
     const plan = await prisma.membershipPlan.update({
       where: { id },
@@ -68,7 +70,10 @@ export const updatePlan = async (req: Request, res: Response, next: NextFunction
     memoryCache.delete('dashboard_stats');
 
     res.json({ status: 'success', data: plan });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return res.status(404).json({ status: 'error', message: 'Plan not found' });
+    }
     next(error);
   }
 };
@@ -87,7 +92,10 @@ export const deletePlan = async (req: Request, res: Response, next: NextFunction
     memoryCache.delete('dashboard_stats');
 
     res.json({ status: 'success', message: 'Plan deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return res.status(404).json({ status: 'error', message: 'Plan not found' });
+    }
     next(error);
   }
 };

@@ -56,7 +56,7 @@ export default function MemberAttendance() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-border hover:border-brand-gold/30 transition-colors"
+                  className="flex items-center justify-between p-4 bg-muted/20 hover:bg-muted/40 rounded-xl border border-border hover:border-brand-gold/30 transition-all duration-200"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">

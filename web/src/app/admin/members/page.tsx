@@ -64,6 +64,11 @@ function MembersContent() {
     mutationFn: deleteMember,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      toast.success("Member deleted successfully");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete member");
     },
   });
 
@@ -108,20 +113,22 @@ function MembersContent() {
       {/* Filters & Search */}
       <div className="glass-panel p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
           <input 
             type="text" 
             placeholder="Search by name, email, or Member No..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-card/50 border border-border rounded-lg pl-10 pr-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none transition-colors"
+            className="w-full bg-card/50 border border-border rounded-xl pl-10 pr-4 h-11 text-sm text-foreground focus-gold placeholder:text-muted-foreground/60 transition-all"
+            aria-label="Search members by name, email, or Member No."
           />
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-card/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:border-brand-gold/50 outline-none w-full md:w-auto appearance-none"
+            className="bg-card/50 border border-border rounded-xl px-4 h-11 text-sm text-foreground focus-gold outline-none w-full md:w-auto appearance-none transition-all cursor-pointer"
+            aria-label="Filter members by subscription status"
           >
             <option>All Status</option>
             <option>Active</option>
@@ -297,27 +304,30 @@ function MembersContent() {
                     })()}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1.5">
                       <Link 
                         href={`/admin/members/${member.id}/plan`}
-                        className="p-2 text-muted-foreground hover:text-green-400 transition-colors rounded-lg hover:bg-green-400/10"
+                        className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-brand-gold transition-colors rounded-xl hover:bg-brand-gold/10 focus-gold"
                         title="Assign Plan"
+                        aria-label={`Assign membership plan for ${member.firstName}`}
                       >
-                        <FileText className="w-4 h-4" />
+                        <FileText className="w-4 h-4" aria-hidden="true" />
                       </Link>
                       <Link 
                         href={`/admin/members/${member.id}/edit`}
-                        className="p-2 text-muted-foreground hover:text-brand-gold transition-colors rounded-lg hover:bg-brand-gold/10"
+                        className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-white/10 focus-gold"
                         title="Edit Member"
+                        aria-label={`Edit profile for ${member.firstName}`}
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-4 h-4" aria-hidden="true" />
                       </Link>
                       <button 
                         onClick={() => handleDelete(member.id, member.firstName)}
-                        className="p-2 text-muted-foreground hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                        className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-red-400 transition-colors rounded-xl hover:bg-red-400/10 focus-gold"
                         title="Delete Member"
+                        aria-label={`Delete member ${member.firstName}`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                   </td>

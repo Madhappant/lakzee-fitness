@@ -5,10 +5,10 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 const createMemberSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   password: z.string().min(6),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  firstName: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
   phone: z.string().optional(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
   dob: z.string().optional(),
@@ -18,11 +18,11 @@ const createMemberSchema = z.object({
 });
 
 const updateMemberSchema = z.object({
-  memberId: z.string().min(1).optional(),
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
+  memberId: z.string().trim().min(1).optional(),
+  firstName: z.string().trim().min(1).optional(),
+  lastName: z.string().trim().min(1).optional(),
   phone: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z.string().trim().toLowerCase().email().optional(),
   password: z.string().min(6).optional(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
   dob: z.string().optional(),
@@ -30,6 +30,18 @@ const updateMemberSchema = z.object({
   address: z.string().optional(),
   emergencyContact: z.string().optional()
 });
+
+const parseOptionalDate = (val?: string): Date | null | undefined => {
+  if (val === undefined) return undefined;
+  const trimmed = val.trim();
+  if (!trimmed) return null;
+  const d = new Date(trimmed);
+  if (isNaN(d.getTime())) {
+    throw new Error('Invalid date format');
+  }
+  return d;
+};
+
 export const createMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedData = createMemberSchema.parse(req.body);
@@ -41,14 +53,28 @@ export const createMember = async (req: Request, res: Response, next: NextFuncti
       return res.status(400).json({ status: 'error', message: 'Email already exists' });
     }
 
+    let parsedDob: Date | null | undefined;
+    try {
+      parsedDob = parseOptionalDate(profileData.dob);
+    } catch {
+      return res.status(400).json({ status: 'error', message: 'Invalid date of birth' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     
     // Generate collision-safe unique member ID
     let memberId = `LZ-${Math.floor(1000 + Math.random() * 9000)}`;
-    for (let attempts = 0; attempts < 10; attempts++) {
+    let foundUnique = false;
+    for (let attempts = 0; attempts < 20; attempts++) {
       const existing = await prisma.memberProfile.findUnique({ where: { memberId } });
-      if (!existing) break;
+      if (!existing) {
+        foundUnique = true;
+        break;
+      }
       memberId = `LZ-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+    if (!foundUnique) {
+      memberId = `LZ-${Date.now().toString().slice(-6)}`;
     }
 
     let photoUrl: string | undefined = undefined;
@@ -73,7 +99,7 @@ export const createMember = async (req: Request, res: Response, next: NextFuncti
             memberId,
             ...profileData,
             photoUrl,
-            dob: profileData.dob ? new Date(profileData.dob) : undefined
+            dob: parsedDob ?? undefined
           }
         }
       },
@@ -141,28 +167,37 @@ export const getMemberById = async (req: AuthRequest, res: Response, next: NextF
 export const deleteMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    
-    const profile = await prisma.memberProfile.findUnique({ where: { userId: id } });
-    
-    if (profile) {
-      // Find invoices to delete associated payments first
-      const invoices = await prisma.invoice.findMany({ where: { memberId: profile.id } });
-      const invoiceIds = invoices.map((i: any) => i.id);
 
-      // Perform manual cascading deletes in a transaction
-      await prisma.$transaction([
-        prisma.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } }),
-        prisma.invoice.deleteMany({ where: { memberId: profile.id } }),
-        prisma.subscription.deleteMany({ where: { memberId: profile.id } }),
-        prisma.attendance.deleteMany({ where: { memberId: profile.id } }),
-        prisma.dietPlan.deleteMany({ where: { memberId: profile.id } }),
-        prisma.workoutRoutine.deleteMany({ where: { memberId: profile.id } })
-      ]);
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      include: { memberProfile: true }
+    });
+    if (!existing) {
+      return res.status(404).json({ status: 'error', message: 'Member not found' });
     }
 
-    // User deletion will cascade and delete the MemberProfile due to the schema relation
-    await prisma.user.delete({
-      where: { id }
+    // Perform full cascading delete atomically in a single transaction
+    await prisma.$transaction(async (tx) => {
+      const profile = existing.memberProfile;
+
+      if (profile) {
+        const invoices = await tx.invoice.findMany({ where: { memberId: profile.id } });
+        const invoiceIds = invoices.map((i) => i.id);
+
+        if (invoiceIds.length > 0) {
+          await tx.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } });
+        }
+        await tx.invoice.deleteMany({ where: { memberId: profile.id } });
+        await tx.subscription.deleteMany({ where: { memberId: profile.id } });
+        await tx.attendance.deleteMany({ where: { memberId: profile.id } });
+        await tx.dietPlan.deleteMany({ where: { memberId: profile.id } });
+        await tx.workoutRoutine.deleteMany({ where: { memberId: profile.id } });
+      }
+
+      // Detach trainer assignments and clean up authored announcements before deleting user
+      await tx.memberProfile.updateMany({ where: { trainerId: id }, data: { trainerId: null } });
+      await tx.announcement.deleteMany({ where: { authorId: id } });
+      await tx.user.delete({ where: { id } });
     });
 
     memoryCache.delete('dashboard_stats');
@@ -189,6 +224,13 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ status: 'error', message: 'Member not found' });
     }
 
+    let parsedDob: Date | null | undefined;
+    try {
+      parsedDob = parseOptionalDate(profileData.dob);
+    } catch {
+      return res.status(400).json({ status: 'error', message: 'Invalid date of birth' });
+    }
+
     if (email) {
       const existingEmail = await prisma.user.findUnique({ where: { email } });
       if (existingEmail && existingEmail.id !== id) {
@@ -206,24 +248,36 @@ export const updateMember = async (req: Request, res: Response, next: NextFuncti
       }
     }
 
-    let updateData: any = {
-      firstName,
-      lastName,
-      phone,
-      memberProfile: {
-        update: {
-          ...profileData,
-          ...(memberId ? { memberId: memberId.trim() } : {}),
-          dob: profileData.dob ? new Date(profileData.dob) : undefined
-        }
-      }
+    const profileUpdateFields: any = {
+      ...profileData,
+      ...(memberId ? { memberId: memberId.trim() } : {}),
     };
+    if (parsedDob !== undefined) {
+      profileUpdateFields.dob = parsedDob;
+    }
 
     if (req.file) {
       const pUrl = ((process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) && req.file.path.startsWith('http'))
         ? req.file.path
         : `/uploads/${req.file.filename}`;
-      updateData.memberProfile.update.photoUrl = pUrl;
+      profileUpdateFields.photoUrl = pUrl;
+    }
+
+    const updateData: any = {
+      firstName,
+      lastName,
+      phone,
+    };
+
+    if (existingUser.memberProfile) {
+      updateData.memberProfile = { update: profileUpdateFields };
+    } else if (memberId || Object.keys(profileUpdateFields).length > 0) {
+      updateData.memberProfile = {
+        create: {
+          memberId: memberId ? memberId.trim() : `LZ-${Date.now().toString().slice(-6)}`,
+          ...profileUpdateFields,
+        },
+      };
     }
 
     if (email) updateData.email = email;

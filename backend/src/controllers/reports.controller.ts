@@ -210,12 +210,19 @@ export const getReports = async (req: Request, res: Response) => {
       paymentMix.push({ name: 'No Data', value: 1 });
     }
 
+    const formatLocalDateKey = (date: Date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
     // 5. Daily Revenue (Last 30 Days Breakdown for 30D Graph Modal)
     const dailyRevenue30dMap: Record<string, { date: string, name: string, fullDate: string, revenue: number, count: number }> = {};
     for (let i = 29; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().split('T')[0];
+      const key = formatLocalDateKey(d);
       const name = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const fullDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       dailyRevenue30dMap[key] = { date: key, name, fullDate, revenue: 0, count: 0 };
@@ -223,7 +230,7 @@ export const getReports = async (req: Request, res: Response) => {
 
     recentSubs.forEach(sub => {
       const d = new Date(sub.createdAt);
-      const key = d.toISOString().split('T')[0];
+      const key = formatLocalDateKey(d);
       if (dailyRevenue30dMap[key]) {
         const price = sub.plan?.price || 0;
         let paid = 0;
@@ -233,7 +240,7 @@ export const getReports = async (req: Request, res: Response) => {
           paid = Math.max(0, price - sub.balanceAmount);
         }
         if (paid > 0) {
-          dailyRevenue30dMap[key].revenue += paid;
+          dailyRevenue30dMap[key].revenue = Math.round((dailyRevenue30dMap[key].revenue + paid) * 100) / 100;
           dailyRevenue30dMap[key].count += 1;
         }
       }
@@ -297,7 +304,7 @@ export const getReports = async (req: Request, res: Response) => {
       const entireDailyMap: Record<string, { date: string, name: string, fullDate: string, revenue: number, count: number }> = {};
       const curr = new Date(start);
       while (curr <= today) {
-        const key = curr.toISOString().split('T')[0];
+        const key = formatLocalDateKey(curr);
         const name = curr.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const fullDate = curr.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         entireDailyMap[key] = { date: key, name, fullDate, revenue: 0, count: 0 };
@@ -306,7 +313,7 @@ export const getReports = async (req: Request, res: Response) => {
 
       allSubs.forEach(sub => {
         const d = new Date(sub.createdAt);
-        const key = d.toISOString().split('T')[0];
+        const key = formatLocalDateKey(d);
         const price = sub.plan?.price || 0;
         let paid = 0;
         if (sub.paymentStatus === 'PAID') {
@@ -315,7 +322,7 @@ export const getReports = async (req: Request, res: Response) => {
           paid = Math.max(0, price - sub.balanceAmount);
         }
         if (paid > 0 && entireDailyMap[key]) {
-          entireDailyMap[key].revenue += paid;
+          entireDailyMap[key].revenue = Math.round((entireDailyMap[key].revenue + paid) * 100) / 100;
           entireDailyMap[key].count += 1;
         }
       });

@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { PublicNavbar } from "@/components/PublicNavbar";
 import { PublicFooter } from "@/components/PublicFooter";
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageSquare } from "lucide-react";
+import { API_URL } from "@/lib/api/config";
+import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageSquare, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -15,9 +19,29 @@ export default function ContactPage() {
     message: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitError("");
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to submit consultation request");
+      }
+      setSubmitted(true);
+      toast.success("Consultation request booked!");
+    } catch (err: unknown) {
+      const msg = (err as Error).message || "Something went wrong. Please try again.";
+      setSubmitError(msg);
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -113,7 +137,7 @@ export default function ContactPage() {
                     </p>
                     <button
                       onClick={() => setSubmitted(false)}
-                      className="mt-4 px-6 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-secondary transition-colors"
+                      className="mt-4 px-6 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-secondary active:scale-[0.98] transition-all duration-200 focus-gold touch-target"
                     >
                       Submit Another Inquiry
                     </button>
@@ -125,6 +149,12 @@ export default function ContactPage() {
                       <p className="text-sm text-muted-foreground">Fill in your details and we will reserve your session.</p>
                     </div>
 
+                    {submitError && (
+                      <div role="alert" className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm">
+                        {submitError}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-foreground">Your Full Name</label>
@@ -134,7 +164,7 @@ export default function ContactPage() {
                           value={form.name}
                           onChange={e => setForm({ ...form, name: e.target.value })}
                           placeholder="e.g. John Doe"
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-brand-gold outline-none"
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus-gold outline-none transition-all"
                         />
                       </div>
                       <div>
@@ -145,7 +175,7 @@ export default function ContactPage() {
                           value={form.phone}
                           onChange={e => setForm({ ...form, phone: e.target.value })}
                           placeholder="+91 98765 43210"
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-brand-gold outline-none"
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus-gold outline-none transition-all"
                         />
                       </div>
                     </div>
@@ -158,7 +188,7 @@ export default function ContactPage() {
                           value={form.email}
                           onChange={e => setForm({ ...form, email: e.target.value })}
                           placeholder="john@example.com"
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-brand-gold outline-none"
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus-gold outline-none transition-all"
                         />
                       </div>
                       <div>
@@ -166,7 +196,8 @@ export default function ContactPage() {
                         <select
                           value={form.goal}
                           onChange={e => setForm({ ...form, goal: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-brand-gold outline-none"
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus-gold outline-none transition-all"
+                          aria-label="Primary Fitness Goal"
                         >
                           <option value="WEIGHT_LOSS">Weight Loss & Shredding</option>
                           <option value="MUSCLE_BUILDING">Muscle Hypertrophy & Bulk</option>
@@ -184,15 +215,17 @@ export default function ContactPage() {
                         value={form.message}
                         onChange={e => setForm({ ...form, message: e.target.value })}
                         placeholder="Tell us about any specific preferences, prior workout experience, or goals..."
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-brand-gold outline-none resize-none"
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus-gold outline-none transition-all resize-none"
                       />
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-primary-foreground font-bold text-sm shadow-lg shadow-brand-gold/25 hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                      disabled={isSubmitting}
+                      className="w-full min-h-[48px] py-4 px-6 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold text-sm shadow-lg shadow-brand-gold/25 hover:brightness-110 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 focus-gold touch-target disabled:opacity-50"
                     >
-                      <Send className="w-4 h-4" /> Confirm Free Consultation
+                      {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {isSubmitting ? "Submitting..." : "Confirm Free Consultation"}
                     </button>
                   </form>
                 )}

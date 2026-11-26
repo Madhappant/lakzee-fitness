@@ -6,12 +6,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchPlans, createPlan, updatePlan, deletePlan } from "@/lib/api/plans";
 import { Plus, X, Check, Loader2, DollarSign, Edit2, Trash2, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 export default function PlansPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT">("ADD");
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [modalError, setModalError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -29,8 +31,16 @@ export default function PlansPage() {
     mutationFn: createPlan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      toast.success("Plan created successfully!");
       setIsModalOpen(false);
+      setModalError("");
       setFormData({ name: "", description: "", price: "", durationDays: "30" });
+    },
+    onError: (err: any) => {
+      const msg = err.message || "Failed to create plan";
+      setModalError(msg);
+      toast.error(msg);
     },
   });
 
@@ -38,8 +48,16 @@ export default function PlansPage() {
     mutationFn: (data: any) => updatePlan(selectedPlanId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      toast.success("Plan updated successfully!");
       setIsModalOpen(false);
+      setModalError("");
       setFormData({ name: "", description: "", price: "", durationDays: "30" });
+    },
+    onError: (err: any) => {
+      const msg = err.message || "Failed to update plan";
+      setModalError(msg);
+      toast.error(msg);
     },
   });
 
@@ -47,15 +65,27 @@ export default function PlansPage() {
     mutationFn: deletePlan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      toast.success("Plan archived successfully!");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete plan");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError("");
+    const parsedPrice = parseFloat(formData.price);
+    const parsedDays = parseInt(formData.durationDays, 10);
+    if (isNaN(parsedPrice) || parsedPrice < 0 || isNaN(parsedDays) || parsedDays < 1) {
+      setModalError("Please enter valid price (>= 0) and duration (>= 1 day).");
+      return;
+    }
     const dataToSubmit = {
       ...formData,
-      price: parseFloat(formData.price),
-      durationDays: parseInt(formData.durationDays),
+      price: parsedPrice,
+      durationDays: parsedDays,
     };
     if (modalMode === "EDIT") {
       updateMut.mutate(dataToSubmit);
@@ -65,6 +95,7 @@ export default function PlansPage() {
   };
 
   const handleEdit = (plan: any) => {
+    setModalError("");
     setModalMode("EDIT");
     setSelectedPlanId(plan.id);
     setFormData({
@@ -87,18 +118,20 @@ export default function PlansPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Membership Plans</h1>
-          <p className="text-muted-foreground">Configure pricing and subscription packages.</p>
+          <h1 className="text-3xl font-bold mb-1">Membership Plans</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Configure subscription packages, duration terms, and pricing tiers.</p>
         </div>
         <button 
           onClick={() => {
+            setModalError("");
             setModalMode("ADD");
             setFormData({ name: "", description: "", price: "", durationDays: "30" });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20"
+          className="touch-target gap-2 px-6 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-brand-gold/20 focus-gold"
+          aria-label="Create new membership plan"
         >
-          <Plus className="w-5 h-5" /> Create New Plan
+          <Plus className="w-5 h-5" aria-hidden="true" /> Create New Plan
         </button>
       </div>
 
@@ -116,20 +149,22 @@ export default function PlansPage() {
               key={plan.id}
               className="glass-panel p-8 relative overflow-hidden group hover:border-brand-gold/50 transition-colors"
             >
-              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+              <div className="absolute top-4 right-4 flex items-center gap-1.5 z-10">
                 <button 
                   onClick={() => handleEdit(plan)} 
-                  className="p-2 bg-card/90 border border-border/80 shadow-sm hover:border-brand-gold/50 hover:bg-brand-gold/20 text-foreground/80 hover:text-brand-gold rounded-lg backdrop-blur-md transition-all cursor-pointer" 
+                  className="w-9 h-9 flex items-center justify-center bg-card/90 border border-border/80 shadow-sm hover:border-brand-gold/50 hover:bg-brand-gold/20 text-foreground/80 hover:text-brand-gold rounded-xl backdrop-blur-md transition-all cursor-pointer focus-gold" 
                   title="Edit Plan"
+                  aria-label={`Edit ${plan.name} plan`}
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button 
                   onClick={() => handleDelete(plan.id)} 
-                  className="p-2 bg-card/90 border border-border/80 shadow-sm hover:border-red-500/50 hover:bg-red-500/20 text-foreground/80 hover:text-red-400 rounded-lg backdrop-blur-md transition-all cursor-pointer" 
+                  className="w-9 h-9 flex items-center justify-center bg-card/90 border border-border/80 shadow-sm hover:border-red-500/50 hover:bg-red-500/20 text-foreground/80 hover:text-red-400 rounded-xl backdrop-blur-md transition-all cursor-pointer focus-gold" 
                   title="Delete Plan"
+                  aria-label={`Delete ${plan.name} plan`}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-5 transition-opacity pointer-events-none">
@@ -191,6 +226,12 @@ export default function PlansPage() {
               <h2 className="text-2xl font-bold mb-6 text-brand-gold">
                 {modalMode === "ADD" ? "Create Plan" : "Edit Plan"}
               </h2>
+
+              {modalError && (
+                <div role="alert" className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+                  {modalError}
+                </div>
+              )}
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">

@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_URL } from "./config";
-export { API_URL };
-
-export const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("lakzee_token");
-  }
-  return null;
-};
+import { API_URL, getAuthToken, handleApiResponse } from "./config";
+export { API_URL, getAuthToken };
 
 export const fetchMembers = async () => {
   const token = getAuthToken();
@@ -16,8 +9,7 @@ export const fetchMembers = async () => {
       Authorization: `Bearer ${token}`,
     },
   });
-  if (!res.ok) throw new Error("Failed to fetch members");
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch members");
 };
 
 export const createMember = async (memberData: any) => {
@@ -32,11 +24,7 @@ export const createMember = async (memberData: any) => {
     body: isFormData ? memberData : JSON.stringify(memberData),
   });
   
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Failed to create member");
-  }
-  return res.json();
+  return handleApiResponse(res, "Failed to create member");
 };
 
 export const deleteMember = async (id: string) => {
@@ -48,8 +36,7 @@ export const deleteMember = async (id: string) => {
     },
   });
   
-  if (!res.ok) throw new Error("Failed to delete member");
-  return res.json();
+  return handleApiResponse(res, "Failed to delete member");
 };
 
 export const fetchMemberById = async (id: string) => {
@@ -59,8 +46,7 @@ export const fetchMemberById = async (id: string) => {
       Authorization: `Bearer ${token}`,
     },
   });
-  if (!res.ok) throw new Error("Failed to fetch member details");
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch member details");
 };
 
 export const updateMember = async (id: string, memberData: any) => {
@@ -75,11 +61,17 @@ export const updateMember = async (id: string, memberData: any) => {
     body: isFormData ? memberData : JSON.stringify(memberData),
   });
   
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to update member");
-  }
-  return res.json();
+  return handleApiResponse(res, "Failed to update member");
+};
+
+export const fetchMemberDietPlan = async (memberId: string) => {
+  const token = getAuthToken();
+  const res = await fetch(`${API_URL}/plans-routines/diet/${memberId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return handleApiResponse(res, "Failed to fetch member diet plan");
 };
 
 export const assignDietPlan = async (memberId: string, data: any) => {
@@ -93,8 +85,17 @@ export const assignDietPlan = async (memberId: string, data: any) => {
     body: JSON.stringify(data),
   });
   
-  if (!res.ok) throw new Error("Failed to assign diet plan");
-  return res.json();
+  return handleApiResponse(res, "Failed to assign diet plan");
+};
+
+export const fetchMemberWorkoutRoutine = async (memberId: string) => {
+  const token = getAuthToken();
+  const res = await fetch(`${API_URL}/plans-routines/workout/${memberId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return handleApiResponse(res, "Failed to fetch member workout routine");
 };
 
 export const assignWorkoutRoutine = async (memberId: string, data: any) => {
@@ -108,6 +109,5 @@ export const assignWorkoutRoutine = async (memberId: string, data: any) => {
     body: JSON.stringify(data),
   });
   
-  if (!res.ok) throw new Error("Failed to assign workout routine");
-  return res.json();
+  return handleApiResponse(res, "Failed to assign workout routine");
 };

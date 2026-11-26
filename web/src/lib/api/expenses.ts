@@ -1,11 +1,4 @@
-import { API_URL } from "./config";
-
-const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("lakzee_token") || "";
-  }
-  return "";
-};
+import { API_URL, getAuthToken, handleApiResponse } from "./config";
 
 export const fetchExpenses = async (month?: number, year?: number) => {
   const token = getAuthToken();
@@ -17,8 +10,7 @@ export const fetchExpenses = async (month?: number, year?: number) => {
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("Failed to fetch expenses");
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch expenses");
 };
 
 export interface ExpenseData {
@@ -26,6 +18,7 @@ export interface ExpenseData {
   category: string;
   amount: number;
   date?: string;
+  paymentMethod?: string;
   notes?: string;
 }
 
@@ -39,11 +32,7 @@ export const createExpense = async (data: ExpenseData) => {
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "Failed to create expense");
-  }
-  return res.json();
+  return handleApiResponse(res, "Failed to create expense");
 };
 
 export const updateExpense = async (id: string, data: Partial<ExpenseData>) => {
@@ -56,11 +45,7 @@ export const updateExpense = async (id: string, data: Partial<ExpenseData>) => {
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "Failed to update expense");
-  }
-  return res.json();
+  return handleApiResponse(res, "Failed to update expense");
 };
 
 export const deleteExpense = async (id: string) => {
@@ -69,6 +54,5 @@ export const deleteExpense = async (id: string) => {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("Failed to delete expense");
-  return res.json();
+  return handleApiResponse(res, "Failed to delete expense");
 };

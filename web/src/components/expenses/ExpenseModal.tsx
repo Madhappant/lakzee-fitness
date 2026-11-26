@@ -98,17 +98,24 @@ function ExpenseModalContent({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="expense-modal-title"
             className="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-6 rounded-2xl bg-card border border-border shadow-2xl"
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">{expense ? "Edit Expense" : "Add Expense"}</h2>
-              <button onClick={onClose} className="p-2 hover:bg-muted rounded-full transition-colors">
+              <h2 id="expense-modal-title" className="text-xl font-bold">{expense ? "Edit Expense" : "Add Expense"}</h2>
+              <button 
+                onClick={onClose} 
+                aria-label="Close dialog"
+                className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-full transition-colors focus-gold"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm">
+              <div role="alert" className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm">
                 {error}
               </div>
             )}
@@ -121,7 +128,7 @@ function ExpenseModalContent({
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none"
                   placeholder="e.g., May Rent, Cleaning Supplies"
                 />
               </div>
@@ -136,7 +143,7 @@ function ExpenseModalContent({
                     step="0.01"
                     value={formData.amount}
                     onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none"
                     placeholder="0.00"
                   />
                 </div>
@@ -147,7 +154,7 @@ function ExpenseModalContent({
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none"
                   />
                 </div>
               </div>
@@ -158,7 +165,7 @@ function ExpenseModalContent({
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none"
                   >
                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -168,7 +175,7 @@ function ExpenseModalContent({
                   <select
                     value={formData.paymentMethod}
                     onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none"
                   >
                     {paymentMethods.map(m => <option key={m} value={m}>{m.replace('_', ' ')}</option>)}
                   </select>
@@ -180,7 +187,7 @@ function ExpenseModalContent({
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none resize-none"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none resize-none"
                   rows={3}
                 />
               </div>
@@ -188,7 +195,7 @@ function ExpenseModalContent({
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full flex justify-center items-center gap-2 bg-brand-gold text-primary-foreground font-bold py-3 px-4 rounded-xl hover:bg-yellow-500 transition-colors disabled:opacity-50 mt-4"
+                className="w-full min-h-[48px] flex justify-center items-center gap-2 bg-brand-gold text-black font-bold py-3 px-4 rounded-xl hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 mt-4 focus-gold touch-target"
               >
                 {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {expense ? "Update Expense" : "Save Expense"}

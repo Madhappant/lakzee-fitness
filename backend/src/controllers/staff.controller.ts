@@ -52,7 +52,8 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { role: role, roleAssignedAt: new Date() }
+      data: { role: role, roleAssignedAt: new Date() },
+      omit: { password: true }
     });
 
     res.json({ status: 'success', message: 'Role assigned successfully', data: updated });
@@ -72,7 +73,8 @@ export const revokeRole = async (req: Request, res: Response, next: NextFunction
 
     const updated = await prisma.user.update({
       where: { id },
-      data: { role: 'MEMBER' }
+      data: { role: 'MEMBER' },
+      omit: { password: true }
     });
 
     res.json({ status: 'success', message: 'Role revoked', data: updated });

@@ -89,19 +89,19 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Gym Name</label>
-              <input required name="gymName" value={formData.gymName} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input required name="gymName" value={formData.gymName} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none transition-all" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Branch / Location Name</label>
-              <input name="branch" value={formData.branch} onChange={handleChange} placeholder="e.g. Downtown Metro" className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input name="branch" value={formData.branch} onChange={handleChange} placeholder="e.g. Downtown Metro" className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none transition-all" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">GST Identification Number</label>
-              <input name="gstNumber" value={formData.gstNumber} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none font-mono uppercase" />
+              <input name="gstNumber" value={formData.gstNumber} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none font-mono uppercase transition-all" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Working Hours</label>
-              <input name="workingHours" value={formData.workingHours} onChange={handleChange} placeholder="e.g. 5:00 AM - 11:00 PM" className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input name="workingHours" value={formData.workingHours} onChange={handleChange} placeholder="e.g. 5:00 AM - 11:00 PM" className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none transition-all" />
             </div>
           </div>
         </div>
@@ -112,15 +112,15 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Official Email</label>
-              <input type="email" name="contactEmail" value={formData.contactEmail} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input type="email" name="contactEmail" value={formData.contactEmail} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none transition-all" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Support Phone</label>
-              <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none transition-all" />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-muted-foreground">Complete Address</label>
-              <textarea name="address" rows={3} value={formData.address} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors resize-none"></textarea>
+              <textarea name="address" rows={3} value={formData.address} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none transition-all resize-none"></textarea>
             </div>
           </div>
         </div>
@@ -128,12 +128,12 @@ export default function SettingsPage() {
         {/* Actions */}
         <div className="flex items-center justify-end gap-4">
           {successMessage && (
-            <span className="text-green-400 font-medium text-sm mr-4">{successMessage}</span>
+            <span role="status" aria-live="polite" className="text-green-400 font-medium text-sm mr-4">{successMessage}</span>
           )}
           <button 
             type="submit" 
             disabled={mutation.isPending}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50"
+            className="flex items-center gap-2 px-8 py-3 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/20 disabled:opacity-50 focus-gold touch-target"
           >
             {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             {mutation.isPending ? "Saving..." : "Save Configuration"}

@@ -63,15 +63,18 @@ export default function MemberSubscriptions() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="border-b border-border hover:bg-white/5 transition-colors"
+                      className="border-b border-border hover:bg-muted/30 transition-colors"
                     >
                       <td className="py-4 pr-4">
                         <p className="font-bold text-foreground">{sub.plan?.name}</p>
                         <p className="text-xs text-brand-gold mt-1">Purchased on {new Date(sub.createdAt).toLocaleDateString()}</p>
+                        {sub.invoice?.invoiceNumber && (
+                          <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{sub.invoice.invoiceNumber}</p>
+                        )}
                       </td>
                       <td className="py-4 px-4 text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-white/20" />
+                          <Calendar className="w-4 h-4 text-muted-foreground/50" />
                           <span>
                             {new Date(sub.startDate).toLocaleDateString()} - {new Date(sub.endDate).toLocaleDateString()}
                           </span>
@@ -79,9 +82,11 @@ export default function MemberSubscriptions() {
                       </td>
                       <td className="py-4 px-4">
                         <p className="font-bold text-lg">₹{sub.plan?.price}</p>
-                        {sub.invoice && sub.invoice.balanceAmount > 0 ? (
+                        {sub.paymentStatus === "PENDING" || (sub.balanceAmount && sub.balanceAmount > 0) ? (
                           <span className="text-xs text-red-400 font-medium">
-                            Pending ₹{sub.invoice.balanceAmount.toLocaleString()}
+                            {sub.balanceAmount > 0
+                              ? `Pending ₹${Number(sub.balanceAmount).toLocaleString()}`
+                              : "Payment Pending"}
                           </span>
                         ) : (
                           <span className="text-xs text-green-400">Paid</span>

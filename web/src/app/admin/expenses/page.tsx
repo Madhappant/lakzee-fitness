@@ -55,7 +55,7 @@ export default function ExpensesPage() {
         </div>
         <button 
           onClick={openNewModal}
-          className="flex items-center gap-2 bg-brand-gold text-primary-foreground font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-colors shadow-lg shadow-brand-gold/20"
+          className="flex items-center gap-2 bg-brand-gold text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/20 focus-gold touch-target"
         >
           <Plus className="w-5 h-5" />
           Add Expense
@@ -80,7 +80,8 @@ export default function ExpensesPage() {
               <select 
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="flex-1 bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none"
+                className="flex-1 bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none"
+                aria-label="Select month"
               >
                 {Array.from({length: 12}).map((_, i) => (
                   <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
@@ -89,7 +90,8 @@ export default function ExpensesPage() {
               <select 
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-32 bg-background border border-border rounded-xl px-4 py-3 focus:ring-1 focus:ring-brand-gold outline-none"
+                className="w-32 bg-background border border-border rounded-xl px-4 py-3 focus-gold transition-all outline-none"
+                aria-label="Select year"
               >
                 {[selectedYear - 1, selectedYear, selectedYear + 1].map(y => (
                   <option key={y} value={y}>{y}</option>
@@ -168,16 +170,18 @@ export default function ExpensesPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => handleEdit(exp)}
-                        className="p-2 text-muted-foreground hover:text-brand-gold hover:bg-brand-gold/10 rounded-lg transition-colors"
+                        className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-brand-gold hover:bg-brand-gold/10 rounded-lg transition-colors focus-gold"
                         title="Edit"
+                        aria-label={`Edit expense ${exp.title}`}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(exp.id)}
                         disabled={deleteMut.isPending}
-                        className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors focus-gold disabled:opacity-50"
                         title="Delete"
+                        aria-label={`Delete expense ${exp.title}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

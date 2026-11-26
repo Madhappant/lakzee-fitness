@@ -8,6 +8,9 @@ export const getMyProfile = async (req: Request, res: Response) => {
       return res.status(401).json({ status: 'error', message: 'Unauthorized' });
     }
 
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
     const memberProfile = await prisma.memberProfile.findUnique({
       where: { userId },
       include: {
@@ -27,7 +30,8 @@ export const getMyProfile = async (req: Request, res: Response) => {
         },
         subscriptions: {
           where: {
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            endDate: { gte: startOfToday }
           },
           include: {
             plan: true
@@ -84,7 +88,15 @@ export const getMySubscriptions = async (req: Request, res: Response) => {
       where: { memberId: memberProfile.id },
       orderBy: { createdAt: 'desc' },
       include: {
-        plan: true
+        plan: true,
+        invoice: {
+          select: {
+            id: true,
+            invoiceNumber: true,
+            totalAmount: true,
+            status: true
+          }
+        }
       }
     });
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_URL, getAuthToken } from "./members";
+import { API_URL, getAuthToken, handleApiResponse } from "./config";
 
 export const fetchPlans = async () => {
   const res = await fetch(`${API_URL}/plans`, {
@@ -10,8 +10,7 @@ export const fetchPlans = async () => {
       'Expires': '0'
     }
   });
-  if (!res.ok) throw new Error("Failed to fetch plans");
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch plans");
 };
 
 export const createPlan = async (planData: any) => {
@@ -24,9 +23,7 @@ export const createPlan = async (planData: any) => {
     },
     body: JSON.stringify(planData),
   });
-  
-  if (!res.ok) throw new Error("Failed to create plan");
-  return res.json();
+  return handleApiResponse(res, "Failed to create plan");
 };
 
 export const updatePlan = async (id: string, data: any) => {
@@ -39,9 +36,7 @@ export const updatePlan = async (id: string, data: any) => {
     },
     body: JSON.stringify(data),
   });
-  
-  if (!res.ok) throw new Error("Failed to update plan");
-  return res.json();
+  return handleApiResponse(res, "Failed to update plan");
 };
 
 export const deletePlan = async (id: string) => {
@@ -52,7 +47,5 @@ export const deletePlan = async (id: string) => {
       Authorization: `Bearer ${token}`,
     },
   });
-  
-  if (!res.ok) throw new Error("Failed to delete plan");
-  return res.json();
+  return handleApiResponse(res, "Failed to delete plan");
 };

@@ -24,8 +24,20 @@ app.use(cors({
     if (!origin || process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    if (allowedOrigins.some(o => origin.startsWith(o))) {
-      return callback(null, true);
+    try {
+      const reqOrigin = new URL(origin).origin;
+      const isAllowed = allowedOrigins.some(o => {
+        try {
+          return new URL(o).origin === reqOrigin;
+        } catch {
+          return false;
+        }
+      });
+      if (isAllowed) {
+        return callback(null, true);
+      }
+    } catch {
+      // Invalid Origin header
     }
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
@@ -35,8 +47,8 @@ app.disable('x-powered-by');
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(compression());
 app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 import path from 'path';
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   maxAge: '7d',
@@ -66,22 +78,48 @@ import notificationRoutes from './routes/notification.routes';
 import announcementRoutes from './routes/announcement.routes';
 import expenseRoutes from './routes/expense.routes';
 import aiRoutes from './routes/ai.routes';
+import contactRoutes from './routes/contact.routes';
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+}
 
 // Trust reverse proxy (Render, Vercel, Nginx) so client IP is accurately recognized
 app.set('trust proxy', 1);
 
-// Routes
+// Routes & Rate Limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 15, // limit each IP to 15 requests per windowMs
-  message: { status: 'error', message: 'Too many login attempts. Please try again in 15 minutes.' }
+  message: { status: 'error', message: 'Too many authentication attempts. Please try again in 15 minutes.' }
+});
+
+const otpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { status: 'error', message: 'Too many OTP verification attempts. Please try again in 15 minutes.' }
+});
+
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { status: 'error', message: 'Too many AI requests. Please try again in a few minutes.' }
+});
+
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { status: 'error', message: 'Too many consultation requests. Please wait before submitting again.' }
 });
 
 app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/request-otp', authLimiter);
 app.use('/api/auth/request-phone-otp', authLimiter);
+app.use('/api/auth/reset-password', otpVerifyLimiter);
+app.use('/api/auth/verify-phone', otpVerifyLimiter);
+app.use('/api/ai', aiLimiter);
+app.use('/api/contact', contactLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
@@ -98,6 +136,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -109,6 +148,12 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
       return res.status(400).json({
         status: 'error',
         message: `A record with this ${target ? target.join(', ') : 'value'} already exists. Please use a unique value.`
+      });
+    }
+    if (err.code === 'P2025') {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Requested record was not found.'
       });
     }
   }

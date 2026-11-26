@@ -51,13 +51,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
               href="/pricing"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-primary-foreground font-bold text-base shadow-xl shadow-brand-gold/25 hover:brightness-110 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold text-base shadow-xl shadow-brand-gold/25 hover:brightness-110 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 focus-gold touch-target"
             >
               Explore Membership Plans <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/member"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl glass text-foreground font-semibold text-base hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 rounded-xl glass text-foreground font-semibold text-base hover:bg-white/10 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 focus-gold touch-target"
             >
               <Dumbbell className="w-4 h-4 text-brand-gold" /> Member Portal
             </Link>
@@ -186,7 +186,7 @@ export default function Home() {
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-brand-gold" /> Mobile QR attendance</li>
                 </ul>
               </div>
-              <Link href="/pricing" className="block text-center py-3 rounded-xl bg-secondary hover:bg-muted font-bold text-sm transition-colors">
+              <Link href="/pricing" className="block text-center py-3 rounded-xl bg-secondary hover:bg-muted font-bold text-sm transition-colors focus-gold touch-target">
                 View Plan Details
               </Link>
             </div>
@@ -194,7 +194,7 @@ export default function Home() {
             {/* Quarterly (Featured) */}
             <div className="p-8 rounded-3xl bg-gradient-to-b from-card to-brand-gold/10 border-2 border-brand-gold shadow-2xl shadow-brand-gold/10 flex flex-col justify-between space-y-6 scale-105">
               <div>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-brand-gold text-primary-foreground">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-brand-gold text-black">
                   Most Popular
                 </span>
                 <h3 className="text-2xl font-bold text-foreground mt-3">Quarterly Plan</h3>
@@ -209,7 +209,7 @@ export default function Home() {
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-brand-gold" /> Monthly body scans</li>
                 </ul>
               </div>
-              <Link href="/pricing" className="block text-center py-3 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-primary-foreground font-bold text-sm shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all">
+              <Link href="/pricing" className="block text-center py-3 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold text-sm shadow-lg shadow-brand-gold/20 hover:brightness-110 active:scale-[0.98] transition-all duration-200 focus-gold touch-target">
                 Select Quarterly
               </Link>
             </div>
@@ -229,7 +229,7 @@ export default function Home() {
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-brand-gold" /> Just ₹1,083/month value</li>
                 </ul>
               </div>
-              <Link href="/pricing" className="block text-center py-3 rounded-xl bg-secondary hover:bg-muted font-bold text-sm transition-colors">
+              <Link href="/pricing" className="block text-center py-3 rounded-xl bg-secondary hover:bg-muted font-bold text-sm transition-colors focus-gold touch-target">
                 View All 6 Plans
               </Link>
             </div>
@@ -252,13 +252,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
             <Link
               href="/contact"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-brand-gold text-primary-foreground font-bold text-base hover:bg-yellow-500 transition-colors shadow-lg shadow-brand-gold/25"
+              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-brand-gold text-black font-bold text-base hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/25 focus-gold touch-target"
             >
               Book Free Consultation
             </Link>
             <Link
               href="/pricing"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl border border-border text-foreground font-semibold text-base hover:bg-secondary transition-colors"
+              className="w-full sm:w-auto px-8 py-4 rounded-xl border border-border text-foreground font-semibold text-base hover:bg-secondary active:scale-[0.98] transition-all duration-200 focus-gold touch-target"
             >
               Browse Membership Plans
             </Link>

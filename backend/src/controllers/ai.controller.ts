@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../app';
 import bcrypt from 'bcryptjs';
+import { memoryCache } from '../utils/cache';
 
 export const checkAiStatus = async (req: Request, res: Response) => {
   try {
@@ -100,11 +101,18 @@ async function handleToolCalls(toolCalls: any[]) {
 
         const pwd = args.password || "lakzee123";
         const hashedPassword = await bcrypt.hash(pwd, 10);
-        const memberId = 'LZM' + Math.floor(1000 + Math.random() * 9000).toString();
-        
+        const normalizedEmail = String(args.email).trim().toLowerCase();
+
+        let memberId = 'LZ-' + Math.floor(1000 + Math.random() * 9000).toString();
+        for (let attempts = 0; attempts < 15; attempts++) {
+          const existsId = await prisma.memberProfile.findUnique({ where: { memberId } });
+          if (!existsId) break;
+          memberId = 'LZ-' + Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
         await prisma.user.create({
           data: {
-            email: args.email,
+            email: normalizedEmail,
             firstName: args.firstName,
             lastName: args.lastName,
             phone: args.phone || null,
@@ -119,13 +127,14 @@ async function handleToolCalls(toolCalls: any[]) {
             }
           }
         });
+        memoryCache.delete('dashboard_stats');
         
         results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content: `Success: Member ${args.firstName} ${args.lastName} added with ID ${memberId} and password ${pwd}.` });
       } 
       
       else if (call.function.name === "update_member") {
         const user = await prisma.user.findUnique({ 
-          where: { email: args.email },
+          where: { email: String(args.email).trim().toLowerCase() },
           include: { memberProfile: true }
         });
         
@@ -135,7 +144,7 @@ async function handleToolCalls(toolCalls: any[]) {
         }
         
         await prisma.user.update({
-          where: { email: args.email },
+          where: { id: user.id },
           data: {
             firstName: args.firstName || user.firstName,
             lastName: args.lastName || user.lastName,
@@ -147,13 +156,14 @@ async function handleToolCalls(toolCalls: any[]) {
             }
           }
         });
+        memoryCache.delete('dashboard_stats');
         
         results.push({ tool_call_id: call.id, role: "tool", name: "update_member", content: `Success: Details for ${args.email} updated successfully.` });
       }
 
       else if (call.function.name === "delete_member") {
         const user = await prisma.user.findUnique({ 
-          where: { email: args.email },
+          where: { email: String(args.email).trim().toLowerCase() },
           include: { memberProfile: true }
         });
         
@@ -162,30 +172,34 @@ async function handleToolCalls(toolCalls: any[]) {
           continue;
         }
         
-        if (user.memberProfile) {
-          const profileId = user.memberProfile.id;
-          const invoices = await prisma.invoice.findMany({ where: { memberId: profileId } });
-          const invoiceIds = invoices.map((i: any) => i.id);
+        await prisma.$transaction(async (tx) => {
+          if (user.memberProfile) {
+            const profileId = user.memberProfile.id;
+            const invoices = await tx.invoice.findMany({ where: { memberId: profileId } });
+            const invoiceIds = invoices.map((i: any) => i.id);
 
-          await prisma.$transaction([
-            prisma.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } }),
-            prisma.invoice.deleteMany({ where: { memberId: profileId } }),
-            prisma.subscription.deleteMany({ where: { memberId: profileId } }),
-            prisma.attendance.deleteMany({ where: { memberId: profileId } }),
-            prisma.dietPlan.deleteMany({ where: { memberId: profileId } }),
-            prisma.workoutRoutine.deleteMany({ where: { memberId: profileId } }),
-            prisma.memberProfile.delete({ where: { id: profileId } })
-          ]);
-        }
-        
-        await prisma.user.delete({ where: { id: user.id } });
+            if (invoiceIds.length > 0) {
+              await tx.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } });
+            }
+            await tx.invoice.deleteMany({ where: { memberId: profileId } });
+            await tx.subscription.deleteMany({ where: { memberId: profileId } });
+            await tx.attendance.deleteMany({ where: { memberId: profileId } });
+            await tx.dietPlan.deleteMany({ where: { memberId: profileId } });
+            await tx.workoutRoutine.deleteMany({ where: { memberId: profileId } });
+            await tx.memberProfile.delete({ where: { id: profileId } });
+          }
+          await tx.memberProfile.updateMany({ where: { trainerId: user.id }, data: { trainerId: null } });
+          await tx.announcement.deleteMany({ where: { authorId: user.id } });
+          await tx.user.delete({ where: { id: user.id } });
+        });
+        memoryCache.delete('dashboard_stats');
         
         results.push({ tool_call_id: call.id, role: "tool", name: "delete_member", content: `Success: Member ${args.email} deleted successfully.` });
       }
 
       else if (call.function.name === "assign_plan") {
         const user = await prisma.user.findUnique({ 
-          where: { email: args.email },
+          where: { email: String(args.email).trim().toLowerCase() },
           include: { memberProfile: true }
         });
         
@@ -194,8 +208,8 @@ async function handleToolCalls(toolCalls: any[]) {
           continue;
         }
         
-        const plans = await prisma.membershipPlan.findMany();
-        const plan = plans.find(p => p.name.toLowerCase().includes(args.planName.toLowerCase()));
+        const plans = await prisma.membershipPlan.findMany({ where: { isActive: true } });
+        const plan = plans.find(p => p.name.toLowerCase().includes(String(args.planName).toLowerCase()));
         
         if (!plan) {
           results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: `Error: Plan matching '${args.planName}' not found. Available plans: ${plans.map(p => p.name).join(", ")}` });
@@ -205,19 +219,51 @@ async function handleToolCalls(toolCalls: any[]) {
         const start = new Date();
         const end = new Date(start);
         end.setDate(end.getDate() + plan.durationDays);
+        const memberProfileId = user.memberProfile.id;
 
-        await prisma.subscription.create({
-          data: {
-            memberId: user.memberProfile.id,
-            planId: plan.id,
-            startDate: start,
-            endDate: end,
-            status: "ACTIVE",
-            paymentStatus: "PAID",
-            paymentMethod: "CASH",
-            balanceAmount: 0
+        await prisma.$transaction(async (tx) => {
+          const sub = await tx.subscription.create({
+            data: {
+              memberId: memberProfileId,
+              planId: plan.id,
+              startDate: start,
+              endDate: end,
+              status: "ACTIVE",
+              paymentStatus: "PAID",
+              paymentMethod: "CASH",
+              balanceAmount: 0
+            }
+          });
+          const gstRate = (plan.gstPercentage || 18.0) / 100;
+          const basePrice = plan.price / (1 + gstRate);
+          const gstAmount = plan.price - basePrice;
+          const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+
+          const invoice = await tx.invoice.create({
+            data: {
+              invoiceNumber,
+              memberId: memberProfileId,
+              subscriptionId: sub.id,
+              subtotal: Math.round(basePrice * 100) / 100,
+              discount: 0,
+              gstAmount: Math.round(gstAmount * 100) / 100,
+              totalAmount: plan.price,
+              status: 'COMPLETED',
+            }
+          });
+
+          if (plan.price > 0) {
+            await tx.payment.create({
+              data: {
+                invoiceId: invoice.id,
+                amount: plan.price,
+                method: 'CASH',
+                status: 'COMPLETED',
+              }
+            });
           }
         });
+        memoryCache.delete('dashboard_stats');
         
         results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: `Success: Plan '${plan.name}' assigned to ${user.firstName}. Valid until ${end.toDateString()}.` });
       }
@@ -233,7 +279,7 @@ export const chatWithAi = async (req: Request, res: Response) => {
   try {
     const { messages, model } = req.body;
 
-    if (!messages || !Array.isArray(messages)) {
+    if (!messages || !Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
       return res.status(400).json({ status: 'error', code: 'AI_BAD_REQUEST', message: 'Invalid messages array' });
     }
 
@@ -413,7 +459,7 @@ export const voiceAssistant = async (req: Request, res: Response) => {
   try {
     const { messages } = req.body;
 
-    if (!messages || !Array.isArray(messages)) {
+    if (!messages || !Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
       return res.status(400).json({ status: 'error', code: 'AI_BAD_REQUEST', message: 'Invalid messages array' });
     }
 

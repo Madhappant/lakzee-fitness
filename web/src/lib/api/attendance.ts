@@ -1,4 +1,4 @@
-import { API_URL, getAuthToken } from "./members";
+import { API_URL, getAuthToken, handleApiResponse } from "./config";
 
 export const fetchTodayAttendance = async () => {
   const token = getAuthToken();
@@ -9,8 +9,7 @@ export const fetchTodayAttendance = async () => {
   const res = await fetch(`${API_URL}/attendance?start=${startOfDay}&end=${endOfDay}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("Failed to fetch attendance logs");
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch attendance logs");
 };
 
 export const checkInMember = async (lakzeeId: string) => {
@@ -23,12 +22,7 @@ export const checkInMember = async (lakzeeId: string) => {
     },
     body: JSON.stringify({ lakzeeId }),
   });
-  
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Check-in failed");
-  }
-  return res.json();
+  return handleApiResponse(res, "Check-in failed");
 };
 
 export const checkOutMember = async (lakzeeId: string) => {
@@ -41,10 +35,5 @@ export const checkOutMember = async (lakzeeId: string) => {
     },
     body: JSON.stringify({ lakzeeId }),
   });
-  
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Check-out failed");
-  }
-  return res.json();
+  return handleApiResponse(res, "Check-out failed");
 };

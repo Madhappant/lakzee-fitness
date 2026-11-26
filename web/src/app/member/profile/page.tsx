@@ -57,9 +57,13 @@ export default function MemberProfilePage() {
     setIsPhoneLoading(true);
     setError("");
     try {
+      const token = localStorage.getItem("lakzee_token");
       const res = await fetch(`${API_URL}/auth/request-phone-otp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ email: user?.email, newPhone }),
       });
       
@@ -79,9 +83,13 @@ export default function MemberProfilePage() {
     setIsPhoneLoading(true);
     setError("");
     try {
+      const token = localStorage.getItem("lakzee_token");
       const res = await fetch(`${API_URL}/auth/verify-phone`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ email: user?.email, otp }),
       });
       
@@ -194,14 +202,14 @@ export default function MemberProfilePage() {
             </h3>
             
             <div className="space-y-6">
-              <div className="bg-black/40 border border-border rounded-xl p-4">
+              <div className="bg-muted/40 border border-border rounded-xl p-4">
                 <p className="text-sm font-medium text-muted-foreground mb-1">Full Name</p>
                 <p className="text-lg font-medium text-foreground">{user.firstName} {user.lastName}</p>
               </div>
               
-              <div className="bg-black/40 border border-border rounded-xl p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                  <Mail className="w-5 h-5 text-brand-gold/80" />
+              <div className="bg-muted/40 border border-border rounded-xl p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shrink-0">
+                  <Mail className="w-5 h-5 text-brand-gold" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Email Address</p>
@@ -209,10 +217,10 @@ export default function MemberProfilePage() {
                 </div>
               </div>
 
-              <div className="bg-black/40 border border-border rounded-xl p-4 flex items-center justify-between gap-4">
+              <div className="bg-muted/40 border border-border rounded-xl p-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                    <Phone className="w-5 h-5 text-brand-gold/80" />
+                  <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shrink-0">
+                    <Phone className="w-5 h-5 text-brand-gold" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">Phone Number</p>
@@ -225,7 +233,7 @@ export default function MemberProfilePage() {
                 </div>
                 <button 
                   onClick={() => setPhoneStep("REQUEST_OTP")}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-foreground rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-background hover:bg-muted border border-border text-foreground rounded-xl text-sm font-medium transition-all focus-gold touch-target"
                 >
                   {user.phone ? "Update" : "Add Phone"}
                 </button>
@@ -245,7 +253,7 @@ export default function MemberProfilePage() {
             </p>
             
             <div className="flex items-center gap-3">
-              <div className="flex-1 bg-black/40 border border-border rounded-xl px-4 py-4 text-foreground font-mono text-sm sm:text-base break-all">
+              <div className="flex-1 bg-muted/40 border border-border rounded-xl px-4 py-4 text-foreground font-mono text-sm sm:text-base break-all">
                 {profile.memberId}
               </div>
               <button 
@@ -257,7 +265,8 @@ export default function MemberProfilePage() {
                     setTimeout(() => { el.innerText = 'Copy'; }, 2000);
                   }
                 }}
-                className="flex items-center gap-2 px-6 py-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shrink-0 shadow-lg shadow-brand-gold/20"
+                aria-label="Copy User ID to clipboard"
+                className="flex items-center gap-2 px-6 py-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 shrink-0 shadow-lg shadow-brand-gold/20 focus-gold touch-target"
               >
                 <CheckCircle2 className="w-5 h-5 hidden" id="copy-icon-check" />
                 <span id="copy-text" className="hidden sm:inline">Copy</span>
@@ -277,20 +286,24 @@ export default function MemberProfilePage() {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
           >
             <motion.div 
-               initial={{ scale: 0.95, opacity: 0 }}
-               animate={{ scale: 1, opacity: 1 }}
-               exit={{ scale: 0.95, opacity: 0 }}
-               className="bg-[#111] border border-border rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden"
-             >
-               {/* Dynamic Background for Modal */}
-               <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-transparent pointer-events-none" />
-               
-               <button 
-                 onClick={resetPhoneFlow}
-                 className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 rounded-full transition-colors z-10"
-               >
-                 <X className="w-5 h-5" />
-               </button>
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="member-phone-modal-title"
+              className="bg-card border border-border rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden"
+            >
+              {/* Dynamic Background for Modal */}
+              <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-transparent pointer-events-none" />
+              
+              <button 
+                onClick={resetPhoneFlow}
+                aria-label="Close dialog"
+                className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors z-10 focus-gold"
+              >
+                <X className="w-5 h-5" />
+              </button>
  
                <div className="relative z-10">
                  {phoneStep === "REQUEST_OTP" && (
@@ -315,7 +328,7 @@ export default function MemberProfilePage() {
                          required
                          value={newPhone}
                          onChange={(e) => setNewPhone(e.target.value)}
-                         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-border text-foreground placeholder-white/40 focus:ring-2 focus:ring-brand-gold/50 transition-all"
+                         className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus-gold outline-none transition-all"
                          placeholder="+1 (555) 000-0000"
                        />
                      </div>
@@ -323,7 +336,7 @@ export default function MemberProfilePage() {
                      <button
                       type="submit"
                       disabled={isPhoneLoading || newPhone.length < 5}
-                      className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
                     >
                       {isPhoneLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                       Send OTP
@@ -354,7 +367,7 @@ export default function MemberProfilePage() {
                          maxLength={6}
                          value={otp}
                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-border text-foreground focus:ring-2 focus:ring-brand-gold/50 transition-all font-mono tracking-widest text-center text-xl"
+                         className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground focus-gold outline-none transition-all font-mono tracking-widest text-center text-xl"
                          placeholder="------"
                        />
                      </div>
@@ -362,7 +375,7 @@ export default function MemberProfilePage() {
                      <button
                       type="submit"
                       disabled={isPhoneLoading || otp.length !== 6}
-                      className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
                     >
                       {isPhoneLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                       Verify & Save

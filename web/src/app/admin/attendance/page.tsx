@@ -37,6 +37,8 @@ export default function AttendancePage() {
     mutationFn: checkInMember,
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
       setLakzeeId("");
       setStatusMessage({ type: 'success', text: res.message });
       setTimeout(() => setStatusMessage(null), 3000);
@@ -62,6 +64,8 @@ export default function AttendancePage() {
     mutationFn: checkOutMember,
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
       setCheckOutId("");
       setStatusMessage({ type: 'success', text: res.message });
       setTimeout(() => setStatusMessage(null), 3000);
@@ -104,6 +108,8 @@ export default function AttendancePage() {
     <div className="max-w-5xl mx-auto space-y-8">
       {statusMessage && (
         <motion.div 
+          role="status"
+          aria-live="polite"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 shadow-xl rounded-full font-medium text-center ${statusMessage.type === 'success' ? 'bg-green-500/10 border border-green-500/50 text-green-400 backdrop-blur-md' : 'bg-red-500/10 border border-red-500/50 text-red-400 backdrop-blur-md'}`}
@@ -165,9 +171,9 @@ export default function AttendancePage() {
             <button 
               type="submit" 
               disabled={mutation.isPending}
-              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50 w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 px-8 h-14 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50 focus-gold w-full sm:w-auto shrink-0"
             >
-              {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+              {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <LogIn className="w-5 h-5" aria-hidden="true" />}
               Check In
             </button>
           </form>
@@ -214,9 +220,9 @@ export default function AttendancePage() {
             <button 
               type="submit" 
               disabled={checkoutMut.isPending}
-              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-primary-foreground bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 font-bold transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 px-8 h-14 rounded-xl text-white bg-gradient-to-r from-red-600 to-red-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 focus-gold w-full sm:w-auto shrink-0"
             >
-              {checkoutMut.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+              {checkoutMut.isPending ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <LogOut className="w-5 h-5" aria-hidden="true" />}
               Check Out
             </button>
           </form>

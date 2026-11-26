@@ -9,6 +9,7 @@ import { fetchPlans } from "@/lib/api/plans";
 import { Plus, X, Loader2, Calendar as CalendarIcon, CheckCircle2, CalendarRange, Wallet, ListTree, Edit2, Trash2, Save, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 import type { PaymentModalType } from "@/components/payments/PaymentDetailsModal";
 
 const PaymentDetailsModal = dynamic(
@@ -22,6 +23,7 @@ export default function PaymentsPage() {
   const [modalMode, setModalMode] = useState<"ASSIGN" | "EDIT">("ASSIGN");
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [activeDetailsModal, setActiveDetailsModal] = useState<PaymentModalType | null>(null);
+  const [modalError, setModalError] = useState("");
   const [formData, setFormData] = useState({
     memberId: "",
     planId: "",
@@ -37,7 +39,7 @@ export default function PaymentsPage() {
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
 
   // Fetching Data
-  const { data: subsData, isLoading: loadingSubs } = useQuery({ 
+  const { data: subsData, isLoading: loadingSubs, isError: subsError } = useQuery({ 
     queryKey: ["subscriptions"], 
     queryFn: () => fetchSubscriptions() 
   });
@@ -80,36 +82,59 @@ export default function PaymentsPage() {
     return matchesSearch && matchesStatus && matchesPayment;
   });
 
+  const invalidateFinanceQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+    queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+    queryClient.invalidateQueries({ queryKey: ["reports"] });
+  };
+
   const mutation = useMutation({
     mutationFn: createSubscription,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
+      invalidateFinanceQueries();
+      toast.success("Plan assigned successfully!");
       setIsModalOpen(false);
+      setModalError("");
       setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH", balanceAmount: "" });
+    },
+    onError: (err: any) => {
+      const msg = err.message || "Failed to assign subscription";
+      setModalError(msg);
+      toast.error(msg);
     },
   });
 
   const updateMut = useMutation({
     mutationFn: (data: any) => updateSubscription(selectedSubId!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
+      invalidateFinanceQueries();
+      toast.success("Subscription updated successfully!");
       setIsModalOpen(false);
+      setModalError("");
       setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH", balanceAmount: "" });
+    },
+    onError: (err: any) => {
+      const msg = err.message || "Failed to update subscription";
+      setModalError(msg);
+      toast.error(msg);
     },
   });
 
   const deleteMut = useMutation({
     mutationFn: deleteSubscription,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
+      invalidateFinanceQueries();
+      toast.success("Subscription deleted");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete subscription");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError("");
     if (modalMode === "EDIT") {
       updateMut.mutate(formData);
     } else {
@@ -122,18 +147,20 @@ export default function PaymentsPage() {
       const newData = { ...prev, [field]: value };
       const plan = plans.find((p: any) => p.id === newData.planId);
       
-      if (plan) {
+      if (plan && newData.startDate) {
         const start = new Date(newData.startDate);
-        const end = new Date(start);
-        end.setDate(end.getDate() + plan.durationDays);
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        if (!isNaN(start.getTime())) {
+          const end = new Date(start);
+          end.setDate(end.getDate() + plan.durationDays);
+          
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
 
-        if (end >= today && newData.status === 'EXPIRED') {
-           newData.status = 'ACTIVE';
-        } else if (end < today && newData.status === 'ACTIVE') {
-           newData.status = 'EXPIRED';
+          if (end >= today && newData.status === 'EXPIRED') {
+             newData.status = 'ACTIVE';
+          } else if (end < today && newData.status === 'ACTIVE') {
+             newData.status = 'EXPIRED';
+          }
         }
       }
       return newData;
@@ -141,6 +168,7 @@ export default function PaymentsPage() {
   };
 
   const handleEdit = (sub: any) => {
+    setModalError("");
     setModalMode("EDIT");
     setSelectedSubId(sub.id);
     setFormData({
@@ -166,69 +194,106 @@ export default function PaymentsPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div 
+          role="button"
+          tabIndex={0}
+          aria-label="View Today's Collection members and payments"
           onClick={() => setActiveDetailsModal("TODAY")}
-          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-green-500/50 hover:bg-green-500/5 cursor-pointer transition-all"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setActiveDetailsModal("TODAY");
+            }
+          }}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-green-500/50 hover:bg-green-500/5 hover:-translate-y-1 hover:shadow-xl cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
         >
           <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Today&apos;s Collection</h3>
-            <Wallet className="w-5 h-5 text-green-500/50 group-hover:text-green-500 transition-colors" />
+            <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">Today&apos;s Collection</h3>
+            <Wallet className="w-5 h-5 text-green-500/60 group-hover:text-green-500 transition-colors" aria-hidden="true" />
           </div>
-          <p className="text-3xl font-bold text-green-500">₹{stats.todaysCollection.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-2 group-hover:text-green-400 transition-colors">Click to view members & payments →</p>
+          <p className="text-3xl font-bold text-green-400">₹{stats.todaysCollection.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-green-400 transition-colors font-medium">Click to view members & payments →</p>
         </div>
         
         <div 
+          role="button"
+          tabIndex={0}
+          aria-label="View This Month's members and payments"
           onClick={() => setActiveDetailsModal("THIS_MONTH")}
-          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/50 hover:bg-brand-gold/5 cursor-pointer transition-all"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setActiveDetailsModal("THIS_MONTH");
+            }
+          }}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/60 hover:bg-brand-gold/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
         >
           <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">This Month</h3>
-            <CalendarRange className="w-5 h-5 text-brand-gold/50 group-hover:text-brand-gold transition-colors" />
+            <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">This Month</h3>
+            <CalendarRange className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold transition-colors" aria-hidden="true" />
           </div>
           <p className="text-3xl font-bold text-brand-gold">₹{stats.thisMonth.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-2 group-hover:text-brand-gold transition-colors">Click to view members & payments →</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-brand-gold transition-colors font-medium">Click to view members & payments →</p>
         </div>
 
         <div 
+          role="button"
+          tabIndex={0}
+          aria-label="View pending payment members"
           onClick={() => setActiveDetailsModal("PENDING")}
-          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-red-500/50 hover:bg-red-500/5 cursor-pointer transition-all"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setActiveDetailsModal("PENDING");
+            }
+          }}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-red-500/50 hover:bg-red-500/5 hover:-translate-y-1 hover:shadow-xl cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
         >
           <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Pending Amount</h3>
-            <Wallet className="w-5 h-5 text-red-500/50 group-hover:text-red-500 transition-colors" />
+            <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">Pending Amount</h3>
+            <Wallet className="w-5 h-5 text-red-500/60 group-hover:text-red-500 transition-colors" aria-hidden="true" />
           </div>
-          <p className="text-3xl font-bold text-red-500">₹{(stats.totalPending || 0).toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-2 group-hover:text-red-400 transition-colors">Click to view pending members →</p>
+          <p className="text-3xl font-bold text-red-400">₹{(stats.totalPending || 0).toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-red-400 transition-colors font-medium">Click to view pending members →</p>
         </div>
 
         <div 
+          role="button"
+          tabIndex={0}
+          aria-label="View all record details"
           onClick={() => setActiveDetailsModal("TOTAL")}
-          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/50 hover:bg-brand-gold/5 cursor-pointer transition-all"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setActiveDetailsModal("TOTAL");
+            }
+          }}
+          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-brand-gold/60 hover:bg-brand-gold/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
         >
           <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">Total Records</h3>
-            <ListTree className="w-5 h-5 text-white/50 group-hover:text-brand-gold transition-colors" />
+            <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">Total Records</h3>
+            <ListTree className="w-5 h-5 text-white/50 group-hover:text-brand-gold transition-colors" aria-hidden="true" />
           </div>
           <p className="text-3xl font-bold text-foreground">{stats.totalRecords.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-2 group-hover:text-brand-gold transition-colors">Click to view all record details →</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-brand-gold transition-colors font-medium">Click to view all record details →</p>
         </div>
       </div>
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Payments & Subscriptions</h1>
-          <p className="text-muted-foreground">Manage member active subscriptions and billing.</p>
+          <h1 className="text-3xl font-bold mb-1">Payments & Subscriptions</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Manage member active subscriptions, revenue intake, and billing.</p>
         </div>
         <button 
           onClick={() => {
+            setModalError("");
             setModalMode("ASSIGN");
             setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH", balanceAmount: "" });
             setIsModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 w-full sm:w-auto"
+          className="touch-target gap-2 px-6 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-brand-gold/20 focus-gold w-full sm:w-auto"
         >
-          <Plus className="w-5 h-5" /> Assign Plan
+          <Plus className="w-5 h-5" aria-hidden="true" /> Assign Plan
         </button>
       </div>
 
@@ -303,7 +368,15 @@ export default function PaymentsPage() {
                 </tr>
               )}
 
-              {!loadingSubs && subscriptions.length === 0 && (
+              {subsError && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-red-400">
+                    Failed to load subscription records. Please refresh or sign in again.
+                  </td>
+                </tr>
+              )}
+
+              {!loadingSubs && !subsError && subscriptions.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                     No active subscriptions found.
@@ -440,6 +513,12 @@ export default function PaymentsPage() {
               <h2 className="text-2xl font-bold mb-6 text-brand-gold">
                 {modalMode === "ASSIGN" ? "Assign Subscription" : "Edit Subscription"}
               </h2>
+
+              {modalError && (
+                <div role="alert" className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+                  {modalError}
+                </div>
+              )}
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">

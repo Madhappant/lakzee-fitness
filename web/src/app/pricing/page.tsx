@@ -131,7 +131,7 @@ export default function PricingPage() {
                 }`}
               >
                 {plan.badge && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-brand-gold to-yellow-500 text-primary-foreground shadow-md">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-brand-gold to-yellow-500 text-black shadow-md">
                     {plan.badge}
                   </div>
                 )}
@@ -167,10 +167,10 @@ export default function PricingPage() {
                 <div className="pt-8 mt-6">
                   <Link
                     href="/contact"
-                    className={`w-full block text-center py-3.5 px-6 rounded-xl font-bold text-sm transition-all ${
+                    className={`w-full block text-center py-3.5 px-6 rounded-xl font-bold text-sm transition-all focus-gold touch-target ${
                       plan.popular
-                        ? "bg-gradient-to-r from-brand-gold to-yellow-500 text-primary-foreground shadow-lg shadow-brand-gold/25 hover:brightness-110"
-                        : "bg-secondary text-foreground hover:bg-brand-gold hover:text-primary-foreground"
+                        ? "bg-gradient-to-r from-brand-gold to-yellow-500 text-black shadow-lg shadow-brand-gold/25 hover:brightness-110 active:scale-[0.98]"
+                        : "bg-secondary text-foreground hover:bg-brand-gold hover:text-black active:scale-[0.98]"
                     }`}
                   >
                     {plan.cta}
@@ -193,7 +193,7 @@ export default function PricingPage() {
             </div>
             <Link
               href="/contact"
-              className="shrink-0 px-8 py-4 rounded-xl bg-brand-gold text-primary-foreground font-bold text-sm hover:bg-yellow-500 transition-colors shadow-lg shadow-brand-gold/20 flex items-center gap-2"
+              className="shrink-0 px-8 py-4 rounded-xl bg-brand-gold text-black font-bold text-sm hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/20 flex items-center gap-2 focus-gold touch-target"
             >
               <Zap className="w-4 h-4" /> Book Free Trial
             </Link>

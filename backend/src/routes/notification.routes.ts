@@ -21,8 +21,9 @@ router.get('/', authenticate, async (req: any, res) => {
       now = new Date(Date.now() - (offset * 60000));
     }
     
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(new Date().getDate() + 3);
+    // Calculate 3 days from now relative to the user's adjusted clock
+    const threeDaysFromNow = new Date(now);
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
     if (userRole === 'ADMIN' || userRole === 'RECEPTIONIST') {
       // ADMIN NOTIFICATIONS
@@ -156,10 +157,10 @@ router.get('/', authenticate, async (req: any, res) => {
           orderBy: { createdAt: 'desc' }
         });
 
-        const seenMyPayment = new Set<string>();
+        const seenMySubIds = new Set<string>();
 
         myPendingInvoices.forEach(invoice => {
-          seenMyPayment.add(invoice.id);
+          if (invoice.subscriptionId) seenMySubIds.add(invoice.subscriptionId);
           notifications.push({
             id: `inv-${invoice.id}`,
             type: 'PAYMENT',
@@ -172,6 +173,7 @@ router.get('/', authenticate, async (req: any, res) => {
         });
 
         myPendingSubs.forEach(sub => {
+          if (seenMySubIds.has(sub.id)) return;
           const amount = sub.balanceAmount > 0 ? sub.balanceAmount : (sub.plan?.price || 0);
           notifications.push({
             id: `sub-pay-${sub.id}`,

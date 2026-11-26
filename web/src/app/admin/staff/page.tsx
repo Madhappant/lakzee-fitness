@@ -52,7 +52,7 @@ export default function StaffPage() {
             value={formData.userId}
             onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value }))}
             placeholder="e.g. 8b8d... or LZ-1234" 
-            className="w-full bg-card/50 border border-border rounded-lg px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none font-mono"
+            className="w-full bg-card/50 border border-border rounded-lg px-4 py-3 text-foreground focus-gold outline-none font-mono transition-all"
           />
         </div>
         
@@ -61,7 +61,8 @@ export default function StaffPage() {
           <select 
             value={formData.role}
             onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-            className="w-full bg-card/50 border border-border rounded-lg px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none appearance-none"
+            className="w-full bg-card/50 border border-border rounded-lg px-4 py-3 text-foreground focus-gold outline-none appearance-none transition-all"
+            aria-label="Role"
           >
             <option value="RECEPTIONIST">receptionist</option>
             <option value="TRAINER">trainer</option>
@@ -72,7 +73,7 @@ export default function StaffPage() {
         <button 
           type="submit" 
           disabled={assignMutation.isPending}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-primary-foreground bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors disabled:opacity-50"
+          className="w-full min-h-[48px] flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-black bg-brand-gold hover:bg-yellow-500 font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 focus-gold touch-target"
         >
           {assignMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
           Assign
@@ -109,7 +110,8 @@ export default function StaffPage() {
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={() => revokeMutation.mutate(user.id)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors focus-gold"
+                      aria-label={`Revoke role for user ${user.id}`}
                     >
                       <UserMinus className="w-4 h-4" /> Revoke
                     </button>

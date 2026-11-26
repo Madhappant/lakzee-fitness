@@ -68,11 +68,14 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-card"
+        className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-card focus-gold"
+        aria-label={`View notifications (${unreadCount} active)`}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-5 h-5" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-background">
+          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-background">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -81,11 +84,13 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            role="dialog"
+            aria-label="Notifications Panel"
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col max-h-[80vh]"
+            className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col max-h-[80vh] gold-glow-sm"
           >
             <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
               <h3 className="font-bold text-foreground">Notifications</h3>

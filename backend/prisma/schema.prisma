@@ -78,7 +78,7 @@ model MemberProfile {
   qrCode         String   @unique @default(uuid()) // Unique identifier for QR checking
   
   trainerId      String?
-  trainer        User?    @relation("TrainerToMember", fields: [trainerId], references: [id])
+  trainer        User?    @relation("TrainerToMember", fields: [trainerId], references: [id], onDelete: SetNull)
 
   subscriptions  Subscription[]
   attendances    Attendance[]
@@ -111,7 +111,7 @@ model MembershipPlan {
 model Subscription {
   id            String             @id @default(uuid())
   memberId      String
-  member        MemberProfile      @relation(fields: [memberId], references: [id])
+  member        MemberProfile      @relation(fields: [memberId], references: [id], onDelete: Cascade)
   planId        String
   plan          MembershipPlan     @relation(fields: [planId], references: [id])
   startDate     DateTime
@@ -136,9 +136,9 @@ model Invoice {
   id            String        @id @default(uuid())
   invoiceNumber String        @unique // Auto generated
   memberId      String
-  member        MemberProfile @relation(fields: [memberId], references: [id])
+  member        MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
   subscriptionId String?      @unique
-  subscription  Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscription  Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   
   subtotal      Float
   discount      Float         @default(0)
@@ -158,7 +158,7 @@ model Invoice {
 model Payment {
   id            String        @id @default(uuid())
   invoiceId     String
-  invoice       Invoice       @relation(fields: [invoiceId], references: [id])
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   amount        Float
   method        String // CASH, UPI, CREDIT_CARD, DEBIT_CARD, BANK_TRANSFER, SPLIT
   transactionId String?
@@ -173,13 +173,15 @@ model Payment {
 model Attendance {
   id            String        @id @default(uuid())
   memberId      String
-  member        MemberProfile @relation(fields: [memberId], references: [id])
+  member        MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
   checkIn       DateTime      @default(now())
   checkOut      DateTime?
   date          DateTime
 
   @@index([date])
   @@index([date, checkIn(sort: Desc)])
+  @@index([memberId, checkOut])
+  @@index([memberId, checkIn])
 }
 
 model Settings {
@@ -213,6 +215,8 @@ model DietPlan {
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([memberId, isActive])
 }
 
 model WorkoutRoutine {
@@ -226,6 +230,8 @@ model WorkoutRoutine {
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([memberId, isActive])
 }
 
 model Announcement {
@@ -233,7 +239,7 @@ model Announcement {
   title     String
   message   String
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
@@ -250,4 +256,18 @@ model Expense {
 
   @@index([date])
   @@index([category])
+}
+
+model ConsultationInquiry {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  goal      String
+  message   String?
+  status    String   @default("NEW") // NEW, CONTACTED, CONVERTED, CLOSED
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
 }

@@ -4,9 +4,12 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchMemberById, updateMember } from "@/lib/api/members";
+import { fetchMemberById, updateMember, API_URL } from "@/lib/api/members";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
+
+const BASE_URL = API_URL.replace("/api", "");
 
 export default function EditMemberPage() {
   const router = useRouter();
@@ -55,19 +58,36 @@ export default function EditMemberPage() {
         emergencyContact: memberProfile?.emergencyContact || "",
         dob: memberProfile?.dob && !isNaN(new Date(memberProfile.dob).getTime()) ? new Date(memberProfile.dob).toISOString().split('T')[0] : "",
       });
-      if (memberProfile?.photoUrl) setPhotoPreview(memberProfile.photoUrl);
+      if (memberProfile?.photoUrl) {
+        const resolvedUrl = memberProfile.photoUrl.startsWith("http")
+          ? memberProfile.photoUrl
+          : `${BASE_URL}${memberProfile.photoUrl}`;
+        setPhotoPreview(resolvedUrl);
+      }
     }
   }, [memberData]);
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
 
   const mutation = useMutation({
     mutationFn: (data: any) => updateMember(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
       queryClient.invalidateQueries({ queryKey: ["member", id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      toast.success("Member updated successfully!");
       router.push("/admin/members");
     },
     onError: (err: any) => {
-      setError(err.message || "Something went wrong.");
+      const msg = err.message || "Something went wrong.";
+      setError(msg);
+      toast.error(msg);
     }
   });
 

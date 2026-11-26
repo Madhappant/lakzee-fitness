@@ -1,12 +1,11 @@
-import { getAuthToken, API_URL } from "./members";
+import { getAuthToken, API_URL, handleApiResponse } from "./config";
 
 export const fetchAnnouncements = async () => {
   const token = getAuthToken();
   const res = await fetch(`${API_URL}/announcements`, {
     headers: { Authorization: `Bearer ${token}` }
   });
-  if (!res.ok) throw new Error("Failed to fetch announcements");
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch announcements");
 };
 
 export const createAnnouncement = async (data: { title: string; message: string }) => {
@@ -19,9 +18,7 @@ export const createAnnouncement = async (data: { title: string; message: string 
     },
     body: JSON.stringify(data)
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to create announcement");
-  return json;
+  return handleApiResponse(res, "Failed to create announcement");
 };
 
 export const deleteAnnouncement = async (id: string) => {
@@ -30,7 +27,5 @@ export const deleteAnnouncement = async (id: string) => {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` }
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to delete announcement");
-  return json;
+  return handleApiResponse(res, "Failed to delete announcement");
 };

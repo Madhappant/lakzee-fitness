@@ -33,51 +33,54 @@ const sidebarGroups = [
   {
     title: "Overview",
     items: [
-      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "RECEPTIONIST"] },
     ],
   },
   {
     title: "Operations",
     items: [
-      { name: "Members", href: "/admin/members", icon: Users },
-      { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
-      { name: "Payments", href: "/admin/payments", icon: CreditCard },
-      { name: "Expenses", href: "/admin/expenses", icon: Receipt },
-      { name: "Announcements", href: "/admin/announcements", icon: Megaphone },
+      { name: "Members", href: "/admin/members", icon: Users, roles: ["ADMIN", "RECEPTIONIST", "TRAINER"] },
+      { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck, roles: ["ADMIN", "RECEPTIONIST", "TRAINER"] },
+      { name: "Payments", href: "/admin/payments", icon: CreditCard, roles: ["ADMIN", "RECEPTIONIST"] },
+      { name: "Expenses", href: "/admin/expenses", icon: Receipt, roles: ["ADMIN", "RECEPTIONIST"] },
+      { name: "Announcements", href: "/admin/announcements", icon: Megaphone, roles: ["ADMIN"] },
     ],
   },
   {
     title: "Catalog",
     items: [
-      { name: "Membership Plans", href: "/admin/plans", icon: Package },
+      { name: "Membership Plans", href: "/admin/plans", icon: Package, roles: ["ADMIN"] },
     ],
   },
   {
     title: "Analytics",
     items: [
-      { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+      { name: "Reports", href: "/admin/reports", icon: BarChart3, roles: ["ADMIN"] },
     ],
   },
   {
     title: "Administration",
     items: [
-      { name: "Staff & Roles", href: "/admin/staff", icon: ShieldCheck },
-      { name: "Settings", href: "/admin/settings", icon: Settings },
+      { name: "Staff & Roles", href: "/admin/staff", icon: ShieldCheck, roles: ["ADMIN"] },
+      { name: "Settings", href: "/admin/settings", icon: Settings, roles: ["ADMIN"] },
     ],
   },
   {
     title: "My Account",
     items: [
-      { name: "Profile", href: "/admin/profile", icon: UserCircle },
+      { name: "Profile", href: "/admin/profile", icon: UserCircle, roles: ["ADMIN", "RECEPTIONIST", "TRAINER"] },
     ],
   },
 ];
+
+const STAFF_ROLES = new Set(["ADMIN", "RECEPTIONIST", "TRAINER"]);
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [pageTitle, setPageTitle] = useState("Admin Dashboard");
 
   useEffect(() => {
@@ -117,7 +120,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (user.role === "MEMBER") {
         // Members belong in the member portal
         router.push("/member/dashboard");
+        return;
       }
+      if (!STAFF_ROLES.has(user.role)) {
+        router.push("/login");
+        return;
+      }
+      setUserRole(user.role);
     } catch {
       router.push("/login");
     }
@@ -151,7 +160,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
-  if (!isClient) return null;
+  if (!isClient || !userRole) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative transition-colors duration-300">
@@ -170,7 +179,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         } md:translate-x-0`}
       >
         <div className="h-20 flex items-center px-6 border-b border-border shrink-0">
-          <Link href="/admin/dashboard" className="flex items-center gap-3 group">
+          <Link href={userRole === "TRAINER" ? "/admin/members" : "/admin/dashboard"} className="flex items-center gap-3 group">
             <Image 
               src="/logo.jpg" 
               alt="Lakzee Fitness Admin Logo" 
@@ -184,43 +193,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-6 custom-scrollbar">
-          {sidebarGroups.map((group) => (
-            <div key={group.title} className="space-y-1">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-4">
-                {group.title}
-              </p>
-              {group.items.map((link) => {
-                const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-                const Icon = link.icon;
-                
-                return (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    onMouseEnter={() => handlePrefetch(link.href)}
-                    onTouchStart={() => handlePrefetch(link.href)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 text-sm ${
-                      isActive 
-                        ? "bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/20" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-card"
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{link.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+          {sidebarGroups.map((group) => {
+            const visibleItems = group.items.filter(item => item.roles.includes(userRole));
+            if (visibleItems.length === 0) return null;
+            return (
+              <div key={group.title} className="space-y-1">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-4">
+                  {group.title}
+                </p>
+                {visibleItems.map((link) => {
+                  const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+                  const Icon = link.icon;
+                  
+                  return (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onMouseEnter={() => handlePrefetch(link.href)}
+                      onTouchStart={() => handlePrefetch(link.href)}
+                      className={`flex items-center gap-3 px-4 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-gold ${
+                        isActive 
+                          ? "bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold shadow-lg shadow-brand-gold/25" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5 active:scale-[0.98]"
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
+                      <span className="font-medium tracking-tight">{link.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-border shrink-0">
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-sm"
+            className="flex items-center gap-3 px-4 min-h-[44px] w-full rounded-xl text-red-500 hover:bg-red-500/10 active:scale-[0.98] transition-colors text-sm focus-gold"
+            aria-label="Log out of admin session"
           >
-            <LogOut className="w-4 h-4" />
-            <span className="font-medium">Logout</span>
+            <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="font-semibold">Logout</span>
           </button>
         </div>
       </aside>
@@ -231,9 +245,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="h-20 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-8 z-40 sticky top-0 shrink-0">
           <div className="flex items-center gap-4">
             <button 
-              className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+              className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-xl focus-gold"
               onClick={() => setIsMobileMenuOpen(true)}
-              aria-label="Open mobile menu"
+              aria-label="Open mobile navigation menu"
             >
               <Menu className="w-6 h-6" aria-hidden="true" />
             </button>
@@ -246,7 +260,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             
             <div className="flex items-center gap-3 border-l border-border pl-4 md:pl-6">
               <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-foreground uppercase tracking-wider">ADMIN</p>
+                <p className="text-sm font-medium text-foreground uppercase tracking-wider">{userRole}</p>
               </div>
               <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border">
                 <UserCircle className="w-6 h-6 text-muted-foreground" />

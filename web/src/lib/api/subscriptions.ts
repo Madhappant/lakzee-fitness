@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_URL, getAuthToken } from "./members";
+import { API_URL, getAuthToken, handleApiResponse } from "./config";
 
 export const fetchSubscriptions = async (params?: { search?: string; status?: string; paymentStatus?: string }) => {
   const token = getAuthToken();
@@ -18,16 +18,7 @@ export const fetchSubscriptions = async (params?: { search?: string; status?: st
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!res.ok) {
-    if (res.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("lakzee_token");
-      localStorage.removeItem("lakzee_user");
-      window.location.href = "/login?session_expired=1";
-    }
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch subscriptions");
-  }
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch subscriptions");
 };
 
 export const createSubscription = async (subData: { memberId: string, planId: string, startDate: string }) => {
@@ -41,8 +32,7 @@ export const createSubscription = async (subData: { memberId: string, planId: st
     body: JSON.stringify(subData),
   });
   
-  if (!res.ok) throw new Error("Failed to create subscription");
-  return res.json();
+  return handleApiResponse(res, "Failed to create subscription");
 };
 
 export const fetchPaymentStats = async () => {
@@ -56,16 +46,7 @@ export const fetchPaymentStats = async () => {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!res.ok) {
-    if (res.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("lakzee_token");
-      localStorage.removeItem("lakzee_user");
-      window.location.href = "/login?session_expired=1";
-    }
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch payment stats");
-  }
-  return res.json();
+  return handleApiResponse(res, "Failed to fetch payment stats");
 };
 
 export const updateSubscription = async (id: string, data: any) => {
@@ -79,8 +60,7 @@ export const updateSubscription = async (id: string, data: any) => {
     body: JSON.stringify(data),
   });
   
-  if (!res.ok) throw new Error("Failed to update subscription");
-  return res.json();
+  return handleApiResponse(res, "Failed to update subscription");
 };
 
 export const deleteSubscription = async (id: string) => {
@@ -92,6 +72,5 @@ export const deleteSubscription = async (id: string) => {
     },
   });
   
-  if (!res.ok) throw new Error("Failed to delete subscription");
-  return res.json();
+  return handleApiResponse(res, "Failed to delete subscription");
 };

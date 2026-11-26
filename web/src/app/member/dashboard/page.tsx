@@ -56,7 +56,7 @@ export default function MemberDashboard() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card p-6 border border-brand-gold/30 flex flex-col items-center justify-center relative overflow-hidden"
+            className="glass-card p-6 border border-brand-gold/30 flex flex-col items-center justify-center relative overflow-hidden gold-glow-sm"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/10 to-transparent pointer-events-none" />
             
@@ -83,12 +83,12 @@ export default function MemberDashboard() {
             transition={{ delay: 0.1 }}
             className="grid grid-cols-2 gap-4"
           >
-            <div className="glass-panel p-4 border border-border rounded-xl">
+            <div className="glass-panel p-4 border border-border hover:border-brand-gold/30 rounded-xl transition-all duration-200">
               <CalendarCheck className="w-6 h-6 text-brand-gold mb-2" />
               <p className="text-2xl font-bold">{recentAttendance.length}</p>
               <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Recent Visits</p>
             </div>
-            <div className="glass-panel p-4 border border-border rounded-xl">
+            <div className="glass-panel p-4 border border-border hover:border-brand-gold/30 rounded-xl transition-all duration-200">
               <Dumbbell className="w-6 h-6 text-brand-gold mb-2" />
               <p className="text-2xl font-bold">{profile?.trainer ? "Yes" : "No"}</p>
               <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Personal Trainer</p>
@@ -150,7 +150,7 @@ export default function MemberDashboard() {
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold">Recent Visits</h2>
-                <Link href="/member/attendance" className="text-xs text-brand-gold hover:underline flex items-center gap-1">
+                <Link href="/member/attendance" className="text-xs text-brand-gold hover:underline flex items-center gap-1 focus-gold rounded-lg px-2 py-1">
                   View All <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>

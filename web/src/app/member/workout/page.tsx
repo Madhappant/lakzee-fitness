@@ -266,13 +266,13 @@ export default function MemberWorkoutPage() {
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={() => setIsLibraryOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-muted/60 hover:bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-muted/60 hover:bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm focus-gold"
           >
             <BookOpen className="w-4 h-4 text-brand-gold" /> Form Guide
           </button>
           <button
             onClick={() => setIsToolsOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-muted/60 hover:bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-muted/60 hover:bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm focus-gold"
           >
             <Calculator className="w-4 h-4 text-brand-gold" /> Plate & 1RM Math
           </button>
@@ -309,9 +309,9 @@ export default function MemberWorkoutPage() {
                 setSelectedDay(day);
                 if (isLiveWorkoutRunning) setIsLiveWorkoutRunning(false);
               }}
-              className={`px-4 py-3 rounded-2xl border text-left transition-all flex-shrink-0 min-w-[130px] ${
+              className={`px-4 py-3 rounded-2xl border text-left transition-all flex-shrink-0 min-w-[130px] focus-gold ${
                 isSelected
-                  ? "bg-brand-gold text-white border-brand-gold shadow-lg shadow-brand-gold/20 scale-[1.02]"
+                  ? "bg-brand-gold text-black font-bold border-brand-gold shadow-lg shadow-brand-gold/20 scale-[1.02]"
                   : "bg-card/60 hover:bg-card border-border/70 text-foreground"
               }`}
             >
@@ -320,7 +320,7 @@ export default function MemberWorkoutPage() {
                 {isToday && (
                   <span
                     className={`text-[10px] px-1.5 py-0.5 rounded font-black uppercase ${
-                      isSelected ? "bg-black/30 text-white" : "bg-brand-gold/20 text-brand-gold"
+                      isSelected ? "bg-black/20 text-black" : "bg-brand-gold/20 text-brand-gold"
                     }`}
                   >
                     Today
@@ -332,7 +332,7 @@ export default function MemberWorkoutPage() {
               </div>
               <div
                 className={`text-[11px] mt-0.5 truncate ${
-                  isSelected ? "text-white/80" : "text-muted-foreground"
+                  isSelected ? "text-black/80 font-medium" : "text-muted-foreground"
                 }`}
               >
                 {hasContent ? "Workout Assigned" : "Rest Day"}
@@ -361,22 +361,23 @@ export default function MemberWorkoutPage() {
             {!isLiveWorkoutRunning ? (
               <button
                 onClick={startLiveWorkout}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 text-white font-bold text-sm shadow-xl shadow-brand-gold/25 flex items-center justify-center gap-2 transition-all transform active:scale-95"
+                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 text-black font-bold text-sm shadow-xl shadow-brand-gold/25 flex items-center justify-center gap-2 transition-all transform active:scale-95 focus-gold touch-target"
               >
-                <Play className="w-4 h-4 fill-white" /> Start Workout
+                <Play className="w-4 h-4 fill-black" /> Start Workout
               </button>
             ) : (
               <div className="flex items-center gap-2">
                 <button
                   onClick={finishWorkout}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 focus-gold"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Finish & Log
                 </button>
                 <button
                   onClick={() => setIsLiveWorkoutRunning(false)}
-                  className="p-2.5 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground transition-all"
+                  className="p-2.5 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground transition-all focus-gold"
                   title="Reset Workout Session"
+                  aria-label="Reset Workout Session"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
@@ -465,7 +466,8 @@ export default function MemberWorkoutPage() {
                               onChange={(e) =>
                                 updateSetField(exIdx, setIdx, "weight", Number(e.target.value))
                               }
-                              className="w-full bg-card border border-border rounded-lg px-2.5 py-1 text-sm font-semibold text-foreground outline-none"
+                              className="w-full bg-card border border-border rounded-lg px-2.5 py-1 text-sm font-semibold text-foreground focus-gold outline-none"
+                              aria-label={`Weight for Set ${set.setNumber}`}
                             />
                           </div>
                           <div className="col-span-3">
@@ -475,17 +477,19 @@ export default function MemberWorkoutPage() {
                               onChange={(e) =>
                                 updateSetField(exIdx, setIdx, "reps", Number(e.target.value))
                               }
-                              className="w-full bg-card border border-border rounded-lg px-2.5 py-1 text-sm font-semibold text-foreground outline-none"
+                              className="w-full bg-card border border-border rounded-lg px-2.5 py-1 text-sm font-semibold text-foreground focus-gold outline-none"
+                              aria-label={`Reps for Set ${set.setNumber}`}
                             />
                           </div>
                           <div className="col-span-3 flex justify-end">
                             <button
                               onClick={() => toggleSetComplete(exIdx, setIdx)}
-                              className={`p-1.5 rounded-lg transition-all ${
+                              className={`p-1.5 rounded-lg transition-all focus-gold ${
                                 set.completed
                                   ? "bg-emerald-600 text-white shadow-sm"
                                   : "bg-muted text-muted-foreground hover:text-foreground"
                               }`}
+                              aria-label={`Mark Set ${set.setNumber} as ${set.completed ? "Incomplete" : "Complete"}`}
                             >
                               <CheckCircle2 className="w-5 h-5" />
                             </button>

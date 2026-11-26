@@ -85,7 +85,7 @@ export default function AnnouncementsPage() {
         </div>
         <button
           onClick={() => setIsCreating(!isCreating)}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-black bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors shadow-sm"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-black bg-brand-gold hover:bg-yellow-500 font-semibold active:scale-[0.98] transition-all duration-200 shadow-sm focus-gold touch-target"
         >
           {isCreating ? <Megaphone className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
           {isCreating ? "Cancel" : "New Announcement"}
@@ -107,7 +107,7 @@ export default function AnnouncementsPage() {
                   <label className="block text-sm sm:text-base font-medium mb-2">Title</label>
                   <input
                     {...register("title")}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 sm:py-3 text-base focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 sm:py-3 text-base focus-gold outline-none transition-all"
                     placeholder="e.g., Gym Closed Tomorrow for Maintenance"
                   />
                   {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
@@ -117,7 +117,7 @@ export default function AnnouncementsPage() {
                   <label className="block text-sm sm:text-base font-medium mb-2">Message</label>
                   <textarea
                     {...register("message")}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 sm:py-3 text-base focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all min-h-[140px] resize-y"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 sm:py-3 text-base focus-gold outline-none transition-all min-h-[140px] resize-y"
                     placeholder="Type your announcement here..."
                   />
                   {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message.message}</p>}
@@ -130,14 +130,14 @@ export default function AnnouncementsPage() {
                       setIsCreating(false);
                       reset();
                     }}
-                    className="w-full sm:w-auto px-6 py-3 rounded-xl font-medium border border-border hover:bg-muted transition-colors order-2 sm:order-1 text-base"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl font-medium border border-border hover:bg-muted active:scale-[0.98] transition-all duration-200 order-2 sm:order-1 text-base focus-gold touch-target"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={createMutation.isPending}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium bg-brand-gold text-black hover:bg-yellow-500 transition-colors disabled:opacity-50 shadow-sm order-1 sm:order-2 text-base"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium bg-brand-gold text-black hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 shadow-sm order-1 sm:order-2 text-base focus-gold touch-target"
                   >
                     {createMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Megaphone className="w-5 h-5" />}
                     Post Announcement
@@ -173,7 +173,7 @@ export default function AnnouncementsPage() {
                     <button 
                       onClick={() => handleDelete(announcement.id)}
                       disabled={deleteMutation.isPending}
-                      className="text-red-500 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 sm:p-3 hover:bg-red-500/10 rounded-lg disabled:opacity-50 shrink-0"
+                      className="text-red-500 opacity-100 sm:opacity-70 group-hover:opacity-100 transition-opacity p-2 sm:p-2.5 hover:bg-red-500/10 rounded-lg disabled:opacity-50 shrink-0 focus-gold"
                       aria-label="Delete Announcement"
                     >
                       <Trash2 className="w-5 h-5" />

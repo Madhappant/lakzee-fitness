@@ -124,15 +124,15 @@ export default function DashboardOverview() {
     <div className="space-y-8 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground text-sm md:text-base">Here is what&apos;s happening at Lakzee Fitness Studio today.</p>
+          <h1 className="text-3xl font-bold mb-1">Admin Dashboard</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Real-time overview of Lakzee Fitness operations and athlete metrics.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <Link href="/admin/attendance" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-brand-gold text-brand-gold hover:bg-brand-gold/10 font-semibold transition-colors w-full sm:w-auto">
-            <QrCode className="w-5 h-5" /> Scan QR
+          <Link href="/admin/attendance" className="touch-target gap-2 px-6 rounded-xl border border-brand-gold/60 text-brand-gold hover:bg-brand-gold/10 font-bold transition-all shadow-sm focus-gold w-full sm:w-auto">
+            <QrCode className="w-5 h-5" aria-hidden="true" /> Scan QR
           </Link>
-          <Link href="/admin/members" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-brand-gold hover:bg-yellow-500 font-semibold transition-colors w-full sm:w-auto">
-            <UserPlus className="w-5 h-5" /> New Member
+          <Link href="/admin/members/new" className="touch-target gap-2 px-6 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-brand-gold/20 focus-gold w-full sm:w-auto">
+            <UserPlus className="w-5 h-5" aria-hidden="true" /> New Member
           </Link>
         </div>
       </div>
@@ -194,24 +194,37 @@ export default function DashboardOverview() {
           <motion.div
             key={stat.title}
             onClick={stat.onClick}
+            onKeyDown={(e) => {
+              if (stat.onClick && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                stat.onClick();
+              }
+            }}
+            tabIndex={stat.onClick ? 0 : undefined}
+            role={stat.onClick ? "button" : undefined}
+            aria-label={stat.onClick ? `View details for ${stat.title}` : undefined}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className={`glass-card p-6 relative overflow-hidden group transition-colors ${
-              stat.onClick ? "cursor-pointer hover:border-brand-gold/50 hover:bg-brand-gold/5" : "hover:border-brand-gold/30"
+            className={`glass-card p-6 relative overflow-hidden group transition-all duration-300 ${
+              stat.onClick 
+                ? "cursor-pointer hover:border-brand-gold/60 hover:bg-brand-gold/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 focus-gold" 
+                : "hover:border-brand-gold/30"
             }`}
           >
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <stat.icon className="w-24 h-24 text-brand-gold" />
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-15 transition-opacity">
+              <stat.icon className="w-24 h-24 text-brand-gold" aria-hidden="true" />
             </div>
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-muted-foreground text-sm font-bold tracking-wider mb-1 uppercase">{stat.title}</h3>
-                <stat.icon className="w-5 h-5 text-brand-gold/50" />
+                <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">{stat.title}</h3>
+                <stat.icon className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold transition-colors" aria-hidden="true" />
               </div>
               <div className="flex items-end justify-between">
-                <p className="text-3xl font-bold">{stat.value}</p>
-                <p className="text-brand-gold/60 text-xs font-medium uppercase tracking-wider">{stat.change}</p>
+                <p className="text-3xl font-bold tracking-tight text-foreground">{stat.value}</p>
+                <span className="text-brand-gold/80 text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-gold/10 border border-brand-gold/20">
+                  {stat.change}
+                </span>
               </div>
             </div>
           </motion.div>

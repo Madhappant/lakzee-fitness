@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { loginUser } from "@/lib/api/auth";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
@@ -61,15 +62,19 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="flex flex-col gap-4 mt-4 w-full">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Email Address</label>
+              <label htmlFor="login-email" className="text-sm font-medium text-foreground/80">
+                Email Address
+              </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 <input
+                  id="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-background/50 border border-border rounded-xl py-3 pl-10 pr-4 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  className="w-full bg-background/60 border border-border rounded-xl h-12 pl-11 pr-4 text-base text-foreground focus-gold placeholder:text-muted-foreground/60 transition-all"
                   placeholder="admin@lakzee.com"
+                  autoComplete="email"
                   required
                 />
               </div>
@@ -77,31 +82,47 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">Password</label>
-                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                <label htmlFor="login-password" className="text-sm font-medium text-foreground/80">
+                  Password
+                </label>
+                <Link href="/forgot-password" className="text-xs text-brand-gold hover:underline font-medium">
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-500" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 <input
-                  type="password"
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-background/50 border border-border rounded-xl py-3 pl-10 pr-4 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  className="w-full bg-background/60 border border-border rounded-xl h-12 pl-11 pr-12 text-base text-foreground focus-gold placeholder:text-muted-foreground/60 transition-all"
                   placeholder="••••••••"
+                  autoComplete="current-password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg focus-gold"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="w-full mt-4 bg-primary text-primary-foreground font-semibold rounded-xl py-3 text-base flex items-center justify-center gap-2 transition-all hover:bg-accent-hover hover:scale-[1.02] active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.2)] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full mt-4 bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold rounded-xl h-12 text-base flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] shadow-lg shadow-brand-gold/20 disabled:opacity-60 disabled:cursor-not-allowed focus-gold"
             >
               {mutation.isPending ? "Signing in..." : "Sign In"}
-              {!mutation.isPending && <ArrowRight className="h-4 w-4" />}
+              {!mutation.isPending && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
             </button>
           </form>
 
