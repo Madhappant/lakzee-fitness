@@ -121,22 +121,22 @@ export default function AddMemberPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">First Name <span className="text-brand-gold">*</span></label>
               <input {...register("firstName")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
-              {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName.message}</p>}
+              {errors.firstName && <p className="font-mono-metric text-foreground/90 text-xs">{errors.firstName.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Last Name <span className="text-brand-gold">*</span></label>
               <input {...register("lastName")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
-              {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName.message}</p>}
+              {errors.lastName && <p className="font-mono-metric text-foreground/90 text-xs">{errors.lastName.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Email Address <span className="text-brand-gold">*</span></label>
               <input type="email" {...register("email")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
-              {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+              {errors.email && <p className="font-mono-metric text-foreground/90 text-xs">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Password <span className="text-brand-gold">*</span></label>
               <input type="password" {...register("password")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
-              {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
+              {errors.password && <p className="font-mono-metric text-foreground/90 text-xs">{errors.password.message}</p>}
             </div>
           </div>
         </div>
@@ -178,15 +178,15 @@ export default function AddMemberPage() {
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-4">
-          <Link href="/admin/members" className="px-6 py-3 rounded-xl font-medium text-foreground hover:bg-white/5 transition-colors">
+          <Link href="/admin/members" className="touch-target px-6 rounded-xl font-medium text-foreground hover:bg-secondary border border-border transition-colors focus-volt">
             Cancel
           </Link>
           <button 
             type="submit" 
             disabled={mutation.isPending}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50"
+            className="touch-target gap-2 px-8 rounded-xl text-[#0A0A0C] bg-[#D4FF00] hover:brightness-105 font-bold transition-all volt-glow-sm focus-volt disabled:opacity-50"
           >
-            {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <Save className="w-5 h-5" aria-hidden="true" />}
             {mutation.isPending ? "Saving..." : "Save Member"}
           </button>
         </div>

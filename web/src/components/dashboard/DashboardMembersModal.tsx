@@ -33,9 +33,7 @@ export function DashboardMembersModal({
   const Icon = isTypeActive ? Users : UserPlus;
   const title = isTypeActive ? "Total Active Members" : "New Members This Month";
   const emptyText = isTypeActive ? "No active members found." : "No new signups this month.";
-  const colorClass = isTypeActive ? "text-brand-gold" : "text-emerald-400";
-  const bgClass = isTypeActive ? "bg-brand-gold/10" : "bg-emerald-500/10";
-  const dateLabel = isTypeActive ? "Active Until" : "Joined On";
+  const dateLabel = isTypeActive ? "Active until" : "Joined";
 
   const filteredMembers = useMemo(() => {
     if (!search.trim()) return members;
@@ -57,53 +55,58 @@ export function DashboardMembersModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            initial={{ opacity: 0, scale: 0.97, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-[50%] top-[50%] z-50 w-full max-w-2xl translate-x-[-50%] translate-y-[-50%] p-6 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            exit={{ opacity: 0, scale: 0.97, y: 12 }}
+            transition={{ duration: 0.22 }}
+            className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-2rem)] max-w-2xl translate-x-[-50%] translate-y-[-50%] p-6 rounded-2xl obsidian-glass shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
           >
             {/* Header */}
-            <div className="flex justify-between items-center mb-4 shrink-0">
+            <div className="flex justify-between items-center mb-5 shrink-0">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-xl ${bgClass}`}>
-                  <Icon className={`w-5 h-5 ${colorClass}`} />
+                <div className="p-2.5 rounded-xl bg-[#D4FF00]/12 border border-[#D4FF00]/25">
+                  <Icon className="w-5 h-5 text-[#D4FF00]" aria-hidden="true" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold flex items-center gap-2">
+                  <h2 className="font-display text-xl font-bold text-foreground">
                     {title}
                   </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="font-mono-metric text-xs text-muted-foreground mt-0.5">
                     {members.length} {members.length === 1 ? "member" : "members"} total
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-muted rounded-full transition-colors"
+                className="touch-target text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-colors focus-volt"
                 aria-label="Close modal"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
-            {/* Live Search Input */}
+            {/* Live Search */}
             <div className="relative mb-4 shrink-0">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Search by name, ID, plan or phone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2 text-sm focus:border-brand-gold outline-none transition-colors"
+                className="w-full h-11 bg-background border border-border rounded-xl pl-10 pr-16 text-sm text-foreground focus:border-[#D4FF00] focus:outline-none transition-colors"
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground font-mono-metric text-xs focus-volt rounded px-1"
                 >
                   Clear
                 </button>
@@ -114,50 +117,50 @@ export function DashboardMembersModal({
             <div className="overflow-y-auto custom-scrollbar flex-1 -mx-6 px-6">
               {!filteredMembers || filteredMembers.length === 0 ? (
                 <div className="text-center text-muted-foreground py-12">
-                  <Icon className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p>{search ? "No matching members found" : emptyText}</p>
+                  <Icon className="w-10 h-10 mx-auto mb-3 opacity-25" aria-hidden="true" />
+                  <p className="text-sm">{search ? "No matching members found" : emptyText}</p>
                 </div>
               ) : (
-                <div className="space-y-3 pb-2">
+                <div className="space-y-2.5 pb-2">
                   {filteredMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-xl border border-border bg-background/50 hover:bg-muted/30 transition-colors"
+                      className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-xl border border-border bg-secondary/40 hover:border-foreground/15 transition-colors"
                     >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-foreground">{member.name}</p>
-                          <span className="text-xs px-2 py-0.5 rounded-md bg-secondary text-brand-gold font-medium border border-border">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-foreground">{member.name}</p>
+                          <span className="font-mono-metric text-[11px] px-2 py-0.5 rounded-md bg-background text-[#D4FF00] font-semibold border border-border">
                             {member.memberId}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Plan: <span className="text-foreground/80 font-medium">{member.planName}</span>
+                          Plan: <span className="font-mono-metric text-foreground/85">{member.planName}</span>
                         </p>
                       </div>
 
                       <div className="flex flex-col sm:items-end gap-2 shrink-0 w-full sm:w-auto">
                         {member.date && (
-                          <span className={`font-semibold ${colorClass} ${bgClass} px-3 py-1 rounded-full text-xs self-start sm:self-auto`}>
+                          <span className="font-mono-metric font-semibold text-[#D4FF00] bg-[#D4FF00]/10 border border-[#D4FF00]/25 px-3 py-1 rounded-full text-xs self-start sm:self-auto">
                             {dateLabel}: {new Date(member.date).toLocaleDateString()}
                           </span>
                         )}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           {member.phone && (
                             <a
                               href={`tel:${member.phone}`}
-                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-brand-gold transition-colors"
+                              className="inline-flex items-center gap-1 font-mono-metric text-xs text-muted-foreground hover:text-foreground transition-colors focus-volt rounded"
                             >
-                              <Phone className="w-3 h-3" /> {member.phone}
+                              <Phone className="w-3 h-3" aria-hidden="true" /> {member.phone}
                             </a>
                           )}
                           {member.userId && (
                             <Link
                               href={`/admin/members?viewMember=${member.userId}`}
                               onClick={onClose}
-                              className="flex items-center gap-1 text-xs text-brand-gold hover:underline font-medium"
+                              className="inline-flex items-center gap-1 text-xs text-[#D4FF00] hover:underline font-semibold focus-volt rounded"
                             >
-                              Details <ArrowUpRight className="w-3 h-3" />
+                              Details <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
                             </Link>
                           )}
                         </div>

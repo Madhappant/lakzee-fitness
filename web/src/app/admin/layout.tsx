@@ -13,20 +13,23 @@ import { fetchReports } from "@/lib/api/reports";
 import { fetchExpenses } from "@/lib/api/expenses";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
-import { 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
-  CalendarCheck, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  CalendarCheck,
+  Settings,
   LogOut,
   Menu,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
   Package,
   BarChart3,
   ShieldCheck,
   UserCircle,
   Megaphone,
-  Receipt
+  Receipt,
 } from "lucide-react";
 
 const sidebarGroups = [
@@ -79,15 +82,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [pageTitle, setPageTitle] = useState("Admin Dashboard");
 
   useEffect(() => {
-    // Find active page title
     let found = false;
     for (const group of sidebarGroups) {
-      const activeItem = group.items.find(item => pathname === item.href || pathname.startsWith(item.href + "/"));
+      const activeItem = group.items.find(
+        (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+      );
       if (activeItem) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setPageTitle(activeItem.name);
@@ -98,7 +103,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!found) setPageTitle("Admin Dashboard");
   }, [pathname]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobileMenuOpen(false);
@@ -109,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setIsClient(true);
     const token = localStorage.getItem("lakzee_token");
     const userStr = localStorage.getItem("lakzee_user");
-    
+
     if (!token || !userStr) {
       router.push("/login");
       return;
@@ -118,7 +122,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     try {
       const user = JSON.parse(userStr);
       if (user.role === "MEMBER") {
-        // Members belong in the member portal
         router.push("/member/dashboard");
         return;
       }
@@ -163,62 +166,111 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isClient || !userRole) return null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground relative transition-colors duration-200">
       {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+        <div
+          className="fixed inset-0 bg-background/75 backdrop-blur-sm z-40 md:hidden transition-opacity duration-200"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Collapsible Minimal Obsidian Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 shrink-0 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0`}
+        aria-label="Admin Navigation"
+        className={`fixed inset-y-0 left-0 z-50 shrink-0 bg-sidebar border-r border-border flex flex-col transition-all duration-200 ease-out ${
+          isSidebarCollapsed ? "md:w-20" : "md:w-64"
+        } w-64 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-        <div className="h-20 flex items-center px-6 border-b border-border shrink-0">
-          <Link href={userRole === "TRAINER" ? "/admin/members" : "/admin/dashboard"} className="flex items-center gap-3 group">
-            <Image 
-              src="/logo.jpg" 
-              alt="Lakzee Fitness Admin Logo" 
-              width={40}
-              height={40}
-              priority
-              className="w-10 h-10 object-cover rounded-full bg-white group-hover:scale-105 transition-transform" 
-            />
-            <span className="text-xl font-bold tracking-tight">LAKZEE</span>
+        {/* Sidebar Header */}
+        <div className="h-18 flex items-center justify-between px-4 border-b border-border shrink-0">
+          <Link
+            href={userRole === "TRAINER" ? "/admin/members" : "/admin/dashboard"}
+            className={`flex items-center gap-3 group focus-volt rounded-xl p-1 ${
+              isSidebarCollapsed ? "md:mx-auto md:justify-center" : ""
+            }`}
+          >
+            <div className="relative w-9 h-9 rounded-full overflow-hidden border border-border group-hover:border-primary transition-colors shrink-0">
+              <Image
+                src="/logo.jpg"
+                alt="Lakzee Fitness Studio"
+                fill
+                sizes="36px"
+                preload
+                className="object-cover"
+              />
+            </div>
+            <div className={`${isSidebarCollapsed ? "md:hidden" : "block"}`}>
+              <span className="font-display text-base font-extrabold tracking-tight text-foreground block leading-none">
+                LAKZEE
+              </span>
+              <span className="font-mono-metric text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
+                Studio OS
+              </span>
+            </div>
           </Link>
+
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-lg focus-volt"
+            aria-label="Close mobile navigation menu"
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-6 custom-scrollbar">
+        {/* Nav Groups */}
+        <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-5 custom-scrollbar">
           {sidebarGroups.map((group) => {
-            const visibleItems = group.items.filter(item => item.roles.includes(userRole));
+            const visibleItems = group.items.filter((item) => item.roles.includes(userRole));
             if (visibleItems.length === 0) return null;
             return (
               <div key={group.title} className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-4">
+                <p
+                  className={`font-mono-metric text-[10px] font-medium text-muted-foreground/70 uppercase tracking-[0.16em] mb-2 px-3 ${
+                    isSidebarCollapsed ? "md:hidden" : ""
+                  }`}
+                >
                   {group.title}
                 </p>
                 {visibleItems.map((link) => {
                   const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
                   const Icon = link.icon;
-                  
+
                   return (
                     <Link
                       key={link.name}
                       href={link.href}
+                      title={isSidebarCollapsed ? link.name : undefined}
                       onMouseEnter={() => handlePrefetch(link.href)}
                       onTouchStart={() => handlePrefetch(link.href)}
-                      className={`flex items-center gap-3 px-4 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-gold ${
-                        isActive 
-                          ? "bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold shadow-lg shadow-brand-gold/25" 
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5 active:scale-[0.98]"
+                      className={`group relative flex items-center gap-3 px-3 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-volt ${
+                        isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+                      } ${
+                        isActive
+                          ? "bg-primary/12 text-foreground font-semibold border border-primary/25"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-transparent"
                       }`}
                     >
-                      <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
-                      <span className="font-medium tracking-tight">{link.name}</span>
+                      {/* Volt Lime Active Indicator Pill */}
+                      {isActive && (
+                        <span
+                          aria-hidden="true"
+                          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-[#D4FF00] ${
+                            isSidebarCollapsed ? "md:h-6" : ""
+                          }`}
+                        />
+                      )}
+                      <Icon
+                        className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                          isActive ? "text-[#D4FF00]" : "text-muted-foreground group-hover:text-foreground"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <span className={`tracking-tight truncate ${isSidebarCollapsed ? "md:hidden" : ""}`}>
+                        {link.name}
+                      </span>
                     </Link>
                   );
                 })}
@@ -227,52 +279,86 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="p-4 border-t border-border shrink-0">
-          <button 
+        {/* Bottom Actions: Collapse Toggle + Logout */}
+        <div className="p-3 border-t border-border space-y-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+            className={`hidden md:flex items-center gap-3 px-3 min-h-[44px] w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors duration-200 text-xs focus-volt ${
+              isSidebarCollapsed ? "justify-center px-0" : ""
+            }`}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="w-4 h-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <>
+                <PanelLeftClose className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span className="font-medium">Collapse dock</span>
+              </>
+            )}
+          </button>
+
+          <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 min-h-[44px] w-full rounded-xl text-red-500 hover:bg-red-500/10 active:scale-[0.98] transition-colors text-sm focus-gold"
+            title={isSidebarCollapsed ? "Logout" : undefined}
+            className={`flex items-center gap-3 px-3 min-h-[44px] w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent hover:border-border transition-colors duration-200 text-sm focus-volt ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            }`}
             aria-label="Log out of admin session"
           >
             <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span className="font-semibold">Logout</span>
+            <span className={`font-medium ${isSidebarCollapsed ? "md:hidden" : ""}`}>Logout</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex flex-col min-h-screen md:pl-64 w-full">
-        {/* Topbar */}
-        <header className="h-20 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-8 z-40 sticky top-0 shrink-0">
-          <div className="flex items-center gap-4">
-            <button 
-              className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-xl focus-gold"
+      <div
+        className={`flex flex-col min-h-screen w-full transition-all duration-200 ease-out ${
+          isSidebarCollapsed ? "md:pl-20" : "md:pl-64"
+        }`}
+      >
+        {/* Minimal Topbar */}
+        <header className="h-18 bg-background/85 backdrop-blur-xl border-b border-border flex items-center justify-between px-4 md:px-8 z-40 sticky top-0 shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-xl focus-volt"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Open mobile navigation menu"
             >
-              <Menu className="w-6 h-6" aria-hidden="true" />
+              <Menu className="w-5 h-5" aria-hidden="true" />
             </button>
-            <h2 className="text-xl font-bold hidden md:block text-foreground/90">{pageTitle}</h2>
+            <div className="hidden md:flex items-center gap-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4FF00]" aria-hidden="true" />
+              <h2 className="font-display text-base font-bold tracking-tight text-foreground">
+                {pageTitle}
+              </h2>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-5">
             <ThemeToggle />
             <NotificationDropdown role="ADMIN" />
-            
-            <div className="flex items-center gap-3 border-l border-border pl-4 md:pl-6">
-              <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-foreground uppercase tracking-wider">{userRole}</p>
+
+            <div className="flex items-center gap-2.5 border-l border-border pl-3 md:pl-5">
+              <div className="hidden sm:block text-right">
+                <p className="font-mono-metric text-[11px] font-bold text-foreground uppercase tracking-widest">
+                  {userRole}
+                </p>
               </div>
               <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border">
-                <UserCircle className="w-6 h-6 text-muted-foreground" />
+                <UserCircle className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
               </div>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar relative">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-gold/5 via-background to-background -z-10" />
-          {children}
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto custom-scrollbar">
+          <div className="max-w-[1440px] mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

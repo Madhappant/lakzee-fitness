@@ -138,7 +138,7 @@ export default function EditMemberPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 font-medium">
+          <div className="p-4 bg-secondary border border-border rounded-xl text-foreground font-medium text-sm">
             {error}
           </div>
         )}
@@ -228,15 +228,15 @@ export default function EditMemberPage() {
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-4">
-          <Link href="/admin/members" className="px-6 py-3 rounded-xl font-medium text-foreground hover:bg-white/5 transition-colors">
+          <Link href="/admin/members" className="touch-target px-6 rounded-xl font-medium text-foreground hover:bg-secondary border border-border transition-colors focus-volt">
             Cancel
           </Link>
           <button 
             type="submit" 
             disabled={mutation.isPending}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50"
+            className="touch-target gap-2 px-8 rounded-xl text-[#0A0A0C] bg-[#D4FF00] hover:brightness-105 font-bold transition-all volt-glow-sm focus-volt disabled:opacity-50"
           >
-            {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <Save className="w-5 h-5" aria-hidden="true" />}
             {mutation.isPending ? "Updating..." : "Update Member"}
           </button>
         </div>

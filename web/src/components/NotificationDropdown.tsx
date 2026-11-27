@@ -23,7 +23,6 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -39,43 +38,45 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
     queryFn: async () => {
       const token = localStorage.getItem("lakzee_token");
       if (!token) return [];
-      
+
       const tzOffset = new Date().getTimezoneOffset();
       const res = await fetch(`${API_URL}/notifications?tzOffset=${tzOffset}`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!res.ok) throw new Error("Failed to fetch notifications");
       const json = await res.json();
       return json.data as Notification[];
     },
-    refetchInterval: 60000 // Refetch every minute
+    refetchInterval: 60000,
   });
 
-  const unreadCount = notifications.length; // We are dynamically generating them, all are "active" alerts
+  const unreadCount = notifications.length;
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "EXPIRY": return <AlertTriangle className="w-5 h-5 text-orange-500" />;
-      case "PAYMENT": return <CreditCard className="w-5 h-5 text-red-500" />;
-      case "ANNOUNCEMENT": return <Bell className="w-5 h-5 text-blue-500" />; // using Bell or Megaphone (if imported)
-      default: return <Bell className="w-5 h-5 text-primary" />;
+      case "EXPIRY":
+        return <AlertTriangle className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />;
+      case "PAYMENT":
+        return <CreditCard className="w-4 h-4 text-[#F5F5F7]" aria-hidden="true" />;
+      default:
+        return <Bell className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />;
     }
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-card focus-gold"
+        className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-secondary focus-volt relative"
         aria-label={`View notifications (${unreadCount} active)`}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
       >
         <Bell className="w-5 h-5" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-background">
+          <span className="font-mono-metric absolute top-1.5 right-1.5 min-w-4 h-4 px-1 bg-[#D4FF00] text-[#0A0A0C] text-[10px] font-bold flex items-center justify-center rounded-full border border-background">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -86,16 +87,16 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
           <motion.div
             role="dialog"
             aria-label="Notifications Panel"
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: 8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col max-h-[80vh] gold-glow-sm"
+            className="absolute right-0 mt-2 w-80 sm:w-96 obsidian-glass rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col max-h-[80vh]"
           >
-            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
-              <h3 className="font-bold text-foreground">Notifications</h3>
+            <div className="p-4 border-b border-border flex items-center justify-between bg-secondary/40">
+              <h3 className="font-display font-bold text-foreground text-base">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">
+                <span className="font-mono-metric text-[11px] bg-[#D4FF00]/15 text-[#D4FF00] border border-[#D4FF00]/25 px-2.5 py-0.5 rounded-full font-bold">
                   {unreadCount} Active
                 </span>
               )}
@@ -104,14 +105,16 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
             <div className="overflow-y-auto custom-scrollbar flex-1">
               {isLoading ? (
                 <div className="p-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm">Loading alerts...</span>
+                  <div className="w-5 h-5 border-2 border-[#D4FF00] border-t-transparent rounded-full animate-spin" />
+                  <span className="font-mono-metric text-xs">Loading alerts...</span>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
-                  <CheckCircle2 className="w-10 h-10 text-green-500/50 mb-2" />
-                  <p>You&apos;re all caught up!</p>
-                  <p className="text-xs">No pending payments or expiring members.</p>
+                  <CheckCircle2 className="w-9 h-9 text-[#D4FF00]/50 mb-1" aria-hidden="true" />
+                  <p className="text-sm text-foreground font-medium">You&apos;re all caught up</p>
+                  <p className="text-xs text-muted-foreground">
+                    No pending payments or expiring members.
+                  </p>
                 </div>
               ) : (
                 <div className="divide-y divide-border">
@@ -120,19 +123,19 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
                       key={notif.id}
                       href={notif.link}
                       onClick={() => setIsOpen(false)}
-                      className="flex items-start gap-4 p-4 hover:bg-muted/50 transition-colors"
+                      className="flex items-start gap-3.5 p-4 hover:bg-secondary/50 transition-colors"
                     >
-                      <div className="shrink-0 p-2 bg-background rounded-full border border-border shadow-sm">
+                      <div className="shrink-0 p-2 bg-secondary rounded-xl border border-border">
                         {getIcon(notif.type)}
                       </div>
-                      <div className="flex-1 space-y-1">
+                      <div className="flex-1 min-w-0 space-y-1">
                         <p className="text-sm font-semibold text-foreground leading-tight">
                           {notif.title}
                         </p>
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-snug">
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
                           {notif.message}
                         </p>
-                        <p className="text-xs text-muted-foreground font-medium pt-1">
+                        <p className="font-mono-metric text-[11px] text-muted-foreground/80 pt-0.5">
                           {formatDistanceToNow(new Date(notif.date), { addSuffix: true })}
                         </p>
                       </div>
@@ -141,8 +144,8 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
                 </div>
               )}
             </div>
-            
-            <div className="p-3 border-t border-border bg-muted/30 text-center text-xs text-muted-foreground">
+
+            <div className="p-3 border-t border-border bg-secondary/30 text-center font-mono-metric text-[11px] text-muted-foreground">
               Alerts update automatically
             </div>
           </motion.div>

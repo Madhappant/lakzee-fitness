@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Plus_Jakarta_Sans } from "next/font/google";
+import { Syne, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import { Toaster } from "sonner";
 
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-heading",
+const syne = Syne({
+  variable: "--font-syne",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
   display: "swap",
 });
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-body",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -84,9 +89,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`h-full antialiased dark ${barlowCondensed.variable} ${plusJakartaSans.variable}`}
+      className={`h-full antialiased dark ${syne.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="h-full bg-background text-foreground selection:bg-brand-gold/30">
+      <body className="h-full bg-background text-foreground selection:bg-[#D4FF00]/25 selection:text-foreground">
         <Providers>
           {children}
           <Toaster richColors position="top-right" />
