@@ -1,29 +1,37 @@
 import type { Metadata } from "next";
-import { Manrope, Inter } from "next/font/google";
+import { Barlow_Condensed, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import { Toaster } from "sonner";
 
-const manrope = Manrope({
+const barlowCondensed = Barlow_Condensed({
   variable: "--font-heading",
   subsets: ["latin"],
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-body",
   subsets: ["latin"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: {
-    default: "Lakzee Fitness Studio | Enterprise Management",
-    template: "%s | Lakzee Fitness Studio"
+    default: "Lakzee Fitness Studio | Strength, Conditioning & Member Portal",
+    template: "%s | Lakzee Fitness Studio",
   },
-  description: "Premium Gym Management Platform providing membership, attendance, and analytics solutions for modern fitness centers.",
-  keywords: ["gym management software", "fitness studio platform", "lakzee fitness", "gym ERP", "member tracking"],
+  description:
+    "Strength and conditioning studio in Tamil Nadu with calibrated free weights, coaching, QR attendance, and custom training plans.",
+  keywords: [
+    "gym management software",
+    "fitness studio platform",
+    "lakzee fitness",
+    "strength and conditioning",
+    "member tracking",
+  ],
   authors: [{ name: "Lakzee Fitness" }],
   creator: "Lakzee Fitness",
   publisher: "Lakzee Fitness",
@@ -33,34 +41,37 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: '/',
-    title: 'Lakzee Fitness Studio | Enterprise Management',
-    description: 'Premium Gym Management Platform providing membership, attendance, and analytics solutions.',
-    siteName: 'Lakzee Fitness',
-    images: [{
-      url: '/logo.jpg',
-      width: 800,
-      height: 600,
-      alt: 'Lakzee Fitness Logo'
-    }]
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    title: "Lakzee Fitness Studio",
+    description:
+      "Strength and conditioning studio with calibrated free weights, coaching, QR attendance, and custom training plans.",
+    siteName: "Lakzee Fitness",
+    images: [
+      {
+        url: "/logo.jpg",
+        width: 800,
+        height: 600,
+        alt: "Lakzee Fitness Logo",
+      },
+    ],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'Lakzee Fitness Studio',
-    description: 'Premium Gym Management Platform',
-    images: ['/logo.jpg'],
+    card: "summary_large_image",
+    title: "Lakzee Fitness Studio",
+    description: "Strength and conditioning studio in Tamil Nadu",
+    images: ["/logo.jpg"],
   },
   icons: {
-    icon: '/icon.jpg',
-    apple: '/icon.jpg',
+    icon: "/icon.jpg",
+    apple: "/icon.jpg",
   },
 };
 
@@ -70,7 +81,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`h-full antialiased dark ${manrope.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`h-full antialiased dark ${barlowCondensed.variable} ${plusJakartaSans.variable}`}
+    >
       <body className="h-full bg-background text-foreground selection:bg-brand-gold/30">
         <Providers>
           {children}

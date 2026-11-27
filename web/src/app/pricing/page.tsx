@@ -1,101 +1,101 @@
 import { PublicNavbar } from "@/components/PublicNavbar";
 import { PublicFooter } from "@/components/PublicFooter";
 import Link from "next/link";
-import { Check, Sparkles, Dumbbell, ShieldCheck, Zap } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 
 const plans = [
   {
     name: "Student",
     price: "₹999",
     period: "/month",
-    description: "Ideal for college students with valid student ID seeking premium training.",
+    description: "Designed for college students training between classes.",
     features: [
-      "Full Gym Access (All Day)",
-      "Cardio & Strength Zone",
-      "Locker & Shower Access",
-      "Mobile App Attendance & QR Check-in",
-      "Valid Student ID Required"
+      "Full gym floor access all day",
+      "Cardio and strength zone",
+      "Locker and shower facilities",
+      "QR app attendance check-in",
+      "Valid student ID required",
     ],
     popular: false,
-    cta: "Join as Student"
+    cta: "Select Student plan",
   },
   {
     name: "Monthly",
     price: "₹1,499",
     period: "/month",
-    description: "Flexible monthly fitness access with zero long-term commitment.",
+    description: "Flexible month-to-month access with no long-term lock-in.",
     features: [
-      "Full Gym Floor Access",
-      "Free Weights & Resistance Machines",
-      "Locker & Shower Facilities",
-      "Member Portal & Routine Tracking",
-      "Basic Workout Guidance"
+      "Full gym floor access",
+      "Free weights and pin-loaded machines",
+      "Locker and shower facilities",
+      "Member portal routine tracking",
+      "Orientation and form basics",
     ],
     popular: false,
-    cta: "Start Monthly"
+    cta: "Select Monthly plan",
   },
   {
     name: "Quarterly",
     price: "₹3,999",
     period: "/3 months",
-    description: "The sweet spot for consistent physique progression and transformation.",
+    description: "Built for consistent physique and strength progression.",
     features: [
-      "All Monthly Features Included",
-      "Personalized Diet & Nutrition Plan",
-      "Monthly Body Composition Assessment",
-      "Cardio & Functional Training Zone",
-      "Save ₹500 vs monthly billing"
+      "All Monthly access included",
+      "Personalized diet and macro plan",
+      "Monthly body composition check",
+      "Conditioning turf zone access",
+      "Saves ₹500 over monthly billing",
     ],
     popular: true,
-    badge: "Most Popular",
-    cta: "Get Quarterly Plan"
+    badge: "Most popular",
+    cta: "Select Quarterly plan",
   },
   {
     name: "Half Year",
     price: "₹7,499",
     period: "/6 months",
-    description: "Serious commitment for dedicated fitness enthusiasts and athletes.",
+    description: "Structured six-month commitment for dedicated lifters.",
     features: [
-      "All Quarterly Features Included",
-      "2 Dedicated 1-on-1 Personal Training Sessions",
-      "Custom Macro & Nutrition Breakdown",
-      "Locker Reservation Privileges",
-      "Priority Access to Studio Events"
+      "All Quarterly features included",
+      "2 one-on-one personal training sessions",
+      "Custom macro and nutrition adjustments",
+      "Locker reservation priority",
+      "Priority entry to studio events",
     ],
     popular: false,
-    cta: "Join for 6 Months"
+    cta: "Select Half Year plan",
   },
   {
     name: "Yearly Elite",
     price: "₹12,999",
     period: "/year",
-    description: "Ultimate luxury membership with VIP perks and unlimited consultations.",
+    description: "Full-year unrestricted access with ongoing coaching support.",
     features: [
-      "Full 365 Days Unrestricted Access",
-      "Unlimited Personal Trainer Consultations",
-      "Custom Periodic Diet Adjustments",
-      "Complimentary Lakzee Fitness Merchandise",
-      "Best Value: Just ₹1,083/month"
+      "365 days unrestricted access",
+      "Unlimited trainer consultations",
+      "Periodic diet plan updates",
+      "Lakzee Fitness studio kit",
+      "Lowest rate at ₹1,083 per month",
     ],
     popular: false,
-    badge: "Best Value",
-    cta: "Go Elite Yearly"
+    badge: "Best value",
+    cta: "Select Yearly Elite",
   },
   {
     name: "Couple / Buddy",
     price: "₹2,499",
     period: "/month for 2",
-    description: "Train together with your partner or workout partner and achieve goals together.",
+    description: "Shared monthly pass for two partners training together.",
     features: [
-      "Simultaneous Access for 2 Members",
-      "Shared Consultation & Assessment",
-      "Partner Workout Routines",
-      "Group Circuit Training Access",
-      "Double Motivation & Support"
+      "Simultaneous gym access for 2 members",
+      "Shared intake consultation",
+      "Partner workout routine setup",
+      "Conditioning circuit zone access",
+      "Dual QR attendance profiles",
     ],
     popular: false,
-    cta: "Join Together"
-  }
+    cta: "Select Buddy plan",
+  },
 ];
 
 export default function PricingPage() {
@@ -104,59 +104,61 @@ export default function PricingPage() {
       <PublicNavbar />
 
       <main className="flex-1 py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto space-y-16">
-          
+        <div className="max-w-7xl mx-auto space-y-14">
           {/* Header */}
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-gold/10 text-brand-gold border border-brand-gold/20">
-              <Sparkles className="w-3.5 h-3.5" /> Transparent Pricing
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-heading font-black tracking-tight">
-              Invest in Your <span className="gold-gradient-text">Greatness</span>
+          <div className="max-w-2xl space-y-3 border-b border-border pb-8">
+            <h1 className="text-4xl sm:text-6xl font-heading font-extrabold uppercase tracking-tight text-foreground">
+              Membership Plans
             </h1>
-            <p className="text-muted-foreground text-lg">
-              No hidden admission fees. State-of-the-art equipment, personalized guidance, and unmatched studio hygiene.
+            <p className="text-muted-foreground text-base sm:text-lg leading-relaxed">
+              Every tier includes full training floor access, locker facilities, and digital member check-in with zero hidden admission charges.
             </p>
           </div>
 
           {/* Pricing Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative flex flex-col justify-between rounded-3xl p-8 transition-all duration-300 border ${
+                className={`flex flex-col justify-between rounded-xl p-7 transition-colors border ${
                   plan.popular
-                    ? "bg-gradient-to-b from-card via-card to-brand-gold/5 border-brand-gold shadow-2xl shadow-brand-gold/10 scale-[1.02]"
-                    : "bg-card/70 border-border hover:border-brand-gold/40 hover:shadow-xl"
+                    ? "bg-card border-2 border-brand-gold"
+                    : "bg-card/80 border-border hover:border-brand-gold/40"
                 }`}
               >
-                {plan.badge && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-brand-gold to-yellow-500 text-black shadow-md">
-                    {plan.badge}
-                  </div>
-                )}
-
                 <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-2xl font-bold font-heading text-foreground">{plan.name}</h3>
-                    <Dumbbell className={`w-6 h-6 ${plan.popular ? "text-brand-gold" : "text-muted-foreground"}`} />
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <h2 className="text-2xl font-bold font-heading text-foreground">{plan.name}</h2>
+                    {plan.badge && (
+                      <span
+                        className={`px-2.5 py-0.5 rounded-md text-xs font-bold ${
+                          plan.popular
+                            ? "bg-brand-gold text-black"
+                            : "bg-secondary text-brand-gold border border-brand-gold/30"
+                        }`}
+                      >
+                        {plan.badge}
+                      </span>
+                    )}
                   </div>
-                  
-                  <p className="text-sm text-muted-foreground min-h-[40px] mb-6">
+
+                  <p className="text-sm text-muted-foreground min-h-[40px] mb-5">
                     {plan.description}
                   </p>
 
-                  <div className="flex items-baseline gap-1 mb-8">
-                    <span className="text-4xl font-extrabold font-heading text-foreground">{plan.price}</span>
+                  <div className="flex items-baseline gap-1.5 mb-6 tabular-nums">
+                    <span className={`text-4xl font-extrabold font-heading ${plan.popular ? "text-brand-gold" : "text-foreground"}`}>
+                      {plan.price}
+                    </span>
                     <span className="text-muted-foreground text-sm">{plan.period}</span>
                   </div>
 
-                  <div className="space-y-3 pt-4 border-t border-border/60">
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">What&apos;s Included:</p>
-                    <ul className="space-y-3">
+                  <div className="space-y-3 pt-4 border-t border-border">
+                    <p className="text-xs font-semibold text-foreground">Included features</p>
+                    <ul className="space-y-2.5">
                       {plan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-3 text-sm text-muted-foreground">
-                          <Check className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
+                        <li key={idx} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <Check className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" aria-hidden="true" />
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -164,12 +166,12 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                <div className="pt-8 mt-6">
+                <div className="pt-8 mt-4">
                   <Link
                     href="/contact"
-                    className={`w-full block text-center py-3.5 px-6 rounded-xl font-bold text-sm transition-all focus-gold touch-target ${
+                    className={`w-full block text-center py-3 px-5 rounded-lg font-bold text-sm transition-all focus-gold touch-target ${
                       plan.popular
-                        ? "bg-gradient-to-r from-brand-gold to-yellow-500 text-black shadow-lg shadow-brand-gold/25 hover:brightness-110 active:scale-[0.98]"
+                        ? "bg-brand-gold text-black hover:brightness-110 active:scale-[0.98]"
                         : "bg-secondary text-foreground hover:bg-brand-gold hover:text-black active:scale-[0.98]"
                     }`}
                   >
@@ -180,25 +182,27 @@ export default function PricingPage() {
             ))}
           </div>
 
-          {/* Guarantee / FAQ Card */}
-          <div className="rounded-3xl border border-border bg-card/40 p-8 sm:p-12 max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-2 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 text-brand-gold text-sm font-bold">
-                <ShieldCheck className="w-5 h-5" /> 100% Commitment Guarantee
+          {/* Custom / Trial Band */}
+          <div className="rounded-xl border border-border bg-card p-8 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-xl">
+              <div className="inline-flex items-center gap-2 text-brand-gold text-sm font-semibold">
+                <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+                Zero admission fee policy
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Want a customized corporate or personal plan?</h2>
+              <h2 className="text-2xl font-heading font-bold text-foreground">
+                Need corporate or personal training pricing?
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Speak directly with our head trainers to formulate a tailor-made regime for you.
+                Schedule a quick floor walkthrough and talk directly with a coach about custom schedules.
               </p>
             </div>
             <Link
               href="/contact"
-              className="shrink-0 px-8 py-4 rounded-xl bg-brand-gold text-black font-bold text-sm hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/20 flex items-center gap-2 focus-gold touch-target"
+              className="shrink-0 px-7 py-3.5 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all focus-gold touch-target"
             >
-              <Zap className="w-4 h-4" /> Book Free Trial
+              Book a free trial
             </Link>
           </div>
-
         </div>
       </main>
 

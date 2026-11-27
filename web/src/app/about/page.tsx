@@ -1,31 +1,32 @@
 import { PublicNavbar } from "@/components/PublicNavbar";
 import { PublicFooter } from "@/components/PublicFooter";
 import Link from "next/link";
-import Image from "next/image";
-import { Dumbbell, Award, Flame, Users, HeartPulse, ArrowRight } from "lucide-react";
+import { Dumbbell, Users, HeartPulse } from "lucide-react";
 
 const stats = [
-  { label: "Active Athletes", value: "850+" },
-  { label: "Certified Trainers", value: "12" },
-  { label: "Square Feet Space", value: "10,000+" },
-  { label: "Success Transformations", value: "1,200+" }
+  { label: "Active athletes", value: "850+" },
+  { label: "Certified coaches", value: "12" },
+  { label: "Training floor space", value: "10,000+ sq ft" },
+  { label: "Completed transformations", value: "1,200+" },
 ];
 
 const trainers = [
   {
+    initials: "MD",
     name: "Madhappan D",
     role: "Founder & Head Strength Coach",
     specialty: "Hypertrophy & Competitive Powerlifting",
-    bio: "Over 8 years sculpting elite athletes and everyday champions with science-backed biomechanics.",
-    image: "/logo.jpg"
+    bio: "Over 8 years coaching competitive athletes and everyday lifters with biomechanically sound programming and progressive overload.",
+    highlight: true,
   },
   {
+    initials: "SV",
     name: "Sakthi vel",
     role: "Main Coach",
     specialty: "Strength, Conditioning & Physique Transformation",
-    bio: "Master coach specializing in athletic performance, biomechanical lifting technique, and high-impact body transformations.",
-    image: "/logo.jpg"
-  }
+    bio: "Focuses on athletic performance, compound lifting mechanics, and structured body transformation plans.",
+    highlight: false,
+  },
 ];
 
 export default function AboutPage() {
@@ -34,99 +35,107 @@ export default function AboutPage() {
       <PublicNavbar />
 
       <main className="flex-1 py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto space-y-24">
-          
-          {/* Hero Section */}
-          <div className="text-center max-w-3xl mx-auto space-y-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-gold/10 text-brand-gold border border-brand-gold/20">
-              <Award className="w-3.5 h-3.5" /> Luxury Fitness Redefined
-            </span>
-            <h1 className="text-4xl sm:text-6xl font-heading font-black tracking-tight">
-              Where Relentless Ambition Meets <span className="gold-gradient-text">Excellence</span>
+        <div className="max-w-7xl mx-auto space-y-20">
+          {/* Intro */}
+          <div className="max-w-3xl space-y-5 border-b border-border pb-10">
+            <h1 className="text-4xl sm:text-6xl font-heading font-extrabold uppercase tracking-tight text-foreground">
+              Built around strength, form, and consistency
             </h1>
-            <p className="text-muted-foreground text-lg sm:text-xl leading-relaxed">
-              Founded on the belief that peak physical health is the ultimate human advantage. Lakzee Fitness is not just a gym—it is an ecosystem crafted for high performers.
+            <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-[65ch]">
+              Lakzee Fitness Studio was established in Tamil Nadu to give lifters, students, and working professionals an organized training floor with calibrated equipment, attentive coaching, and clear progress tracking.
             </p>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* Studio Metrics Strip */}
+          <div className="grid grid-cols-2 md:grid-cols-4 border border-border rounded-xl overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border bg-card">
             {stats.map((stat, i) => (
-              <div key={i} className="p-8 rounded-3xl bg-card border border-border/80 hover:border-brand-gold/30 transition-all duration-200 text-center space-y-2">
-                <p className="text-4xl sm:text-5xl font-extrabold font-heading text-brand-gold">{stat.value}</p>
-                <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+              <div key={i} className="p-6 sm:p-8 space-y-1.5">
+                <p className="text-3xl sm:text-4xl font-extrabold font-heading text-brand-gold tabular-nums">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
               </div>
             ))}
           </div>
 
-          {/* Our Core Pillars */}
-          <div className="space-y-12">
-            <div className="text-center max-w-2xl mx-auto space-y-3">
-              <h2 className="text-3xl sm:text-4xl font-bold font-heading">Our Core Pillars</h2>
-              <p className="text-muted-foreground">The foundation upon which every workout and transformation is built.</p>
+          {/* Training Principles */}
+          <div className="space-y-8">
+            <div className="max-w-2xl space-y-2">
+              <h2 className="text-3xl sm:text-4xl font-bold font-heading uppercase text-foreground">
+                How the studio operates
+              </h2>
+              <p className="text-muted-foreground text-base">
+                Three practical standards that govern our equipment floor and coaching practice.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-8 rounded-3xl bg-card/60 border border-border space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold">
-                  <Dumbbell className="w-6 h-6" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-7 rounded-xl bg-card border border-border space-y-3">
+                <div className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
+                  <Dumbbell className="w-5 h-5" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-bold">Olympic-Grade Equipment</h3>
+                <h3 className="text-xl font-heading font-bold text-foreground">Olympic-grade floor</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Precision-calibrated bars, plates, bio-mechanically engineered pin-loaded stations, and dedicated deadlift platforms.
+                  Calibrated bars and plates, engineered resistance stations, and dedicated platforms kept in clean working order.
                 </p>
               </div>
 
-              <div className="p-8 rounded-3xl bg-card/60 border border-border space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold">
-                  <HeartPulse className="w-6 h-6" />
+              <div className="p-7 rounded-xl bg-card border border-border space-y-3">
+                <div className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
+                  <HeartPulse className="w-5 h-5" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-bold">Holistic Health Monitoring</h3>
+                <h3 className="text-xl font-heading font-bold text-foreground">Structured tracking</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  From customized diet charts to attendance analytics and routine logging, we track the metrics that drive real outcomes.
+                  Members receive individualized nutrition targets, workout splits, and attendance logs inside their portal.
                 </p>
               </div>
 
-              <div className="p-8 rounded-3xl bg-card/60 border border-border space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold">
-                  <Users className="w-6 h-6" />
+              <div className="p-7 rounded-xl bg-card border border-border space-y-3">
+                <div className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
+                  <Users className="w-5 h-5" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-bold">Inspiring Brotherhood & Culture</h3>
+                <h3 className="text-xl font-heading font-bold text-foreground">Focused atmosphere</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Train alongside dedicated members who push past limits in a clean, high-energy environment free of distraction.
+                  Respectful gym culture where members train alongside peers without crowding or clutter.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Trainers Section */}
-          <div id="trainers" className="space-y-12 scroll-mt-28">
-            <div className="text-center max-w-2xl mx-auto space-y-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-gold/10 text-brand-gold border border-brand-gold/20">
-                <Flame className="w-3.5 h-3.5" /> Certified Experts
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-bold font-heading">Meet Your Coaches</h2>
-              <p className="text-muted-foreground">Certified specialists dedicated to unlocking your peak potential safely and sustainably.</p>
+          {/* Coaches */}
+          <div id="trainers" className="space-y-8 scroll-mt-24">
+            <div className="max-w-2xl space-y-2">
+              <h2 className="text-3xl sm:text-4xl font-bold font-heading uppercase text-foreground">
+                Meet the coaches
+              </h2>
+              <p className="text-muted-foreground text-base">
+                Certified coaches guiding technique, programming, and safe progression.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {trainers.map((t, i) => (
-                <div key={i} className="group rounded-3xl overflow-hidden border border-border bg-card/80 hover:border-brand-gold/40 transition-all p-6 space-y-4">
-                  <div className="relative h-64 w-full rounded-2xl overflow-hidden bg-muted">
-                    <Image
-                      src={t.image}
-                      alt={t.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                <div
+                  key={i}
+                  className="rounded-xl border border-border bg-card p-8 flex flex-col justify-between gap-6"
+                >
+                  <div className="flex items-start gap-5">
+                    <div
+                      className={`w-14 h-14 rounded-lg font-heading font-extrabold text-2xl flex items-center justify-center shrink-0 ${
+                        t.highlight
+                          ? "bg-brand-gold text-black"
+                          : "bg-secondary border border-brand-gold/40 text-brand-gold"
+                      }`}
+                    >
+                      {t.initials}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-2xl font-heading font-bold text-foreground">{t.name}</h3>
+                      <p className="text-sm text-brand-gold font-medium">{t.role}</p>
+                      <p className="text-xs text-muted-foreground">{t.specialty}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground">{t.name}</h3>
-                    <p className="text-xs text-brand-gold font-semibold uppercase tracking-wider">{t.role}</p>
-                    <p className="text-xs text-muted-foreground mt-1 font-medium">{t.specialty}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed border-t border-border pt-5">
                     {t.bio}
                   </p>
                 </div>
@@ -134,28 +143,31 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* CTA Banner */}
-          <div className="rounded-3xl border border-brand-gold/30 bg-gradient-to-r from-card via-brand-gold/10 to-card p-8 sm:p-12 text-center space-y-6 max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold font-heading text-foreground">Ready to Elevate Your Standard?</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Schedule your introductory consultation and body scan with one of our certified trainers today.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+          {/* Walkthrough CTA */}
+          <div className="rounded-xl border border-border bg-card p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-xl">
+              <h2 className="text-2xl sm:text-3xl font-bold font-heading text-foreground">
+                Visit the gym in person
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Schedule an introductory session and body scan with our coaching staff.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
                 href="/contact"
-                className="px-8 py-3.5 rounded-xl bg-brand-gold text-black font-bold hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/25 inline-flex items-center justify-center gap-2 focus-gold touch-target"
+                className="px-7 py-3.5 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all text-center focus-gold touch-target"
               >
-                Book Free Consultation <ArrowRight className="w-4 h-4" />
+                Book a walkthrough
               </Link>
               <Link
                 href="/pricing"
-                className="px-8 py-3.5 rounded-xl border border-border bg-secondary text-foreground font-semibold hover:bg-muted active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center focus-gold touch-target"
+                className="px-7 py-3.5 rounded-lg border border-border bg-secondary text-foreground font-semibold text-sm hover:bg-muted active:scale-[0.98] transition-all text-center focus-gold touch-target"
               >
-                View Plans
+                View plans
               </Link>
             </div>
           </div>
-
         </div>
       </main>
 

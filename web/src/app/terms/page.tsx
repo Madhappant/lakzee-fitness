@@ -10,18 +10,16 @@ export default function TermsOfServicePage() {
       <main className="flex-1 py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-10">
           <div className="space-y-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-gold/10 text-brand-gold border border-brand-gold/20">
-              <FileText className="w-3.5 h-3.5" /> Studio Rules & Terms
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-heading font-black tracking-tight">
-              Terms of <span className="gold-gradient-text">Service</span>
+            <h1 className="text-4xl sm:text-5xl font-heading font-extrabold uppercase tracking-tight text-foreground">
+              Terms of Service
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Last updated: November 2026 • Lakzee Fitness Studio
+            <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <FileText className="w-4 h-4 text-brand-gold shrink-0" aria-hidden="true" />
+              <span>Last updated: November 2026</span>
             </p>
           </div>
 
-          <div className="rounded-3xl bg-card border border-border p-8 sm:p-10 space-y-8 text-sm leading-relaxed text-muted-foreground">
+          <div className="rounded-xl bg-card border border-border p-8 sm:p-10 space-y-8 text-sm leading-relaxed text-muted-foreground">
             <section className="space-y-2">
               <h2 className="text-xl font-bold text-foreground">1. Membership & Check-In</h2>
               <p>
