@@ -1,9 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../app';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { generateToken } from '../utils/jwt';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import { asyncHandler } from '../middlewares/error.middleware';
+import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from '../utils/errors';
+import { invalidateCacheScopes } from '../utils/cache';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -38,364 +41,311 @@ const verifyPhoneSchema = z.object({
   otp: z.string().length(6),
 });
 
+const EMAIL_WEBHOOK_TIMEOUT_MS = 12000;
 const generateSecureOtp = () => crypto.randomInt(100000, 1000000).toString();
 
-export const register = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { email, password, firstName, lastName } = registerSchema.parse(req.body);
-
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ status: 'error', message: 'Email already exists' });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        // Default role is MEMBER as per schema
-      },
-    });
-
-    const token = generateToken(user);
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        user: { id: user.id, email: user.email, role: user.role, firstName: user.firstName, lastName: user.lastName },
-        token,
-      },
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
-    }
-    next(error);
+async function sendOtpEmailViaScript(to: string, subject: string, html: string) {
+  const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+  if (!scriptUrl) {
+    throw new Error('Server configuration error: GOOGLE_SCRIPT_URL is missing. Please add it to your Render environment variables.');
   }
-};
 
-export const login = async (req: Request, res: Response, next: NextFunction) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), EMAIL_WEBHOOK_TIMEOUT_MS);
+
   try {
-    const { email, password } = loginSchema.parse(req.body);
-
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return res.status(401).json({ status: 'error', message: 'Invalid credentials' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ status: 'error', message: 'Invalid credentials' });
-    }
-
-    const token = generateToken(user);
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        user: { id: user.id, email: user.email, role: user.role, firstName: user.firstName, lastName: user.lastName },
-        token,
-      },
+    const response = await fetch(scriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: process.env.GOOGLE_SCRIPT_SECRET,
+        to,
+        subject,
+        html,
+      }),
+      signal: controller.signal,
     });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
+
+    const data = (await response.json()) as { error?: string };
+    if (data.error) {
+      throw new Error(data.error);
     }
-    next(error);
+  } finally {
+    clearTimeout(timer);
   }
-};
+}
 
-export const requestOtp = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { email } = requestOtpSchema.parse(req.body);
+export const register = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password, firstName, lastName } = registerSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      // Return 200 even if user not found to prevent email enumeration
-      return res.status(200).json({ status: 'success', message: 'If the email exists, an OTP has been sent.' });
-    }
-    
-    // Generate cryptographically secure 6-digit OTP
-    const otp = generateSecureOtp();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const existingUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (existingUser) {
+    throw new BadRequestError('Email already exists');
+  }
 
-    await prisma.user.update({
-      where: { email },
-      data: {
-        resetOtp: otp,
-        resetOtpExpiry: expiry
-      }
-    });
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-    if (process.env.GOOGLE_SCRIPT_URL) {
-      try {
-        const resetHtml = `
+  const user = await prisma.user.create({
+    data: { email, password: hashedPassword, firstName, lastName },
+  });
+
+  const token = generateToken(user);
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      token,
+    },
+  });
+});
+
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password } = loginSchema.parse(req.body);
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      password: true,
+      role: true,
+      firstName: true,
+      lastName: true,
+    },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError('Invalid credentials');
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new UnauthorizedError('Invalid credentials');
+  }
+
+  const token = generateToken(user);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      token,
+    },
+  });
+});
+
+export const requestOtp = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = requestOtpSchema.parse(req.body);
+
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (!user) {
+    return res.status(200).json({ status: 'success', message: 'If the email exists, an OTP has been sent.' });
+  }
+
+  const otp = generateSecureOtp();
+  const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await prisma.user.update({
+    where: { email },
+    data: { resetOtp: otp, resetOtpExpiry: expiry },
+  });
+
+  const resetHtml = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
-  <div style="text-align: center; margin-bottom: 20px;">
-    <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
-  </div>
   <h2 style="color: #333333; text-align: center;">Your Password Reset Request</h2>
   <p style="color: #555555; line-height: 1.6; font-size: 16px;">
     Hello,<br><br>
-    We received a request to reset the password associated with your Lakzee Fitness account. We understand how important it is to keep your account secure and accessible. To proceed with resetting your password, please use the One-Time Password (OTP) provided below.
+    Use the One-Time Password (OTP) below to reset your Lakzee Fitness password. It expires in 10 minutes.
   </p>
   <div style="text-align: center; margin: 30px 0;">
-    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
+    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #0A0A0C; background-color: #D4FF00; border-radius: 8px; letter-spacing: 5px;">
       ${otp}
     </span>
   </div>
-  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    This verification code is valid for the next 10 minutes. Please do not share this code with anyone, including our support team, as it grants access to modify your account credentials. If you did not request a password reset, you can safely ignore this email and your account will remain secure. Your security and fitness journey are our top priorities!
-  </p>
-  <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
   <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
-    &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
-    Train Hard, Stay Fit.
+    &copy; ${new Date().getFullYear()} Lakzee Fitness Studio. All rights reserved.
   </p>
-</div>
-        `;
+</div>`;
 
-        const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            secret: process.env.GOOGLE_SCRIPT_SECRET,
-            to: email,
-            subject: 'Your Password Reset OTP',
-            html: resetHtml
-          })
-        });
-
-        const data = await response.json();
-        
-        if (data.error) {
-           throw new Error(data.error);
-        }
-
-        console.log(`[HTTP] Real email sent to ${email} via Google Apps Script`);
-      } catch (mailError: any) {
-        console.error("Failed to send real email via Google Script API", mailError);
-        return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
-      }
-    } else {
-      console.error("Missing GOOGLE_SCRIPT_URL in environment variables.");
-      return res.status(500).json({ 
-        status: 'error', 
-        message: 'Server configuration error: GOOGLE_SCRIPT_URL is missing. Please add it to your Render environment variables.' 
-      });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      message: 'OTP has been sent to your registered email address.',
-      phoneMasked: email
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
-    }
-    next(error);
-  }
-};
-
-export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, otp, newPassword } = resetSchema.parse(req.body);
-
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.resetOtp !== otp) {
-      return res.status(400).json({ status: 'error', message: 'Invalid OTP or email' });
-    }
-
-    if (!user.resetOtpExpiry || user.resetOtpExpiry < new Date()) {
-      return res.status(400).json({ status: 'error', message: 'OTP has expired' });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    await prisma.user.update({
-      where: { email },
-      data: { 
-        password: hashedPassword,
-        resetOtp: null,
-        resetOtpExpiry: null
-      }
+    await sendOtpEmailViaScript(email, 'Your Password Reset OTP', resetHtml);
+  } catch (mailError) {
+    const msg = mailError instanceof Error ? mailError.message : String(mailError);
+    return res.status(500).json({
+      status: 'error',
+      message: msg.includes('GOOGLE_SCRIPT_URL') ? msg : `Failed to send email: ${msg}`,
     });
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Password reset successfully',
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
-    }
-    next(error);
   }
-};
 
-export const requestPhoneOtp = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const authUserId = req.user?.id;
-    if (!authUserId) {
-      return res.status(401).json({ status: 'error', message: 'Unauthorized' });
-    }
+  res.status(200).json({
+    status: 'success',
+    message: 'OTP has been sent to your registered email address.',
+    phoneMasked: email,
+  });
+});
 
-    const { email, newPhone } = requestPhoneOtpSchema.parse(req.body);
+export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = resetSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { id: authUserId } });
-    if (!user) {
-      return res.status(404).json({ status: 'error', message: 'User not found' });
-    }
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, resetOtp: true, resetOtpExpiry: true },
+  });
 
-    if (email && email !== user.email.toLowerCase()) {
-      return res.status(403).json({ status: 'error', message: 'Forbidden: You can only update your own phone number' });
-    }
+  if (!user || user.resetOtp !== otp) {
+    throw new BadRequestError('Invalid OTP or email');
+  }
+  if (!user.resetOtpExpiry || user.resetOtpExpiry < new Date()) {
+    throw new BadRequestError('OTP has expired');
+  }
 
-    const otp = generateSecureOtp();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        pendingPhone: newPhone,
-        phoneOtp: otp,
-        phoneOtpExpiry: expiry
-      }
-    });
+  await prisma.user.update({
+    where: { email },
+    data: { password: hashedPassword, resetOtp: null, resetOtpExpiry: null },
+  });
 
-    if (process.env.GOOGLE_SCRIPT_URL) {
-      try {
-        const phoneHtml = `
+  invalidateCacheScopes(`auth:${user.id}`);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password reset successfully',
+  });
+});
+
+export const requestPhoneOtp = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const authUserId = req.user?.id;
+  if (!authUserId) {
+    throw new UnauthorizedError('Unauthorized');
+  }
+
+  const { email, newPhone } = requestPhoneOtpSchema.parse(req.body);
+
+  const user = await prisma.user.findUnique({
+    where: { id: authUserId },
+    select: { id: true, email: true },
+  });
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  if (email && email !== user.email.toLowerCase()) {
+    throw new ForbiddenError('Forbidden: You can only update your own phone number');
+  }
+
+  const otp = generateSecureOtp();
+  const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { pendingPhone: newPhone, phoneOtp: otp, phoneOtpExpiry: expiry },
+  });
+
+  const phoneHtml = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fafafa;">
-  <div style="text-align: center; margin-bottom: 20px;">
-    <img src="https://lakzee-fitness.vercel.app/logo.png" alt="Lakzee Fitness Logo" style="max-width: 150px; height: auto;" />
-  </div>
   <h2 style="color: #333333; text-align: center;">Phone Verification Request</h2>
   <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    Hello,<br><br>
-    We received a request to update the phone number associated with your Lakzee Fitness account. Keeping your contact information up-to-date helps us ensure you receive important gym announcements and membership updates. To verify and confirm this change, please use the One-Time Password (OTP) provided below.
+    Use the One-Time Password (OTP) below to verify your new phone number. It expires in 10 minutes.
   </p>
   <div style="text-align: center; margin: 30px 0;">
-    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #d4af37; background-color: #fff8e1; border: 2px dashed #d4af37; border-radius: 8px; letter-spacing: 5px;">
+    <span style="display: inline-block; padding: 15px 30px; font-size: 28px; font-weight: bold; color: #0A0A0C; background-color: #D4FF00; border-radius: 8px; letter-spacing: 5px;">
       ${otp}
     </span>
   </div>
-  <p style="color: #555555; line-height: 1.6; font-size: 16px;">
-    This verification code is valid for the next 10 minutes. If you did not request to update your phone number, please ignore this email and your account details will remain unchanged. Your security and fitness journey are our top priorities!
-  </p>
-  <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;" />
-  <p style="color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
-    &copy; ${new Date().getFullYear()} Lakzee Fitness. All rights reserved.<br>
-    Train Hard, Stay Fit.
-  </p>
-</div>
-        `;
+</div>`;
 
-        const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            secret: process.env.GOOGLE_SCRIPT_SECRET,
-            to: user.email,
-            subject: 'Verify Your New Phone Number',
-            html: phoneHtml
-          })
-        });
-
-        const data = await response.json();
-        
-        if (data.error) {
-           throw new Error(data.error);
-        }
-
-        console.log(`[HTTP] Real email sent to ${user.email} via Google Apps Script`);
-      } catch (mailError: any) {
-        console.error("Failed to send real email via Google Script API", mailError);
-        return res.status(500).json({ status: 'error', message: `Failed to send email: ${mailError.message || mailError}` });
-      }
-    } else {
-      console.error("Missing GOOGLE_SCRIPT_URL in environment variables.");
-      return res.status(500).json({ 
-        status: 'error', 
-        message: 'Server configuration error: GOOGLE_SCRIPT_URL is missing. Please add it to your Render environment variables.' 
-      });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      message: 'OTP has been sent to your registered email address.',
-      phoneMasked: user.email
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
-    }
-    next(error);
-  }
-};
-
-export const verifyPhoneOtp = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const authUserId = req.user?.id;
-    if (!authUserId) {
-      return res.status(401).json({ status: 'error', message: 'Unauthorized' });
-    }
-
-    const { email, otp } = verifyPhoneSchema.parse(req.body);
-
-    const user = await prisma.user.findUnique({ where: { id: authUserId } });
-    if (!user) {
-      return res.status(404).json({ status: 'error', message: 'User not found' });
-    }
-
-    if (email && email !== user.email.toLowerCase()) {
-      return res.status(403).json({ status: 'error', message: 'Forbidden: You can only verify your own phone number' });
-    }
-
-    if (!user.phoneOtp || user.phoneOtp !== otp) {
-      return res.status(400).json({ status: 'error', message: 'Invalid OTP' });
-    }
-
-    if (!user.phoneOtpExpiry || user.phoneOtpExpiry < new Date()) {
-      return res.status(400).json({ status: 'error', message: 'OTP has expired' });
-    }
-
-    if (!user.pendingPhone) {
-      return res.status(400).json({ status: 'error', message: 'No pending phone number to update' });
-    }
-
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { 
-        phone: user.pendingPhone,
-        pendingPhone: null,
-        phoneOtp: null,
-        phoneOtpExpiry: null
-      }
+    await sendOtpEmailViaScript(user.email, 'Verify Your New Phone Number', phoneHtml);
+  } catch (mailError) {
+    const msg = mailError instanceof Error ? mailError.message : String(mailError);
+    return res.status(500).json({
+      status: 'error',
+      message: msg.includes('GOOGLE_SCRIPT_URL') ? msg : `Failed to send email: ${msg}`,
     });
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Phone number updated successfully',
-      data: {
-        user: { id: updatedUser.id, email: updatedUser.email, role: updatedUser.role, firstName: updatedUser.firstName, lastName: updatedUser.lastName, phone: updatedUser.phone }
-      }
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
-    }
-    next(error);
   }
-};
+
+  res.status(200).json({
+    status: 'success',
+    message: 'OTP has been sent to your registered email address.',
+    phoneMasked: user.email,
+  });
+});
+
+export const verifyPhoneOtp = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const authUserId = req.user?.id;
+  if (!authUserId) {
+    throw new UnauthorizedError('Unauthorized');
+  }
+
+  const { email, otp } = verifyPhoneSchema.parse(req.body);
+
+  const user = await prisma.user.findUnique({
+    where: { id: authUserId },
+    select: {
+      id: true,
+      email: true,
+      phoneOtp: true,
+      phoneOtpExpiry: true,
+      pendingPhone: true,
+    },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  if (email && email !== user.email.toLowerCase()) {
+    throw new ForbiddenError('Forbidden: You can only verify your own phone number');
+  }
+  if (!user.phoneOtp || user.phoneOtp !== otp) {
+    throw new BadRequestError('Invalid OTP');
+  }
+  if (!user.phoneOtpExpiry || user.phoneOtpExpiry < new Date()) {
+    throw new BadRequestError('OTP has expired');
+  }
+  if (!user.pendingPhone) {
+    throw new BadRequestError('No pending phone number to update');
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      phone: user.pendingPhone,
+      pendingPhone: null,
+      phoneOtp: null,
+      phoneOtpExpiry: null,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+    },
+  });
+
+  invalidateCacheScopes('members', 'dashboard');
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Phone number updated successfully',
+    data: { user: updatedUser },
+  });
+});

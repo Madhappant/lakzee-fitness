@@ -2,7 +2,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, useDeferredValue, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchMembers, updateMember, deleteMember, API_URL } from "@/lib/api/members";
 import Link from "next/link";
@@ -93,22 +93,25 @@ function MembersContent() {
     }
   };
 
-  const members = data?.data || [];
+  const members = useMemo(() => data?.data ?? [], [data?.data]);
+  const deferredSearch = useDeferredValue(searchQuery);
 
-  const filteredMembers = members.filter((member: any) => {
-    const searchLower = searchQuery.toLowerCase();
-    const nameMatch = `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchLower);
-    const emailMatch = member.email.toLowerCase().includes(searchLower);
-    const idMatch = member.memberProfile?.memberId?.toLowerCase().includes(searchLower) || false;
-    const isMemberActive =
-      member.memberProfile?.subscriptions?.some((sub: any) => sub.status === "ACTIVE") || false;
+  const filteredMembers = useMemo(() => {
+    const searchLower = deferredSearch.toLowerCase().trim();
+    return members.filter((member: any) => {
+      const nameMatch = `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchLower);
+      const emailMatch = member.email.toLowerCase().includes(searchLower);
+      const idMatch = member.memberProfile?.memberId?.toLowerCase().includes(searchLower) || false;
+      const isMemberActive =
+        member.memberProfile?.subscriptions?.some((sub: any) => sub.status === "ACTIVE") || false;
 
-    let matchesStatus = true;
-    if (statusFilter === "Active") matchesStatus = isMemberActive;
-    if (statusFilter === "Inactive") matchesStatus = !isMemberActive;
+      let matchesStatus = true;
+      if (statusFilter === "Active") matchesStatus = isMemberActive;
+      if (statusFilter === "Inactive") matchesStatus = !isMemberActive;
 
-    return (nameMatch || emailMatch || idMatch) && matchesStatus;
-  });
+      return (nameMatch || emailMatch || idMatch) && matchesStatus;
+    });
+  }, [members, deferredSearch, statusFilter]);
 
   return (
     <div className="space-y-6 pb-12">

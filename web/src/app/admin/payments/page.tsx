@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useDeferredValue } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchSubscriptions, createSubscription, fetchPaymentStats, updateSubscription, deleteSubscription } from "@/lib/api/subscriptions";
 import { fetchMembers } from "@/lib/api/members";
@@ -47,40 +47,43 @@ export default function PaymentsPage() {
   const { data: membersData } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
   const { data: plansData } = useQuery({ queryKey: ["plans"], queryFn: fetchPlans });
 
-  const subscriptions = subsData?.data || [];
+  const subscriptions = useMemo(() => subsData?.data ?? [], [subsData?.data]);
   const stats = statsData?.data || { todaysCollection: 0, thisMonth: 0, totalRecords: 0, totalPending: 0 };
   const members = membersData?.data || [];
   const plans = plansData?.data || [];
+  const deferredSearch = useDeferredValue(searchQuery);
 
-  const filteredSubscriptions = subscriptions.filter((sub: any) => {
-    const q = searchQuery.toLowerCase().trim();
-    const firstName = sub.member?.user?.firstName || "";
-    const lastName = sub.member?.user?.lastName || "";
-    const fullName = `${firstName} ${lastName}`.toLowerCase();
-    const memberId = (sub.member?.memberId || "").toLowerCase();
-    const email = (sub.member?.user?.email || "").toLowerCase();
-    const phone = (sub.member?.user?.phone || "").toLowerCase();
-    const planName = (sub.plan?.name || "").toLowerCase();
-    const method = (sub.paymentMethod || "").toLowerCase();
+  const filteredSubscriptions = useMemo(() => {
+    const q = deferredSearch.toLowerCase().trim();
+    return subscriptions.filter((sub: any) => {
+      const firstName = sub.member?.user?.firstName || "";
+      const lastName = sub.member?.user?.lastName || "";
+      const fullName = `${firstName} ${lastName}`.toLowerCase();
+      const memberId = (sub.member?.memberId || "").toLowerCase();
+      const email = (sub.member?.user?.email || "").toLowerCase();
+      const phone = (sub.member?.user?.phone || "").toLowerCase();
+      const planName = (sub.plan?.name || "").toLowerCase();
+      const method = (sub.paymentMethod || "").toLowerCase();
 
-    const matchesSearch = !q || 
-      fullName.includes(q) || 
-      memberId.includes(q) || 
-      email.includes(q) || 
-      phone.includes(q) || 
-      planName.includes(q) || 
-      method.includes(q);
+      const matchesSearch = !q || 
+        fullName.includes(q) || 
+        memberId.includes(q) || 
+        email.includes(q) || 
+        phone.includes(q) || 
+        planName.includes(q) || 
+        method.includes(q);
 
-    let matchesStatus = true;
-    if (statusFilter === "Active") matchesStatus = sub.status === "ACTIVE";
-    if (statusFilter === "Expired") matchesStatus = sub.status === "EXPIRED";
+      let matchesStatus = true;
+      if (statusFilter === "Active") matchesStatus = sub.status === "ACTIVE";
+      if (statusFilter === "Expired") matchesStatus = sub.status === "EXPIRED";
 
-    let matchesPayment = true;
-    if (paymentFilter === "Paid") matchesPayment = sub.paymentStatus === "PAID";
-    if (paymentFilter === "Pending") matchesPayment = sub.paymentStatus === "PENDING";
+      let matchesPayment = true;
+      if (paymentFilter === "Paid") matchesPayment = sub.paymentStatus === "PAID";
+      if (paymentFilter === "Pending") matchesPayment = sub.paymentStatus === "PENDING";
 
-    return matchesSearch && matchesStatus && matchesPayment;
-  });
+      return matchesSearch && matchesStatus && matchesPayment;
+    });
+  }, [subscriptions, deferredSearch, statusFilter, paymentFilter]);
 
   const invalidateFinanceQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["subscriptions"] });

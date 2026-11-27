@@ -1,31 +1,18 @@
-import { API_URL, getAuthToken, handleApiResponse } from "./config";
+import { apiRequest } from "./config";
 
-export const fetchStaff = async () => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/staff`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch staff");
-};
+export const fetchStaff = () =>
+  apiRequest("/staff", {}, "Failed to fetch staff");
 
-export const assignRole = async (userId: string, role: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/staff/assign`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ userId, role }),
-  });
-  return handleApiResponse(res, "Failed to assign role");
-};
+export const assignRole = (userId: string, role: string) =>
+  apiRequest(
+    "/staff/assign",
+    { method: "POST", body: { userId, role } },
+    "Failed to assign role"
+  );
 
-export const revokeRole = async (userId: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/staff/${userId}/revoke`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to revoke role");
-};
+export const revokeRole = (userId: string) =>
+  apiRequest(
+    `/staff/${userId}/revoke`,
+    { method: "POST" },
+    "Failed to revoke role"
+  );

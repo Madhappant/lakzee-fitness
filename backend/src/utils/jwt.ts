@@ -7,7 +7,7 @@ if (!process.env.JWT_SECRET) {
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-export const generateToken = (user: User) => {
+export const generateToken = (user: Pick<User, 'id' | 'role'>) => {
   const options: jwt.SignOptions = {
     expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn']
   };

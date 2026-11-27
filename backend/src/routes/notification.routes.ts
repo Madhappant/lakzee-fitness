@@ -1,49 +1,115 @@
-import { Router } from 'express';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Router, Response } from 'express';
 import { prisma } from '../app';
-import { authenticate } from '../middlewares/auth.middleware';
+import { authenticate, AuthRequest } from '../middlewares/auth.middleware';
+import { asyncHandler } from '../middlewares/error.middleware';
 
 const router = Router();
 
-router.get('/', authenticate, async (req: any, res) => {
-  try {
-    const userRole = req.user.role;
-    const userId = req.user.id;
+router.get(
+  '/',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userRole = req.user!.role;
+    const userId = req.user!.id;
 
     const notifications: any[] = [];
-    
-    // Calculate 3 days from now for expiry warnings
     let now = new Date();
-    
-    // Adjust 'now' to match the user's local timezone if tzOffset is provided
+
     if (req.query.tzOffset) {
       const offset = parseInt(req.query.tzOffset as string, 10);
-      // Offset is in minutes (e.g., -330 for IST).
-      now = new Date(Date.now() - (offset * 60000));
+      if (!isNaN(offset)) {
+        now = new Date(Date.now() - offset * 60000);
+      }
     }
-    
-    // Calculate 3 days from now relative to the user's adjusted clock
+
     const threeDaysFromNow = new Date(now);
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Fetch today's announcements in parallel across all roles
+    const announcementsPromise = prisma.announcement.findMany({
+      where: { createdAt: { gte: todayStart } },
+      select: { id: true, title: true, message: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
     if (userRole === 'ADMIN' || userRole === 'RECEPTIONIST') {
-      // ADMIN NOTIFICATIONS
-
-      // 1. Pending Payments (Invoices or Pending Subscriptions)
-      const pendingInvoices = await prisma.invoice.findMany({
-        where: { status: 'PENDING' },
-        include: { member: { include: { user: true } } },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      const pendingSubs = await prisma.subscription.findMany({
-        where: { paymentStatus: 'PENDING' },
-        include: { member: { include: { user: true } }, plan: true },
-        orderBy: { createdAt: 'desc' }
-      });
+      const [
+        pendingInvoices,
+        pendingSubs,
+        expiringSubscriptions,
+        membersWithBirthdays,
+        recentAnnouncements,
+      ] = await Promise.all([
+        prisma.invoice.findMany({
+          where: { status: 'PENDING' },
+          select: {
+            id: true,
+            memberId: true,
+            totalAmount: true,
+            createdAt: true,
+            member: {
+              select: {
+                user: { select: { firstName: true, lastName: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.subscription.findMany({
+          where: { paymentStatus: 'PENDING' },
+          select: {
+            id: true,
+            memberId: true,
+            balanceAmount: true,
+            createdAt: true,
+            plan: { select: { name: true, price: true } },
+            member: {
+              select: {
+                user: { select: { firstName: true, lastName: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.subscription.findMany({
+          where: {
+            endDate: { lte: threeDaysFromNow },
+            status: { notIn: ['CANCELLED', 'FROZEN'] },
+          },
+          select: {
+            id: true,
+            endDate: true,
+            plan: { select: { name: true } },
+            member: {
+              select: {
+                userId: true,
+                user: { select: { firstName: true, lastName: true } },
+              },
+            },
+          },
+          orderBy: { endDate: 'asc' },
+        }),
+        userRole === 'ADMIN'
+          ? prisma.memberProfile.findMany({
+              where: { dob: { not: null } },
+              select: {
+                id: true,
+                userId: true,
+                dob: true,
+                user: { select: { firstName: true, lastName: true } },
+              },
+            })
+          : Promise.resolve([]),
+        announcementsPromise,
+      ]);
 
       const seenMemberPaymentIds = new Set<string>();
 
-      pendingInvoices.forEach(invoice => {
+      for (const invoice of pendingInvoices) {
         seenMemberPaymentIds.add(invoice.memberId);
         const memberName = invoice.member?.user
           ? `${invoice.member.user.firstName} ${invoice.member.user.lastName}`.trim()
@@ -54,15 +120,15 @@ router.get('/', authenticate, async (req: any, res) => {
           title: 'Pending Payment',
           message: `${memberName} has a pending invoice of ₹${invoice.totalAmount}.`,
           date: invoice.createdAt,
-          link: `/admin/payments`,
-          read: false
+          link: '/admin/payments',
+          read: false,
         });
-      });
+      }
 
-      pendingSubs.forEach(sub => {
+      for (const sub of pendingSubs) {
         if (!seenMemberPaymentIds.has(sub.memberId)) {
           seenMemberPaymentIds.add(sub.memberId);
-          const amount = sub.balanceAmount > 0 ? sub.balanceAmount : (sub.plan?.price || 0);
+          const amount = sub.balanceAmount > 0 ? sub.balanceAmount : sub.plan?.price || 0;
           const memberName = sub.member?.user
             ? `${sub.member.user.firstName} ${sub.member.user.lastName}`.trim()
             : 'Member';
@@ -72,54 +138,37 @@ router.get('/', authenticate, async (req: any, res) => {
             title: 'Pending Subscription Payment',
             message: `${memberName} has a pending payment of ₹${amount} for ${sub.plan?.name || 'plan'}.`,
             date: sub.createdAt,
-            link: `/admin/payments`,
-            read: false
+            link: '/admin/payments',
+            read: false,
           });
         }
-      });
+      }
 
-      // 2. Expiring / Expired Subscriptions
-      const expiringSubscriptions = await prisma.subscription.findMany({
-        where: {
-          endDate: { lte: threeDaysFromNow },
-          status: { notIn: ['CANCELLED', 'FROZEN'] } // ACTIVE or already EXPIRED
-        },
-        include: { member: { include: { user: true } }, plan: true },
-        orderBy: { endDate: 'asc' }
-      });
-
-      expiringSubscriptions.forEach(sub => {
+      for (const sub of expiringSubscriptions) {
         const isExpired = sub.endDate < now;
         const memberName = sub.member?.user
           ? `${sub.member.user.firstName} ${sub.member.user.lastName}`.trim()
           : 'Member';
         const planName = sub.plan?.name || 'Membership';
-        const memberProfileId = sub.member?.id;
+        // Fix: /admin/members/[id]/plan expects User ID, not MemberProfile ID
+        const memberUserId = sub.member?.userId;
         notifications.push({
           id: `sub-${sub.id}`,
           type: 'EXPIRY',
           title: isExpired ? 'Membership Expired' : 'Membership Expiring Soon',
           message: `${memberName}'s ${planName} plan ${isExpired ? 'expired on' : 'will expire on'} ${sub.endDate.toLocaleDateString()}.`,
           date: sub.endDate,
-          link: memberProfileId ? `/admin/members/${memberProfileId}/plan` : `/admin/members`,
-          read: false
+          link: memberUserId ? `/admin/members/${memberUserId}/plan` : '/admin/members',
+          read: false,
         });
-      });
+      }
 
-      // 3. Member Birthdays (ONLY for Admins)
       if (userRole === 'ADMIN') {
-        const membersWithBirthdays = await prisma.memberProfile.findMany({
-          where: { dob: { not: null } },
-          include: { user: true }
-        });
-        
         const currentMonth = now.getUTCMonth();
         const currentDay = now.getUTCDate();
 
-        membersWithBirthdays.forEach(member => {
-          if (!member.dob) return;
-          // Check if birthday matches today's exact date (ignoring year)
-          // We use getUTCMonth/Date because dates saved from frontend (e.g. YYYY-MM-DD) are often stored as UTC midnight
+        for (const member of membersWithBirthdays) {
+          if (!member.dob) continue;
           if (member.dob.getUTCMonth() === currentMonth && member.dob.getUTCDate() === currentDay) {
             const memberName = member.user
               ? `${member.user.firstName} ${member.user.lastName}`.trim()
@@ -127,39 +176,68 @@ router.get('/', authenticate, async (req: any, res) => {
             notifications.push({
               id: `bday-${member.id}`,
               type: 'SYSTEM',
-              title: 'Member Birthday Today! 🎉',
-              message: `It's ${memberName}'s birthday today! Don't forget to wish them.`,
+              title: 'Member Birthday Today',
+              message: `It's ${memberName}'s birthday today.`,
               date: now,
               link: `/admin/members?viewMember=${member.userId}`,
-              read: false
+              read: false,
             });
           }
-        });
+        }
       }
 
+      for (const announcement of recentAnnouncements) {
+        notifications.push({
+          id: `ann-${announcement.id}`,
+          type: 'ANNOUNCEMENT',
+          title: announcement.title,
+          message: announcement.message,
+          date: announcement.createdAt,
+          link: '/admin/announcements',
+          read: false,
+        });
+      }
     } else if (userRole === 'MEMBER') {
-      // MEMBER NOTIFICATIONS
-      
-      const memberProfile = await prisma.memberProfile.findUnique({
-        where: { userId }
-      });
+      const [memberProfile, recentAnnouncements] = await Promise.all([
+        prisma.memberProfile.findUnique({ where: { userId }, select: { id: true } }),
+        announcementsPromise,
+      ]);
 
       if (memberProfile) {
-        // 1. My Pending Payments
-        const myPendingInvoices = await prisma.invoice.findMany({
-          where: { memberId: memberProfile.id, status: 'PENDING' },
-          orderBy: { createdAt: 'desc' }
-        });
-
-        const myPendingSubs = await prisma.subscription.findMany({
-          where: { memberId: memberProfile.id, paymentStatus: 'PENDING' },
-          include: { plan: true },
-          orderBy: { createdAt: 'desc' }
-        });
+        const [myPendingInvoices, myPendingSubs, myExpiringSubscriptions] = await Promise.all([
+          prisma.invoice.findMany({
+            where: { memberId: memberProfile.id, status: 'PENDING' },
+            select: { id: true, subscriptionId: true, totalAmount: true, createdAt: true },
+            orderBy: { createdAt: 'desc' },
+          }),
+          prisma.subscription.findMany({
+            where: { memberId: memberProfile.id, paymentStatus: 'PENDING' },
+            select: {
+              id: true,
+              balanceAmount: true,
+              createdAt: true,
+              plan: { select: { name: true, price: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+          }),
+          prisma.subscription.findMany({
+            where: {
+              memberId: memberProfile.id,
+              endDate: { lte: threeDaysFromNow },
+              status: { notIn: ['CANCELLED', 'FROZEN'] },
+            },
+            select: {
+              id: true,
+              endDate: true,
+              plan: { select: { name: true } },
+            },
+            orderBy: { endDate: 'asc' },
+          }),
+        ]);
 
         const seenMySubIds = new Set<string>();
 
-        myPendingInvoices.forEach(invoice => {
+        for (const invoice of myPendingInvoices) {
           if (invoice.subscriptionId) seenMySubIds.add(invoice.subscriptionId);
           notifications.push({
             id: `inv-${invoice.id}`,
@@ -167,37 +245,26 @@ router.get('/', authenticate, async (req: any, res) => {
             title: 'Pending Payment',
             message: `You have a pending invoice of ₹${invoice.totalAmount}. Please complete your payment.`,
             date: invoice.createdAt,
-            link: `/member/subscriptions`,
-            read: false
+            link: '/member/subscriptions',
+            read: false,
           });
-        });
+        }
 
-        myPendingSubs.forEach(sub => {
-          if (seenMySubIds.has(sub.id)) return;
-          const amount = sub.balanceAmount > 0 ? sub.balanceAmount : (sub.plan?.price || 0);
+        for (const sub of myPendingSubs) {
+          if (seenMySubIds.has(sub.id)) continue;
+          const amount = sub.balanceAmount > 0 ? sub.balanceAmount : sub.plan?.price || 0;
           notifications.push({
             id: `sub-pay-${sub.id}`,
             type: 'PAYMENT',
             title: 'Pending Plan Payment',
             message: `You have a pending payment of ₹${amount} for your ${sub.plan?.name || 'membership'} plan.`,
             date: sub.createdAt,
-            link: `/member/subscriptions`,
-            read: false
+            link: '/member/subscriptions',
+            read: false,
           });
-        });
+        }
 
-        // 2. My Expiring Subscriptions
-        const myExpiringSubscriptions = await prisma.subscription.findMany({
-          where: {
-            memberId: memberProfile.id,
-            endDate: { lte: threeDaysFromNow },
-            status: { notIn: ['CANCELLED', 'FROZEN'] }
-          },
-          include: { plan: true },
-          orderBy: { endDate: 'asc' }
-        });
-
-        myExpiringSubscriptions.forEach(sub => {
+        for (const sub of myExpiringSubscriptions) {
           const isExpired = sub.endDate < now;
           notifications.push({
             id: `sub-${sub.id}`,
@@ -205,48 +272,45 @@ router.get('/', authenticate, async (req: any, res) => {
             title: isExpired ? 'Membership Expired' : 'Membership Expiring Soon',
             message: `Your ${sub.plan?.name || 'membership'} plan ${isExpired ? 'expired on' : 'will expire on'} ${sub.endDate.toLocaleDateString()}. Please renew it to continue accessing the gym.`,
             date: sub.endDate,
-            link: `/member/subscriptions`,
-            read: false
+            link: '/member/subscriptions',
+            read: false,
           });
+        }
+      }
+
+      for (const announcement of recentAnnouncements) {
+        notifications.push({
+          id: `ann-${announcement.id}`,
+          type: 'ANNOUNCEMENT',
+          title: announcement.title,
+          message: announcement.message,
+          date: announcement.createdAt,
+          link: '/member/dashboard',
+          read: false,
+        });
+      }
+    } else {
+      const recentAnnouncements = await announcementsPromise;
+      for (const announcement of recentAnnouncements) {
+        notifications.push({
+          id: `ann-${announcement.id}`,
+          type: 'ANNOUNCEMENT',
+          title: announcement.title,
+          message: announcement.message,
+          date: announcement.createdAt,
+          link: '/admin/announcements',
+          read: false,
         });
       }
     }
 
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
-
-    // Add Announcements for everyone
-    const recentAnnouncements = await prisma.announcement.findMany({
-      where: {
-        createdAt: { gte: todayStart }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    recentAnnouncements.forEach(announcement => {
-      notifications.push({
-        id: `ann-${announcement.id}`,
-        type: 'ANNOUNCEMENT',
-        title: announcement.title,
-        message: announcement.message,
-        date: announcement.createdAt,
-        link: userRole === 'MEMBER' ? '/member/dashboard' : '/admin/announcements',
-        read: false
-      });
-    });
-
-    // Sort all notifications by date (newest first for payments and announcements, and closest expiry first?)
-    // Actually, sorting by date descending is fine for payments, but for expiry, maybe we want most recent expiries first.
     notifications.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     res.status(200).json({
       status: 'success',
-      data: notifications
+      data: notifications,
     });
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to fetch notifications' });
-  }
-});
+  })
+);
 
 export default router;

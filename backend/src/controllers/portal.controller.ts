@@ -1,178 +1,159 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { prisma } from '../app';
+import { AuthRequest } from '../middlewares/auth.middleware';
+import { asyncHandler } from '../middlewares/error.middleware';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
 
-export const getMyProfile = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ status: 'error', message: 'Unauthorized' });
-    }
+export const getMyProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError('Unauthorized');
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
 
-    const memberProfile = await prisma.memberProfile.findUnique({
-      where: { userId },
-      include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-            phone: true,
-          }
+  const memberProfile = await prisma.memberProfile.findUnique({
+    where: { userId },
+    include: {
+      user: {
+        select: {
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
         },
-        trainer: {
-          select: {
-            firstName: true,
-            lastName: true,
-          }
+      },
+      trainer: {
+        select: {
+          firstName: true,
+          lastName: true,
         },
-        subscriptions: {
-          where: {
-            status: 'ACTIVE',
-            endDate: { gte: startOfToday }
-          },
-          include: {
-            plan: true
-          },
-          orderBy: {
-            createdAt: 'desc'
-          },
-          take: 1
-        }
-      }
-    });
+      },
+      subscriptions: {
+        where: {
+          status: 'ACTIVE',
+          endDate: { gte: startOfToday },
+        },
+        include: {
+          plan: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+    },
+  });
 
-    if (!memberProfile) {
-      return res.status(404).json({ status: 'error', message: 'Member profile not found' });
-    }
-
-    res.json({ status: 'success', data: memberProfile });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to fetch profile' });
+  if (!memberProfile) {
+    throw new NotFoundError('Member profile not found');
   }
-};
 
-export const getMyAttendance = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+  res.json({ status: 'success', data: memberProfile });
+});
 
-    const memberProfile = await prisma.memberProfile.findUnique({ where: { userId } });
-    if (!memberProfile) return res.status(404).json({ status: 'error', message: 'Member not found' });
+export const getMyAttendance = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError('Unauthorized');
 
-    const attendance = await prisma.attendance.findMany({
-      where: { memberId: memberProfile.id },
-      orderBy: { checkIn: 'desc' },
-      take: 30 // last 30 visits
-    });
+  const memberProfile = await prisma.memberProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!memberProfile) throw new NotFoundError('Member not found');
 
-    res.json({ status: 'success', data: attendance });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to fetch attendance' });
+  const attendance = await prisma.attendance.findMany({
+    where: { memberId: memberProfile.id },
+    orderBy: { checkIn: 'desc' },
+    take: 30,
+  });
+
+  res.json({ status: 'success', data: attendance });
+});
+
+export const getMySubscriptions = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError('Unauthorized');
+
+  const memberProfile = await prisma.memberProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!memberProfile) throw new NotFoundError('Member not found');
+
+  const subscriptions = await prisma.subscription.findMany({
+    where: { memberId: memberProfile.id },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      plan: true,
+      invoice: {
+        select: {
+          id: true,
+          invoiceNumber: true,
+          totalAmount: true,
+          status: true,
+        },
+      },
+    },
+  });
+
+  res.json({ status: 'success', data: subscriptions });
+});
+
+export const uploadPhoto = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError('Unauthorized');
+  if (!req.file) throw new BadRequestError('No file uploaded');
+
+  const memberProfile = await prisma.memberProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!memberProfile) throw new NotFoundError('Member not found');
+
+  let photoUrl = `/uploads/${req.file.filename}`;
+  if ((process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) && req.file.path) {
+    photoUrl = req.file.path;
   }
-};
 
-export const getMySubscriptions = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+  const updatedProfile = await prisma.memberProfile.update({
+    where: { userId },
+    data: { photoUrl },
+    select: { photoUrl: true },
+  });
 
-    const memberProfile = await prisma.memberProfile.findUnique({ where: { userId } });
-    if (!memberProfile) return res.status(404).json({ status: 'error', message: 'Member not found' });
+  res.json({ status: 'success', data: { photoUrl: updatedProfile.photoUrl } });
+});
 
-    const subscriptions = await prisma.subscription.findMany({
-      where: { memberId: memberProfile.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        plan: true,
-        invoice: {
-          select: {
-            id: true,
-            invoiceNumber: true,
-            totalAmount: true,
-            status: true
-          }
-        }
-      }
-    });
+export const getMyDietPlan = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError('Unauthorized');
 
-    res.json({ status: 'success', data: subscriptions });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to fetch subscriptions' });
-  }
-};
+  const memberProfile = await prisma.memberProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!memberProfile) throw new NotFoundError('Member not found');
 
-export const uploadPhoto = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+  const activeDietPlan = await prisma.dietPlan.findFirst({
+    where: { memberId: memberProfile.id, isActive: true },
+    orderBy: { createdAt: 'desc' },
+  });
 
-    if (!req.file) {
-      return res.status(400).json({ status: 'error', message: 'No file uploaded' });
-    }
+  res.json({ status: 'success', data: activeDietPlan });
+});
 
-    const memberProfile = await prisma.memberProfile.findUnique({ where: { userId } });
-    if (!memberProfile) return res.status(404).json({ status: 'error', message: 'Member not found' });
+export const getMyWorkoutRoutine = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError('Unauthorized');
 
-    // Store the URL depending on storage provider
-    let photoUrl = `/uploads/${req.file.filename}`;
-    if ((process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) && req.file.path) {
-      photoUrl = req.file.path; // Cloudinary URL
-    }
+  const memberProfile = await prisma.memberProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!memberProfile) throw new NotFoundError('Member not found');
 
-    const updatedProfile = await prisma.memberProfile.update({
-      where: { userId },
-      data: { photoUrl }
-    });
+  const activeRoutine = await prisma.workoutRoutine.findFirst({
+    where: { memberId: memberProfile.id, isActive: true },
+    orderBy: { createdAt: 'desc' },
+  });
 
-    res.json({ status: 'success', data: { photoUrl: updatedProfile.photoUrl } });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: error?.message || 'Failed to upload photo' });
-  }
-};
-
-export const getMyDietPlan = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ status: 'error', message: 'Unauthorized' });
-
-    const memberProfile = await prisma.memberProfile.findUnique({ where: { userId } });
-    if (!memberProfile) return res.status(404).json({ status: 'error', message: 'Member not found' });
-
-    const activeDietPlan = await prisma.dietPlan.findFirst({
-      where: { memberId: memberProfile.id, isActive: true },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    res.json({ status: 'success', data: activeDietPlan });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to fetch diet plan' });
-  }
-};
-
-export const getMyWorkoutRoutine = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ status: 'error', message: 'Unauthorized' });
-
-    const memberProfile = await prisma.memberProfile.findUnique({ where: { userId } });
-    if (!memberProfile) return res.status(404).json({ status: 'error', message: 'Member not found' });
-
-    const activeRoutine = await prisma.workoutRoutine.findFirst({
-      where: { memberId: memberProfile.id, isActive: true },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    res.json({ status: 'success', data: activeRoutine });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ status: 'error', message: 'Failed to fetch workout routine' });
-  }
-};
+  res.json({ status: 'success', data: activeRoutine });
+});

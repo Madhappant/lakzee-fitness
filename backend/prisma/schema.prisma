@@ -42,6 +42,7 @@ model User {
 
   @@index([role])
   @@index([phone])
+  @@index([role, createdAt])
 }
 
 model StaffProfile {
@@ -88,6 +89,7 @@ model MemberProfile {
 
   @@index([trainerId])
   @@index([joiningDate])
+  @@index([dob])
 }
 
 model MembershipPlan {
@@ -106,6 +108,8 @@ model MembershipPlan {
   updatedAt     DateTime @updatedAt
 
   subscriptions Subscription[]
+
+  @@index([isActive])
 }
 
 model Subscription {
@@ -127,9 +131,12 @@ model Subscription {
   invoice       Invoice?
 
   @@index([memberId])
+  @@index([planId])
   @@index([status, endDate])
+  @@index([endDate, status])
   @@index([paymentStatus])
   @@index([createdAt])
+  @@index([createdAt, paymentStatus])
 }
 
 model Invoice {
@@ -241,6 +248,8 @@ model Announcement {
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Expense {

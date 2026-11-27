@@ -26,6 +26,7 @@ export default function AttendancePage() {
     queryKey: ["attendance"],
     queryFn: fetchTodayAttendance,
     refetchInterval: 30000, // Auto refresh every 30s
+    refetchIntervalInBackground: false,
   });
 
   const logs = data?.data || [];

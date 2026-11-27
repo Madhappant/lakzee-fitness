@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { API_URL } from "@/lib/api/config";
+import { apiRequest, getAuthToken } from "@/lib/api/config";
 
 type Notification = {
   id: string;
@@ -36,20 +36,20 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
-      const token = localStorage.getItem("lakzee_token");
+      const token = getAuthToken();
       if (!token) return [];
 
       const tzOffset = new Date().getTimezoneOffset();
-      const res = await fetch(`${API_URL}/notifications?tzOffset=${tzOffset}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!res.ok) throw new Error("Failed to fetch notifications");
-      const json = await res.json();
+      const json = await apiRequest(
+        `/notifications?tzOffset=${tzOffset}`,
+        { requireAuth: false, includeAuth: true, redirectOnUnauthorized: true },
+        "Failed to fetch notifications"
+      );
       return json.data as Notification[];
     },
+    staleTime: 30000,
     refetchInterval: 60000,
+    refetchIntervalInBackground: false,
   });
 
   const unreadCount = notifications.length;

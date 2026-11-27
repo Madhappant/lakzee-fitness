@@ -1,6 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import { prisma } from '../app';
-import { memoryCache } from '../utils/cache';
+import { asyncHandler } from '../middlewares/error.middleware';
+import { NotFoundError } from '../utils/errors';
+import { invalidateCacheScopes } from '../utils/cache';
+import {
+  computeCollectedAmount,
+  computeInvoiceBreakdown,
+  computePendingBalance,
+  createSubscriptionWithInvoice,
+  roundCurrency,
+  syncExpiredSubscriptions,
+} from '../services/subscription-ledger.service';
 import { z } from 'zod';
 
 const createSubscriptionSchema = z.object({
@@ -22,319 +33,228 @@ const updateSubscriptionSchema = z.object({
   balanceAmount: z.preprocess((v) => (v === '' || v === undefined ? undefined : Number(v)), z.number().min(0).optional()),
 });
 
-const roundCurrency = (val: number) => Math.round(val * 100) / 100;
+export const createSubscription = asyncHandler(async (req: Request, res: Response) => {
+  const validated = createSubscriptionSchema.parse(req.body);
+  const { subscription } = await createSubscriptionWithInvoice(prisma, validated);
+  res.status(201).json({ status: 'success', data: subscription });
+});
 
-export const createSubscription = async (req: Request, res: Response) => {
-  try {
-    const validated = createSubscriptionSchema.parse(req.body);
-    const { memberId, planId, startDate, paymentStatus, paymentMethod } = validated;
-    const effectiveBalance = paymentStatus === 'PAID' ? 0 : Math.max(0, roundCurrency(validated.balanceAmount));
+export const getSubscriptions = asyncHandler(async (req: Request, res: Response) => {
+  const { search, status, paymentStatus } = req.query;
 
-    const [member, plan] = await Promise.all([
-      prisma.memberProfile.findUnique({ where: { id: memberId } }),
-      prisma.membershipPlan.findUnique({ where: { id: planId } }),
-    ]);
-    if (!member) return res.status(404).json({ status: 'error', message: 'Member not found' });
-    if (!plan) return res.status(404).json({ status: 'error', message: 'Plan not found' });
+  // Cooldown-guarded sync prevents an UPDATE write lock on every GET request
+  await syncExpiredSubscriptions(prisma, 300);
 
-    const start = new Date(startDate);
-    const end = new Date(start);
-    end.setDate(end.getDate() + plan.durationDays);
+  const where: any = {};
 
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-    const computedStatus = validated.status || (end < todayMidnight ? 'EXPIRED' : 'ACTIVE');
+  if (status && status !== 'All Status' && status !== 'ALL') {
+    where.status = String(status).toUpperCase();
+  }
 
-    const subscription = await prisma.$transaction(async (tx) => {
-      const sub = await tx.subscription.create({
-        data: {
-          memberId,
-          planId,
-          startDate: start,
-          endDate: end,
-          status: computedStatus,
-          paymentStatus,
-          paymentMethod,
-          balanceAmount: effectiveBalance,
-        },
-      });
+  if (paymentStatus && paymentStatus !== 'All Payments' && paymentStatus !== 'ALL') {
+    where.paymentStatus = String(paymentStatus).toUpperCase();
+  }
 
-      const gstRate = (plan.gstPercentage || 18.0) / 100;
-      const basePrice = plan.price / (1 + gstRate);
-      const gstAmount = plan.price - basePrice;
-      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+  if (search) {
+    const searchStr = String(search).trim();
+    where.OR = [
+      { member: { memberId: { contains: searchStr, mode: 'insensitive' } } },
+      { member: { user: { firstName: { contains: searchStr, mode: 'insensitive' } } } },
+      { member: { user: { lastName: { contains: searchStr, mode: 'insensitive' } } } },
+      { member: { user: { email: { contains: searchStr, mode: 'insensitive' } } } },
+      { member: { user: { phone: { contains: searchStr, mode: 'insensitive' } } } },
+      { plan: { name: { contains: searchStr, mode: 'insensitive' } } },
+    ];
+  }
 
-      const invoice = await tx.invoice.create({
-        data: {
-          invoiceNumber,
-          memberId,
-          subscriptionId: sub.id,
-          subtotal: roundCurrency(basePrice),
-          discount: 0,
-          gstAmount: roundCurrency(gstAmount),
-          totalAmount: roundCurrency(plan.price),
-          status: paymentStatus === 'PAID' ? 'COMPLETED' : 'PENDING',
-        },
-      });
-
-      const paidAmount = paymentStatus === 'PAID' ? plan.price : Math.max(0, roundCurrency(plan.price - effectiveBalance));
-      if (paidAmount > 0) {
-        await tx.payment.create({
-          data: {
-            invoiceId: invoice.id,
-            amount: roundCurrency(paidAmount),
-            method: paymentMethod || 'CASH',
-            status: 'COMPLETED',
+  // Strip sensitive User credentials (password, OTPs) with explicit select projection
+  const subscriptions = await prisma.subscription.findMany({
+    where,
+    include: {
+      plan: true,
+      member: {
+        select: {
+          id: true,
+          memberId: true,
+          photoUrl: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+            },
           },
-        });
-      }
-
-      return sub;
-    });
-
-    memoryCache.delete('dashboard_stats');
-    res.status(201).json({ status: 'success', data: subscription });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
-    }
-    res.status(500).json({ status: 'error', message: 'Failed to create subscription' });
-  }
-};
-
-export const getSubscriptions = async (req: Request, res: Response) => {
-  try {
-    const { search, status, paymentStatus } = req.query;
-
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-
-    const expireResult = await prisma.subscription.updateMany({
-      where: {
-        status: 'ACTIVE',
-        endDate: { lt: todayMidnight },
+        },
       },
-      data: { status: 'EXPIRED' },
-    });
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
-    if (expireResult.count > 0) {
-      memoryCache.delete('dashboard_stats');
+  res.json({ status: 'success', data: subscriptions });
+});
+
+export const getPaymentStats = asyncHandler(async (_req: Request, res: Response) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const [monthSubs, totalRecords, pendingSubs] = await Promise.all([
+    prisma.subscription.findMany({
+      where: { createdAt: { gte: firstDayOfMonth } },
+      select: {
+        createdAt: true,
+        paymentStatus: true,
+        balanceAmount: true,
+        plan: { select: { price: true } },
+      },
+    }),
+    prisma.subscription.count(),
+    prisma.subscription.findMany({
+      where: { paymentStatus: 'PENDING' },
+      select: {
+        paymentStatus: true,
+        balanceAmount: true,
+        plan: { select: { price: true } },
+      },
+    }),
+  ]);
+
+  let todaysCollection = 0;
+  let thisMonth = 0;
+  for (const sub of monthSubs) {
+    const collected = computeCollectedAmount(sub);
+    thisMonth += collected;
+    if (sub.createdAt >= today) {
+      todaysCollection += collected;
     }
-
-    const where: any = {};
-
-    if (status && status !== 'All Status' && status !== 'ALL') {
-      where.status = String(status).toUpperCase();
-    }
-
-    if (paymentStatus && paymentStatus !== 'All Payments' && paymentStatus !== 'ALL') {
-      where.paymentStatus = String(paymentStatus).toUpperCase();
-    }
-
-    if (search) {
-      const searchStr = String(search).trim();
-      where.OR = [
-        { member: { memberId: { contains: searchStr, mode: 'insensitive' } } },
-        { member: { user: { firstName: { contains: searchStr, mode: 'insensitive' } } } },
-        { member: { user: { lastName: { contains: searchStr, mode: 'insensitive' } } } },
-        { member: { user: { email: { contains: searchStr, mode: 'insensitive' } } } },
-        { member: { user: { phone: { contains: searchStr, mode: 'insensitive' } } } },
-        { plan: { name: { contains: searchStr, mode: 'insensitive' } } },
-      ];
-    }
-
-    const subscriptions = await prisma.subscription.findMany({
-      where,
-      include: { plan: true, member: { include: { user: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json({ status: 'success', data: subscriptions });
-  } catch {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch subscriptions' });
   }
-};
 
-export const getPaymentStats = async (req: Request, res: Response) => {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const totalPending = roundCurrency(
+    pendingSubs.reduce((sum, sub) => sum + computePendingBalance(sub), 0)
+  );
 
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  res.json({
+    status: 'success',
+    data: {
+      todaysCollection: roundCurrency(todaysCollection),
+      thisMonth: roundCurrency(thisMonth),
+      totalRecords,
+      totalPending,
+    },
+  });
+});
 
-    const [todaysSubs, monthSubs, totalRecords, pendingSubs] = await Promise.all([
-      prisma.subscription.findMany({
-        where: { createdAt: { gte: today } },
-        include: { plan: true },
-      }),
-      prisma.subscription.findMany({
-        where: { createdAt: { gte: firstDayOfMonth } },
-        include: { plan: true },
-      }),
-      prisma.subscription.count(),
-      prisma.subscription.findMany({
-        where: { paymentStatus: 'PENDING' },
-        include: { plan: true },
-      }),
-    ]);
+export const updateSubscription = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const validated = updateSubscriptionSchema.parse(req.body);
+  const { status, paymentStatus, paymentMethod, startDate, planId, balanceAmount } = validated;
 
-    const calcCollected = (subs: any[]) =>
-      roundCurrency(
-        subs.reduce((sum, sub) => {
-          const price = sub.plan?.price || 0;
-          if (sub.paymentStatus === 'PAID') return sum + price;
-          if (sub.paymentStatus === 'PENDING' && sub.balanceAmount > 0) {
-            return sum + Math.max(0, price - sub.balanceAmount);
-          }
-          return sum;
-        }, 0)
+  const currentSub = await prisma.subscription.findUnique({
+    where: { id },
+    include: { plan: true, invoice: { include: { payments: true } } },
+  });
+  if (!currentSub) {
+    throw new NotFoundError('Subscription not found');
+  }
+
+  const effectivePlanId = planId || currentSub.planId;
+  const effectivePlan = planId
+    ? await prisma.membershipPlan.findUnique({ where: { id: planId } })
+    : currentSub.plan;
+  if (!effectivePlan) {
+    throw new NotFoundError('Plan not found');
+  }
+
+  const effectivePaymentStatus = paymentStatus ?? (currentSub.paymentStatus as 'PAID' | 'PENDING');
+  const effectiveMethod = paymentMethod ?? currentSub.paymentMethod;
+  const effectiveBalance =
+    effectivePaymentStatus === 'PAID'
+      ? 0
+      : roundCurrency(balanceAmount !== undefined ? balanceAmount : currentSub.balanceAmount);
+
+  const dataToUpdate: any = {
+    ...(status !== undefined && { status }),
+    paymentStatus: effectivePaymentStatus,
+    paymentMethod: effectiveMethod,
+    balanceAmount: effectiveBalance,
+  };
+
+  if (startDate || planId) {
+    const start = startDate ? new Date(startDate) : new Date(currentSub.startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + effectivePlan.durationDays);
+    dataToUpdate.startDate = start;
+    dataToUpdate.endDate = end;
+    dataToUpdate.planId = effectivePlanId;
+  }
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const updatedSub = await tx.subscription.update({
+      where: { id },
+      data: dataToUpdate,
+    });
+
+    if (currentSub.invoice) {
+      const breakdown = computeInvoiceBreakdown(
+        effectivePlan.price,
+        effectivePlan.gstPercentage,
+        effectivePaymentStatus as 'PAID' | 'PENDING',
+        effectiveBalance
       );
 
-    const todaysCollection = calcCollected(todaysSubs);
-    const thisMonth = calcCollected(monthSubs);
-
-    const totalPending = roundCurrency(
-      pendingSubs.reduce((sum, sub) => {
-        const price = sub.plan?.price || 0;
-        if (sub.balanceAmount > 0) return sum + sub.balanceAmount;
-        return sum + price;
-      }, 0)
-    );
-
-    res.json({
-      status: 'success',
-      data: {
-        todaysCollection,
-        thisMonth,
-        totalRecords,
-        totalPending,
-      },
-    });
-  } catch {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch payment stats' });
-  }
-};
-
-export const updateSubscription = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const validated = updateSubscriptionSchema.parse(req.body);
-    const { status, paymentStatus, paymentMethod, startDate, planId, balanceAmount } = validated;
-
-    const currentSub = await prisma.subscription.findUnique({
-      where: { id },
-      include: { plan: true, invoice: { include: { payments: true } } },
-    });
-    if (!currentSub) {
-      return res.status(404).json({ status: 'error', message: 'Subscription not found' });
-    }
-
-    const effectivePlanId = planId || currentSub.planId;
-    const effectivePlan = planId
-      ? await prisma.membershipPlan.findUnique({ where: { id: planId } })
-      : currentSub.plan;
-    if (!effectivePlan) {
-      return res.status(404).json({ status: 'error', message: 'Plan not found' });
-    }
-
-    const effectivePaymentStatus = paymentStatus ?? currentSub.paymentStatus;
-    const effectiveMethod = paymentMethod ?? currentSub.paymentMethod;
-    const effectiveBalance =
-      effectivePaymentStatus === 'PAID'
-        ? 0
-        : roundCurrency(balanceAmount !== undefined ? balanceAmount : currentSub.balanceAmount);
-
-    const dataToUpdate: any = {
-      ...(status !== undefined && { status }),
-      paymentStatus: effectivePaymentStatus,
-      paymentMethod: effectiveMethod,
-      balanceAmount: effectiveBalance,
-    };
-
-    if (startDate || planId) {
-      const start = startDate ? new Date(startDate) : new Date(currentSub.startDate);
-      const end = new Date(start);
-      end.setDate(end.getDate() + effectivePlan.durationDays);
-      dataToUpdate.startDate = start;
-      dataToUpdate.endDate = end;
-      dataToUpdate.planId = effectivePlanId;
-    }
-
-    const updated = await prisma.$transaction(async (tx) => {
-      const updatedSub = await tx.subscription.update({
-        where: { id },
-        data: dataToUpdate,
+      await tx.invoice.update({
+        where: { id: currentSub.invoice.id },
+        data: {
+          subtotal: breakdown.subtotal,
+          gstAmount: breakdown.gstAmount,
+          totalAmount: breakdown.totalAmount,
+          status: breakdown.invoiceStatus,
+        },
       });
 
-      if (currentSub.invoice) {
-        const gstRate = (effectivePlan.gstPercentage || 18.0) / 100;
-        const basePrice = effectivePlan.price / (1 + gstRate);
-        const gstAmount = effectivePlan.price - basePrice;
-
-        await tx.invoice.update({
-          where: { id: currentSub.invoice.id },
+      const totalPaidSoFar = currentSub.invoice.payments.reduce((acc, p) => acc + p.amount, 0);
+      if (breakdown.paidAmount > totalPaidSoFar) {
+        await tx.payment.create({
           data: {
-            subtotal: roundCurrency(basePrice),
-            gstAmount: roundCurrency(gstAmount),
-            totalAmount: roundCurrency(effectivePlan.price),
-            status: effectivePaymentStatus === 'PAID' ? 'COMPLETED' : 'PENDING',
+            invoiceId: currentSub.invoice.id,
+            amount: roundCurrency(breakdown.paidAmount - totalPaidSoFar),
+            method: effectiveMethod,
+            status: 'COMPLETED',
+            notes: 'Subscription payment update',
           },
         });
-
-        const totalPaidSoFar = currentSub.invoice.payments.reduce((acc, p) => acc + p.amount, 0);
-        const targetPaid =
-          effectivePaymentStatus === 'PAID'
-            ? effectivePlan.price
-            : Math.max(0, roundCurrency(effectivePlan.price - effectiveBalance));
-
-        if (targetPaid > totalPaidSoFar) {
-          await tx.payment.create({
-            data: {
-              invoiceId: currentSub.invoice.id,
-              amount: roundCurrency(targetPaid - totalPaidSoFar),
-              method: effectiveMethod,
-              status: 'COMPLETED',
-              notes: 'Subscription payment update',
-            },
-          });
-        }
       }
-
-      return updatedSub;
-    });
-
-    memoryCache.delete('dashboard_stats');
-    res.json({ status: 'success', data: updated });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: (error as any).errors });
-    }
-    res.status(500).json({ status: 'error', message: 'Failed to update subscription' });
-  }
-};
-
-export const deleteSubscription = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-
-    const sub = await prisma.subscription.findUnique({
-      where: { id },
-      include: { invoice: true },
-    });
-    if (!sub) {
-      return res.status(404).json({ status: 'error', message: 'Subscription not found' });
     }
 
-    await prisma.$transaction(async (tx) => {
-      if (sub.invoice) {
-        await tx.payment.deleteMany({ where: { invoiceId: sub.invoice.id } });
-        await tx.invoice.delete({ where: { id: sub.invoice.id } });
-      }
-      await tx.subscription.delete({ where: { id } });
-    });
+    return updatedSub;
+  });
 
-    memoryCache.delete('dashboard_stats');
-    res.json({ status: 'success', message: 'Subscription deleted successfully' });
-  } catch {
-    res.status(500).json({ status: 'error', message: 'Failed to delete subscription' });
+  invalidateCacheScopes('dashboard', 'reports', 'members');
+  res.json({ status: 'success', data: updated });
+});
+
+export const deleteSubscription = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+
+  const sub = await prisma.subscription.findUnique({
+    where: { id },
+    include: { invoice: { select: { id: true } } },
+  });
+  if (!sub) {
+    throw new NotFoundError('Subscription not found');
   }
-};
+
+  await prisma.$transaction(async (tx) => {
+    if (sub.invoice) {
+      await tx.payment.deleteMany({ where: { invoiceId: sub.invoice.id } });
+      await tx.invoice.delete({ where: { id: sub.invoice.id } });
+    }
+    await tx.subscription.delete({ where: { id } });
+  });
+
+  invalidateCacheScopes('dashboard', 'reports', 'members');
+  res.json({ status: 'success', message: 'Subscription deleted successfully' });
+});

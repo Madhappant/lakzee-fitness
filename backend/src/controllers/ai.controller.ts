@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma } from '../app';
-import bcrypt from 'bcryptjs';
-import { memoryCache } from '../utils/cache';
+import { invalidateCacheScopes } from '../utils/cache';
+import { createMemberRecord, deleteMemberCascade } from '../services/member.service';
+import { createSubscriptionWithInvoice } from '../services/subscription-ledger.service';
 
 export const checkAiStatus = async (req: Request, res: Response) => {
   try {
@@ -93,49 +94,41 @@ async function handleToolCalls(toolCalls: any[]) {
       const args = JSON.parse(call.function.arguments);
       
       if (call.function.name === "add_member") {
-        const existing = await prisma.user.findUnique({ where: { email: args.email } });
-        if (existing) {
-          results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content: "Error: A member with this email already exists." });
-          continue;
-        }
-
-        const pwd = args.password || "lakzee123";
-        const hashedPassword = await bcrypt.hash(pwd, 10);
-        const normalizedEmail = String(args.email).trim().toLowerCase();
-
-        let memberId = 'LZ-' + Math.floor(1000 + Math.random() * 9000).toString();
-        for (let attempts = 0; attempts < 15; attempts++) {
-          const existsId = await prisma.memberProfile.findUnique({ where: { memberId } });
-          if (!existsId) break;
-          memberId = 'LZ-' + Math.floor(1000 + Math.random() * 9000).toString();
-        }
-
-        await prisma.user.create({
-          data: {
-            email: normalizedEmail,
+        try {
+          const newMember = await createMemberRecord(prisma, {
+            email: String(args.email),
             firstName: args.firstName,
             lastName: args.lastName,
-            phone: args.phone || null,
-            password: hashedPassword,
-            role: "MEMBER",
-            memberProfile: {
-              create: {
-                memberId: memberId,
-                gender: args.gender || null,
-                address: args.address || null
-              }
-            }
-          }
-        });
-        memoryCache.delete('dashboard_stats');
-        
-        results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content: `Success: Member ${args.firstName} ${args.lastName} added with ID ${memberId} and password ${pwd}.` });
+            password: args.password || "lakzee123",
+            phone: args.phone || undefined,
+            address: args.address || undefined,
+            gender: args.gender || undefined,
+          });
+          results.push({
+            tool_call_id: call.id,
+            role: "tool",
+            name: "add_member",
+            content: `Success: Member ${args.firstName} ${args.lastName} added with ID ${newMember.memberProfile?.memberId}.`,
+          });
+        } catch (err: any) {
+          const content =
+            err?.code === 'EMAIL_EXISTS'
+              ? "Error: A member with this email already exists."
+              : `Error executing tool: ${err.message}`;
+          results.push({ tool_call_id: call.id, role: "tool", name: "add_member", content });
+        }
       } 
       
       else if (call.function.name === "update_member") {
         const user = await prisma.user.findUnique({ 
           where: { email: String(args.email).trim().toLowerCase() },
-          include: { memberProfile: true }
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            memberProfile: { select: { id: true, address: true } },
+          },
         });
         
         if (!user || !user.memberProfile) {
@@ -156,7 +149,7 @@ async function handleToolCalls(toolCalls: any[]) {
             }
           }
         });
-        memoryCache.delete('dashboard_stats');
+        invalidateCacheScopes('dashboard', 'reports', 'members');
         
         results.push({ tool_call_id: call.id, role: "tool", name: "update_member", content: `Success: Details for ${args.email} updated successfully.` });
       }
@@ -164,51 +157,38 @@ async function handleToolCalls(toolCalls: any[]) {
       else if (call.function.name === "delete_member") {
         const user = await prisma.user.findUnique({ 
           where: { email: String(args.email).trim().toLowerCase() },
-          include: { memberProfile: true }
+          select: { id: true },
         });
         
         if (!user) {
           results.push({ tool_call_id: call.id, role: "tool", name: "delete_member", content: "Error: Member not found." });
           continue;
         }
-        
-        await prisma.$transaction(async (tx) => {
-          if (user.memberProfile) {
-            const profileId = user.memberProfile.id;
-            const invoices = await tx.invoice.findMany({ where: { memberId: profileId } });
-            const invoiceIds = invoices.map((i: any) => i.id);
 
-            if (invoiceIds.length > 0) {
-              await tx.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } });
-            }
-            await tx.invoice.deleteMany({ where: { memberId: profileId } });
-            await tx.subscription.deleteMany({ where: { memberId: profileId } });
-            await tx.attendance.deleteMany({ where: { memberId: profileId } });
-            await tx.dietPlan.deleteMany({ where: { memberId: profileId } });
-            await tx.workoutRoutine.deleteMany({ where: { memberId: profileId } });
-            await tx.memberProfile.delete({ where: { id: profileId } });
-          }
-          await tx.memberProfile.updateMany({ where: { trainerId: user.id }, data: { trainerId: null } });
-          await tx.announcement.deleteMany({ where: { authorId: user.id } });
-          await tx.user.delete({ where: { id: user.id } });
-        });
-        memoryCache.delete('dashboard_stats');
-        
+        await deleteMemberCascade(prisma, user.id);
         results.push({ tool_call_id: call.id, role: "tool", name: "delete_member", content: `Success: Member ${args.email} deleted successfully.` });
       }
 
       else if (call.function.name === "assign_plan") {
-        const user = await prisma.user.findUnique({ 
-          where: { email: String(args.email).trim().toLowerCase() },
-          include: { memberProfile: true }
-        });
+        const [user, plans] = await Promise.all([
+          prisma.user.findUnique({ 
+            where: { email: String(args.email).trim().toLowerCase() },
+            select: {
+              firstName: true,
+              memberProfile: { select: { id: true } },
+            },
+          }),
+          prisma.membershipPlan.findMany({
+            where: { isActive: true },
+            select: { id: true, name: true },
+          }),
+        ]);
         
         if (!user || !user.memberProfile) {
           results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: "Error: Member not found." });
           continue;
         }
         
-        const plans = await prisma.membershipPlan.findMany({ where: { isActive: true } });
         const plan = plans.find(p => p.name.toLowerCase().includes(String(args.planName).toLowerCase()));
         
         if (!plan) {
@@ -216,56 +196,15 @@ async function handleToolCalls(toolCalls: any[]) {
           continue;
         }
 
-        const start = new Date();
-        const end = new Date(start);
-        end.setDate(end.getDate() + plan.durationDays);
-        const memberProfileId = user.memberProfile.id;
-
-        await prisma.$transaction(async (tx) => {
-          const sub = await tx.subscription.create({
-            data: {
-              memberId: memberProfileId,
-              planId: plan.id,
-              startDate: start,
-              endDate: end,
-              status: "ACTIVE",
-              paymentStatus: "PAID",
-              paymentMethod: "CASH",
-              balanceAmount: 0
-            }
-          });
-          const gstRate = (plan.gstPercentage || 18.0) / 100;
-          const basePrice = plan.price / (1 + gstRate);
-          const gstAmount = plan.price - basePrice;
-          const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
-
-          const invoice = await tx.invoice.create({
-            data: {
-              invoiceNumber,
-              memberId: memberProfileId,
-              subscriptionId: sub.id,
-              subtotal: Math.round(basePrice * 100) / 100,
-              discount: 0,
-              gstAmount: Math.round(gstAmount * 100) / 100,
-              totalAmount: plan.price,
-              status: 'COMPLETED',
-            }
-          });
-
-          if (plan.price > 0) {
-            await tx.payment.create({
-              data: {
-                invoiceId: invoice.id,
-                amount: plan.price,
-                method: 'CASH',
-                status: 'COMPLETED',
-              }
-            });
-          }
+        const { endDate } = await createSubscriptionWithInvoice(prisma, {
+          memberId: user.memberProfile.id,
+          planId: plan.id,
+          startDate: new Date(),
+          paymentStatus: 'PAID',
+          paymentMethod: 'CASH',
         });
-        memoryCache.delete('dashboard_stats');
         
-        results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: `Success: Plan '${plan.name}' assigned to ${user.firstName}. Valid until ${end.toDateString()}.` });
+        results.push({ tool_call_id: call.id, role: "tool", name: "assign_plan", content: `Success: Plan '${plan.name}' assigned to ${user.firstName}. Valid until ${endDate.toDateString()}.` });
       }
     } catch (e: any) {
       results.push({ tool_call_id: call.id, role: "tool", name: call.function.name, content: `Error executing tool: ${e.message}` });
