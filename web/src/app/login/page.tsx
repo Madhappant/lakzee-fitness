@@ -1,12 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, Eye, EyeOff, Loader2, ArrowUpRight, ArrowLeft } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { loginUser } from "@/lib/api/auth";
+import { fetchDashboardStats } from "@/lib/api/dashboard";
+import { fetchMembers } from "@/lib/api/members";
+import { fetchMyProfile, fetchMyAttendance } from "@/lib/api/portal";
+import { clearPersistedQueryCache } from "@/lib/query-persistence";
 import { toast } from "sonner";
 import {
   motion,
@@ -20,7 +24,14 @@ const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    router.prefetch("/admin/dashboard");
+    router.prefetch("/admin/members");
+    router.prefetch("/member/dashboard");
+  }, [router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,15 +90,23 @@ export default function LoginPage() {
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
+      clearPersistedQueryCache();
+      queryClient.clear();
       localStorage.setItem("lakzee_token", data.data.token);
       localStorage.setItem("lakzee_user", JSON.stringify(data.data.user));
 
       toast.success("Signed in");
 
       if (data.data.user.role === "MEMBER") {
+        void queryClient.prefetchQuery({ queryKey: ["myProfile"], queryFn: fetchMyProfile });
+        void queryClient.prefetchQuery({ queryKey: ["myAttendance"], queryFn: fetchMyAttendance });
         router.push("/member/dashboard");
       } else {
-        router.push("/admin/dashboard");
+        if (data.data.user.role !== "TRAINER") {
+          void queryClient.prefetchQuery({ queryKey: ["dashboardStats"], queryFn: fetchDashboardStats });
+        }
+        void queryClient.prefetchQuery({ queryKey: ["members"], queryFn: () => fetchMembers("asc") });
+        router.push(data.data.user.role === "TRAINER" ? "/admin/members" : "/admin/dashboard");
       }
     },
     onError: (error: Error) => {

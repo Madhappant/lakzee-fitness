@@ -7,7 +7,11 @@ import { fetchMyProfile, fetchMyAttendance } from "@/lib/api/portal";
 import { Loader2, CalendarCheck, Clock, ShieldCheck, Dumbbell, ArrowRight, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
-import ActivityHeatmap from "@/components/ActivityHeatmap";
+import dynamic from "next/dynamic";
+
+const ActivityHeatmap = dynamic(() => import("@/components/ActivityHeatmap"), {
+  ssr: false,
+});
 
 export default function MemberDashboard() {
   const { data: profileData, isLoading: profileLoading } = useQuery({

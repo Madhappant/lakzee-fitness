@@ -7,7 +7,12 @@ import { z } from 'zod';
 import { asyncHandler } from '../middlewares/error.middleware';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors';
 import { CACHE_KEYS, invalidateCacheScopes, memoryCache } from '../utils/cache';
-import { createMemberRecord, deleteMemberCascade } from '../services/member.service';
+import {
+  createMemberRecord,
+  deleteMemberCascade,
+  parseMemberSortOrder,
+  sortMembers,
+} from '../services/member.service';
 
 const createMemberSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -69,8 +74,11 @@ export const createMember = asyncHandler(async (req: Request, res: Response) => 
   res.status(201).json({ status: 'success', data: newMember });
 });
 
-export const getMembers = asyncHandler(async (_req: Request, res: Response) => {
-  const cached = memoryCache.get<unknown[]>(CACHE_KEYS.MEMBERS_LIST);
+export const getMembers = asyncHandler(async (req: Request, res: Response) => {
+  const sortOrder = parseMemberSortOrder(req.query.sort);
+  const cacheKey = `${CACHE_KEYS.MEMBERS_LIST}:${sortOrder}`;
+
+  const cached = memoryCache.get<unknown[]>(cacheKey);
   if (cached) {
     return res.json({ status: 'success', data: cached });
   }
@@ -105,11 +113,15 @@ export const getMembers = asyncHandler(async (_req: Request, res: Response) => {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy:
+      sortOrder === 'latest'
+        ? { createdAt: 'desc' }
+        : { memberProfile: { memberId: sortOrder === 'desc' ? 'desc' : 'asc' } },
   });
 
-  memoryCache.set(CACHE_KEYS.MEMBERS_LIST, members, 30);
-  res.json({ status: 'success', data: members });
+  const sortedMembers = sortMembers(members, sortOrder);
+  memoryCache.set(cacheKey, sortedMembers, 30);
+  res.json({ status: 'success', data: sortedMembers });
 });
 
 export const getMemberById = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -41,6 +41,7 @@ export default function AddMemberPage() {
     mutationFn: createMember,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
       toast.success("Member created successfully!");
       router.push("/admin/members");
     },

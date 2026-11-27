@@ -42,6 +42,7 @@ model User {
 
   @@index([role])
   @@index([phone])
+  @@index([createdAt])
   @@index([role, createdAt])
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { Toaster } from "sonner";
 
 const syne = Syne({
@@ -78,6 +79,7 @@ export const metadata: Metadata = {
     icon: "/icon.jpg",
     apple: "/icon.jpg",
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
@@ -93,6 +95,7 @@ export default function RootLayout({
     >
       <body className="h-full bg-background text-foreground selection:bg-[#D4FF00]/25 selection:text-foreground">
         <Providers>
+          <ServiceWorkerRegister />
           {children}
           <Toaster richColors position="top-right" />
         </Providers>

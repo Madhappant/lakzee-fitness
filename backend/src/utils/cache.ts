@@ -92,7 +92,7 @@ export function invalidateCacheScopes(...scopes: CacheScope[]): void {
         memoryCache.delete(CACHE_KEYS.GYM_SETTINGS);
         break;
       case 'members':
-        memoryCache.delete(CACHE_KEYS.MEMBERS_LIST);
+        memoryCache.deletePrefix(CACHE_KEYS.MEMBERS_LIST);
         break;
       default:
         if (scope.startsWith('auth:')) {

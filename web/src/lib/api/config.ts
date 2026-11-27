@@ -27,6 +27,7 @@ export async function handleApiResponse<T = any>(
     if (redirectOnUnauthorized && res.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("lakzee_token");
       localStorage.removeItem("lakzee_user");
+      localStorage.removeItem("lakzee_swr_cache_v1");
       window.location.href = "/login?session_expired=1";
     }
     const err = await res.json().catch(() => ({}));

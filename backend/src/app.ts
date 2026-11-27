@@ -81,15 +81,19 @@ app.use(
   })
 );
 
-// Fast Health & Deep DB Readiness Check
-app.get('/health', async (req: Request, res: Response) => {
-  if (req.query.deep === '1') {
+// Fast Health & 24/7 Keep-Alive Endpoints (exempt from rate limiting)
+async function handleHealthCheck(req: Request, res: Response, forceDbPing: boolean) {
+  res.setHeader('Cache-Control', 'no-store');
+  const shouldPingDb = (forceDbPing && req.query.shallow !== '1') || req.query.deep === '1';
+
+  if (shouldPingDb) {
     try {
       await prisma.$queryRaw`SELECT 1`;
       return res.status(200).json({
         status: 'success',
         message: 'Lakzee Fitness API is running',
         db: 'up',
+        timestamp: new Date().toISOString(),
         uptimeSeconds: Math.round(process.uptime()),
       });
     } catch {
@@ -97,15 +101,20 @@ app.get('/health', async (req: Request, res: Response) => {
         status: 'error',
         message: 'Database unreachable',
         db: 'down',
+        timestamp: new Date().toISOString(),
       });
     }
   }
+
   return res.status(200).json({
     status: 'success',
     message: 'Lakzee Fitness API is running',
     uptimeSeconds: Math.round(process.uptime()),
   });
-});
+}
+
+app.get('/health', (req: Request, res: Response) => handleHealthCheck(req, res, false));
+app.get('/api/health', (req: Request, res: Response) => handleHealthCheck(req, res, true));
 
 if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

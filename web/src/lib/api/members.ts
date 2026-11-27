@@ -1,113 +1,44 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_URL, getAuthToken, handleApiResponse } from "./config";
+import { API_URL, apiRequest, getAuthToken } from "./config";
+import type { MemberSortOrder } from "../members-sort";
+
 export { API_URL, getAuthToken };
+export type { MemberSortOrder };
 
-export const fetchMembers = async () => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/members`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return handleApiResponse(res, "Failed to fetch members");
+export const fetchMembers = (sort?: MemberSortOrder | unknown) => {
+  const resolvedSort: MemberSortOrder =
+    sort === "asc" || sort === "desc" || sort === "latest" ? sort : "asc";
+  return apiRequest(`/members?sort=${resolvedSort}`, {}, "Failed to fetch members");
 };
 
-export const createMember = async (memberData: any) => {
-  const token = getAuthToken();
-  const isFormData = memberData instanceof FormData;
-  const headers: any = { Authorization: `Bearer ${token}` };
-  if (!isFormData) headers['Content-Type'] = 'application/json';
+export const createMember = (memberData: any) =>
+  apiRequest("/members", { method: "POST", body: memberData }, "Failed to create member");
 
-  const res = await fetch(`${API_URL}/members`, {
-    method: "POST",
-    headers,
-    body: isFormData ? memberData : JSON.stringify(memberData),
-  });
-  
-  return handleApiResponse(res, "Failed to create member");
-};
+export const deleteMember = (id: string) =>
+  apiRequest(`/members/${id}`, { method: "DELETE" }, "Failed to delete member");
 
-export const deleteMember = async (id: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/members/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  
-  return handleApiResponse(res, "Failed to delete member");
-};
+export const fetchMemberById = (id: string) =>
+  apiRequest(`/members/${id}`, {}, "Failed to fetch member details");
 
-export const fetchMemberById = async (id: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/members/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return handleApiResponse(res, "Failed to fetch member details");
-};
+export const updateMember = (id: string, memberData: any) =>
+  apiRequest(`/members/${id}`, { method: "PUT", body: memberData }, "Failed to update member");
 
-export const updateMember = async (id: string, memberData: any) => {
-  const token = getAuthToken();
-  const isFormData = memberData instanceof FormData;
-  const headers: any = { Authorization: `Bearer ${token}` };
-  if (!isFormData) headers['Content-Type'] = 'application/json';
+export const fetchMemberDietPlan = (memberId: string) =>
+  apiRequest(`/plans-routines/diet/${memberId}`, {}, "Failed to fetch member diet plan");
 
-  const res = await fetch(`${API_URL}/members/${id}`, {
-    method: "PUT",
-    headers,
-    body: isFormData ? memberData : JSON.stringify(memberData),
-  });
-  
-  return handleApiResponse(res, "Failed to update member");
-};
+export const assignDietPlan = (memberId: string, data: any) =>
+  apiRequest(
+    `/plans-routines/diet/${memberId}`,
+    { method: "POST", body: data },
+    "Failed to assign diet plan"
+  );
 
-export const fetchMemberDietPlan = async (memberId: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/plans-routines/diet/${memberId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return handleApiResponse(res, "Failed to fetch member diet plan");
-};
+export const fetchMemberWorkoutRoutine = (memberId: string) =>
+  apiRequest(`/plans-routines/workout/${memberId}`, {}, "Failed to fetch member workout routine");
 
-export const assignDietPlan = async (memberId: string, data: any) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/plans-routines/diet/${memberId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  
-  return handleApiResponse(res, "Failed to assign diet plan");
-};
-
-export const fetchMemberWorkoutRoutine = async (memberId: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/plans-routines/workout/${memberId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return handleApiResponse(res, "Failed to fetch member workout routine");
-};
-
-export const assignWorkoutRoutine = async (memberId: string, data: any) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/plans-routines/workout/${memberId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  
-  return handleApiResponse(res, "Failed to assign workout routine");
-};
+export const assignWorkoutRoutine = (memberId: string, data: any) =>
+  apiRequest(
+    `/plans-routines/workout/${memberId}`,
+    { method: "POST", body: data },
+    "Failed to assign workout routine"
+  );

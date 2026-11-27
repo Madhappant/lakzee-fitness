@@ -206,6 +206,67 @@ describe('HTTP API routes, caching, auth & error middleware', () => {
     assert.equal(deepDown.json.db, 'down');
   });
 
+  it('GET /api/health always warms database with SELECT 1 and disables HTTP caching', async (t) => {
+    const queryStub = stubMethod(t, prisma, '$queryRaw', async () => [{ '?column?': 1 }]);
+    const up = await dispatchRequest(app, '/api/health');
+    assert.equal(up.status, 200);
+    assert.equal(up.headers['cache-control'], 'no-store');
+    assert.equal(up.json.db, 'up');
+    assert.equal(typeof up.json.timestamp, 'string');
+    assert.equal(queryStub.callCount, 1);
+
+    queryStub.setNext(async () => {
+      throw new Error('db sleeping');
+    });
+    const down = await dispatchRequest(app, '/api/health');
+    assert.equal(down.status, 503);
+    assert.equal(down.json.db, 'down');
+  });
+
+  it('GET /api/members defaults to natural ascending order, supports sort modes, and caches per sort mode', async (t) => {
+    const token = generateToken({ id: 'admin-user-1', role: 'ADMIN' });
+    stubMethod(t, prisma.user, 'findUnique', async () => ({ id: 'admin-user-1', role: 'ADMIN' }));
+
+    const sampleUsers = [
+      { id: 'u2', firstName: 'B', lastName: 'User', email: 'b@x.com', phone: null, role: 'MEMBER', createdAt: new Date('2026-01-01'), memberProfile: { memberId: '010', subscriptions: [] } },
+      { id: 'u1', firstName: 'A', lastName: 'User', email: 'a@x.com', phone: null, role: 'MEMBER', createdAt: new Date('2026-01-02'), memberProfile: { memberId: '002', subscriptions: [] } },
+      { id: 'u3', firstName: 'C', lastName: 'User', email: 'c@x.com', phone: null, role: 'MEMBER', createdAt: new Date('2026-01-03'), memberProfile: { memberId: '001', subscriptions: [] } },
+    ];
+    const findManyStub = stubMethod(t, prisma.user, 'findMany', async () => sampleUsers);
+
+    const ascFirst = await dispatchRequest(app, '/api/members', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(ascFirst.status, 200);
+    assert.deepEqual(
+      ascFirst.json.data.map((m: any) => m.memberProfile.memberId),
+      ['001', '002', '010']
+    );
+
+    // Repeated call hits memoryCache without querying DB again
+    const ascCached = await dispatchRequest(app, '/api/members?sort=asc', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(ascCached.status, 200);
+    assert.equal(findManyStub.callCount, 1);
+
+    const descRes = await dispatchRequest(app, '/api/members?sort=desc', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.deepEqual(
+      descRes.json.data.map((m: any) => m.memberProfile.memberId),
+      ['010', '002', '001']
+    );
+
+    const latestRes = await dispatchRequest(app, '/api/members?sort=latest', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.deepEqual(
+      latestRes.json.data.map((m: any) => m.memberProfile.memberId),
+      ['001', '002', '010']
+    );
+  });
+
   it('GET /api/plans caches in memory, sets revalidation headers & exposes rate-limit headers', async (t) => {
     const samplePlans = [
       { id: 'plan-1', name: 'Monthly Pro', price: 1500, durationDays: 30, isActive: true },

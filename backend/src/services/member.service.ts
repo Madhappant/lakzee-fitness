@@ -3,21 +3,127 @@ import bcrypt from 'bcryptjs';
 import { invalidateCacheScopes } from '../utils/cache';
 import { BadRequestError, NotFoundError } from '../utils/errors';
 
+export type MemberSortOrder = 'asc' | 'desc' | 'latest';
+
+const naturalIdCollator = new Intl.Collator('en', {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+export function parseMemberSortOrder(raw: unknown): MemberSortOrder {
+  if (raw === 'desc' || raw === 'latest') {
+    return raw;
+  }
+  return 'asc';
+}
+
+export function compareMemberIds(aRaw?: string | null, bRaw?: string | null): number {
+  const a = (aRaw ?? '').trim();
+  const b = (bRaw ?? '').trim();
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+
+  const cmp = naturalIdCollator.compare(a, b);
+  if (cmp !== 0) return cmp;
+  // Deterministic tie-breaker when numeric values match (e.g. "002" vs "2")
+  return a.localeCompare(b);
+}
+
+function toTimestamp(val: Date | string | null | undefined): number | null {
+  if (!val) return null;
+  const ms = val instanceof Date ? val.getTime() : Date.parse(val);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export interface SortableMemberShape {
+  id: string;
+  createdAt?: Date | string | null;
+  memberProfile?: {
+    memberId?: string | null;
+    joiningDate?: Date | string | null;
+  } | null;
+}
+
+export function sortMembers<T extends SortableMemberShape>(
+  members: readonly T[],
+  sortOrder: MemberSortOrder = 'asc'
+): T[] {
+  return [...members].sort((a, b) => {
+    const aId = a.memberProfile?.memberId;
+    const bId = b.memberProfile?.memberId;
+
+    if (sortOrder === 'latest') {
+      const aTime = toTimestamp(a.createdAt ?? a.memberProfile?.joiningDate);
+      const bTime = toTimestamp(b.createdAt ?? b.memberProfile?.joiningDate);
+      if (aTime !== null && bTime !== null && aTime !== bTime) {
+        return bTime - aTime;
+      }
+      if (aTime !== null && bTime === null) return -1;
+      if (aTime === null && bTime !== null) return 1;
+      // Fallback to highest Member ID first when timestamps match or are absent
+      return compareMemberIds(bId, aId);
+    }
+
+    const idCmp = sortOrder === 'desc' ? compareMemberIds(bId, aId) : compareMemberIds(aId, bId);
+    if (idCmp !== 0) return idCmp;
+
+    const aTime = toTimestamp(a.createdAt) ?? 0;
+    const bTime = toTimestamp(b.createdAt) ?? 0;
+    if (aTime !== bTime) {
+      return sortOrder === 'desc' ? bTime - aTime : aTime - bTime;
+    }
+    return a.id.localeCompare(b.id);
+  });
+}
+
+/**
+ * Generates the next sequential Member ID above the highest existing natural ID
+ * so every newly added member lands at the bottom of the default ascending list.
+ */
 export async function generateUniqueMemberId(
   db: Pick<PrismaClient, 'memberProfile'>,
-  maxAttempts = 20
+  maxAttempts = 25
 ): Promise<string> {
-  for (let attempts = 0; attempts < maxAttempts; attempts++) {
-    const candidate = `LZ-${Math.floor(1000 + Math.random() * 9000)}`;
-    const existing = await db.memberProfile.findUnique({
+  const existingProfiles = await db.memberProfile.findMany({
+    select: { memberId: true },
+  });
+
+  if (existingProfiles.length === 0) {
+    return '001';
+  }
+
+  let highestId = '';
+  for (const row of existingProfiles) {
+    const candidate = row.memberId?.trim();
+    if (!candidate) continue;
+    if (!highestId || compareMemberIds(candidate, highestId) > 0) {
+      highestId = candidate;
+    }
+  }
+
+  if (!highestId) {
+    return '001';
+  }
+
+  const trailingDigitsMatch = highestId.match(/^(.*?)(\d+)$/);
+  const prefix = trailingDigitsMatch ? trailingDigitsMatch[1] : `${highestId}-`;
+  const digitsPart = trailingDigitsMatch ? trailingDigitsMatch[2] : '';
+  const baseNumber = digitsPart ? parseInt(digitsPart, 10) : 0;
+  const padWidth = Math.max(3, digitsPart.length);
+
+  for (let step = 1; step <= maxAttempts; step++) {
+    const candidate = `${prefix}${String(baseNumber + step).padStart(padWidth, '0')}`;
+    const collision = await db.memberProfile.findUnique({
       where: { memberId: candidate },
       select: { id: true },
     });
-    if (!existing) {
+    if (!collision) {
       return candidate;
     }
   }
-  return `LZ-${Date.now().toString().slice(-6)}`;
+
+  return `${prefix}${Date.now().toString().slice(-6)}`;
 }
 
 export interface CreateMemberInput {

@@ -5,9 +5,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useDeferredValue, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchMembers, updateMember, deleteMember, API_URL } from "@/lib/api/members";
+import { sortMembers, type MemberSortOrder } from "@/lib/members-sort";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Plus, Search, Loader2, Trash2, Edit2, FileText, X, Check } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, Edit2, FileText, X, Check, ArrowUpDown, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -22,13 +23,14 @@ function MembersContent() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const [sortOrder, setSortOrder] = useState<MemberSortOrder>("asc");
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editNumberValue, setEditNumberValue] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["members"],
-    queryFn: fetchMembers,
+    queryFn: () => fetchMembers("asc"),
   });
 
   const viewMemberId = searchParams.get("viewMember");
@@ -98,7 +100,7 @@ function MembersContent() {
 
   const filteredMembers = useMemo(() => {
     const searchLower = deferredSearch.toLowerCase().trim();
-    return members.filter((member: any) => {
+    const matched = members.filter((member: any) => {
       const nameMatch = `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchLower);
       const emailMatch = member.email.toLowerCase().includes(searchLower);
       const idMatch = member.memberProfile?.memberId?.toLowerCase().includes(searchLower) || false;
@@ -111,7 +113,9 @@ function MembersContent() {
 
       return (nameMatch || emailMatch || idMatch) && matchesStatus;
     });
-  }, [members, deferredSearch, statusFilter]);
+
+    return sortMembers(matched, sortOrder);
+  }, [members, deferredSearch, statusFilter, sortOrder]);
 
   return (
     <div className="space-y-6 pb-12">
@@ -150,9 +154,9 @@ function MembersContent() {
         </Link>
       </motion.div>
 
-      {/* Streamlined Action Bar: Search + Filter Pills */}
-      <div className="glass-panel p-4 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-        <div className="relative w-full lg:max-w-md">
+      {/* Streamlined Action Bar: Search + Filter Pills + Sort Selector */}
+      <div className="glass-panel p-4 flex flex-col xl:flex-row gap-4 items-stretch xl:items-center justify-between">
+        <div className="relative w-full xl:max-w-md">
           <Search
             className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
             aria-hidden="true"
@@ -176,30 +180,54 @@ function MembersContent() {
           )}
         </div>
 
-        {/* Minimal Filter Pills */}
-        <div
-          role="group"
-          aria-label="Filter members by subscription status"
-          className="flex flex-wrap items-center gap-2"
-        >
-          {STATUS_FILTERS.map((filterOption) => {
-            const isSelected = statusFilter === filterOption;
-            return (
-              <button
-                key={filterOption}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => setStatusFilter(filterOption)}
-                className={`touch-target px-4 rounded-xl text-xs font-semibold transition-all duration-200 focus-volt border ${
-                  isSelected
-                    ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00] font-bold"
-                    : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground hover:border-foreground/20"
-                }`}
-              >
-                {filterOption}
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3">
+          {/* Minimal Filter Pills */}
+          <div
+            role="group"
+            aria-label="Filter members by subscription status"
+            className="flex flex-wrap items-center gap-2"
+          >
+            {STATUS_FILTERS.map((filterOption) => {
+              const isSelected = statusFilter === filterOption;
+              return (
+                <button
+                  key={filterOption}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setStatusFilter(filterOption)}
+                  className={`touch-target px-4 rounded-xl text-xs font-semibold transition-all duration-200 focus-volt border ${
+                    isSelected
+                      ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00] font-bold"
+                      : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground hover:border-foreground/20"
+                  }`}
+                >
+                  {filterOption}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sort Order Selector (Natural Numeric ID & Recency) */}
+          <div className="relative flex items-center">
+            <ArrowUpDown
+              className="pointer-events-none absolute left-3 w-3.5 h-3.5 text-[#D4FF00]"
+              aria-hidden="true"
+            />
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as MemberSortOrder)}
+              aria-label="Sort members list"
+              className="h-11 min-w-[215px] bg-background border border-border rounded-xl pl-9 pr-9 font-mono-metric text-xs font-semibold text-foreground hover:border-foreground/25 focus:border-[#D4FF00] focus:outline-none transition-colors cursor-pointer appearance-none focus-volt"
+            >
+              <option value="asc">Ascending (001 → Last)</option>
+              <option value="desc">Descending (Last → 001)</option>
+              <option value="latest">Recently Added / Latest</option>
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-3 w-3.5 h-3.5 text-muted-foreground"
+              aria-hidden="true"
+            />
+          </div>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import { fetchPlans } from "@/lib/api/plans";
 import { fetchSubscriptions } from "@/lib/api/subscriptions";
 import { fetchReports } from "@/lib/api/reports";
 import { fetchExpenses } from "@/lib/api/expenses";
+import { clearPersistedQueryCache } from "@/lib/query-persistence";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import {
@@ -135,20 +136,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [router]);
 
+  const queryClient = useQueryClient();
+
   const handleLogout = () => {
+    clearPersistedQueryCache();
+    queryClient.clear();
     localStorage.removeItem("lakzee_token");
     localStorage.removeItem("lakzee_user");
     router.push("/login");
   };
 
-  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!userRole) return;
+    const timer = setTimeout(() => {
+      router.prefetch("/admin/members");
+      router.prefetch("/admin/attendance");
+      if (userRole === "ADMIN" || userRole === "RECEPTIONIST") {
+        router.prefetch("/admin/dashboard");
+        router.prefetch("/admin/payments");
+        void queryClient.prefetchQuery({ queryKey: ["dashboardStats"], queryFn: fetchDashboardStats });
+      }
+      void queryClient.prefetchQuery({ queryKey: ["members"], queryFn: () => fetchMembers("asc") });
+      void queryClient.prefetchQuery({ queryKey: ["plans"], queryFn: fetchPlans });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [userRole, queryClient, router]);
 
   const handlePrefetch = (href: string) => {
     try {
       if (href === "/admin/dashboard") {
         queryClient.prefetchQuery({ queryKey: ["dashboardStats"], queryFn: fetchDashboardStats });
       } else if (href === "/admin/members") {
-        queryClient.prefetchQuery({ queryKey: ["members"], queryFn: fetchMembers });
+        queryClient.prefetchQuery({ queryKey: ["members"], queryFn: () => fetchMembers("asc") });
       } else if (href === "/admin/plans") {
         queryClient.prefetchQuery({ queryKey: ["plans"], queryFn: fetchPlans });
       } else if (href === "/admin/payments") {
@@ -244,6 +263,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       href={link.href}
                       title={isSidebarCollapsed ? link.name : undefined}
                       onMouseEnter={() => handlePrefetch(link.href)}
+                      onFocus={() => handlePrefetch(link.href)}
                       onTouchStart={() => handlePrefetch(link.href)}
                       className={`group relative flex items-center gap-3 px-3 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-volt ${
                         isSidebarCollapsed ? "md:justify-center md:px-0" : ""
