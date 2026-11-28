@@ -104,11 +104,14 @@ export async function migrateSingleBranchToPrimary(
         notificationLogs: notificationLogs.count,
       },
     };
-  });
+  }, { maxWait: 15_000, timeout: 60_000 });
 }
 
 if (require.main === module) {
-  const prisma = new PrismaClient();
+  const migrationDbUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+  const prisma = new PrismaClient(
+    migrationDbUrl ? { datasources: { db: { url: migrationDbUrl } } } : undefined
+  );
   migrateSingleBranchToPrimary(prisma)
     .then((summary) => {
       process.stdout.write(`${JSON.stringify({ status: 'ok', summary }, null, 2)}\n`);
