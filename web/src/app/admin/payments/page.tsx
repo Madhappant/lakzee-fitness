@@ -250,14 +250,14 @@ export default function PaymentsPage() {
               setActiveDetailsModal("TODAY");
             }
           }}
-          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-green-500/50 hover:bg-green-500/5 hover:-translate-y-1 hover:shadow-xl cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
+          className="apple-glass p-6 relative overflow-hidden group hover:border-[#DBA12C]/55 hover:-translate-y-1 hover:shadow-xl cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
         >
           <div className="flex justify-between items-start mb-4 relative z-10">
             <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">Today&apos;s Collection</h3>
-            <Wallet className="w-5 h-5 text-green-500/60 group-hover:text-green-500 transition-colors" aria-hidden="true" />
+            <Wallet className="w-5 h-5 text-[#DBA12C]/70 group-hover:text-[#F2C14E] transition-colors" aria-hidden="true" />
           </div>
-          <p className="text-3xl font-bold text-green-400">₹{stats.todaysCollection.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-2 group-hover:text-green-400 transition-colors font-medium">Click to view members & payments →</p>
+          <p className="text-3xl font-bold text-[#F2C14E]">₹{stats.todaysCollection.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-[#F2C14E] transition-colors font-medium">Click to view members & payments →</p>
         </div>
         
         <div 
@@ -292,14 +292,14 @@ export default function PaymentsPage() {
               setActiveDetailsModal("PENDING");
             }
           }}
-          className="glass-panel p-6 border border-border relative overflow-hidden group hover:border-red-500/50 hover:bg-red-500/5 hover:-translate-y-1 hover:shadow-xl cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
+          className="apple-glass p-6 relative overflow-hidden group hover:border-foreground/45 hover:-translate-y-1 hover:shadow-xl cursor-pointer transition-all duration-300 focus-gold rounded-2xl"
         >
           <div className="flex justify-between items-start mb-4 relative z-10">
             <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">Pending Amount</h3>
-            <Wallet className="w-5 h-5 text-red-500/60 group-hover:text-red-500 transition-colors" aria-hidden="true" />
+            <Wallet className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden="true" />
           </div>
-          <p className="text-3xl font-bold text-red-400">₹{(stats.totalPending || 0).toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-2 group-hover:text-red-400 transition-colors font-medium">Click to view pending members →</p>
+          <p className="text-3xl font-bold text-foreground">₹{(stats.totalPending || 0).toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-2 group-hover:text-foreground transition-colors font-medium">Click to view pending members →</p>
         </div>
 
         <div 
@@ -337,7 +337,7 @@ export default function PaymentsPage() {
             setFormData({ memberId: "", planId: "", startDate: new Date().toISOString().split('T')[0], status: "ACTIVE", paymentStatus: "PAID", paymentMethod: "CASH", balanceAmount: "" });
             setIsModalOpen(true);
           }}
-          className="touch-target gap-2 px-6 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-brand-gold/20 focus-gold w-full sm:w-auto"
+          className="touch-target gap-2 px-6 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold transition-all gold-glow-sm focus-gold w-full sm:w-auto"
         >
           <Plus className="w-5 h-5" aria-hidden="true" /> Assign Plan
         </button>
@@ -350,7 +350,7 @@ export default function PaymentsPage() {
           onClick={() => setActiveTab("SUBSCRIPTIONS")}
           className={`touch-target px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-colors ${
             activeTab === "SUBSCRIPTIONS"
-              ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+              ? "bg-[#DBA12C] text-[#0A0A0C] border-[#DBA12C]"
               : "bg-secondary/60 text-muted-foreground border-border hover:text-foreground"
           }`}
         >
@@ -361,7 +361,7 @@ export default function PaymentsPage() {
           onClick={() => setActiveTab("ONLINE")}
           className={`touch-target inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-colors ${
             activeTab === "ONLINE"
-              ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+              ? "bg-[#DBA12C] text-[#0A0A0C] border-[#DBA12C]"
               : "bg-secondary/60 text-muted-foreground border-border hover:text-foreground"
           }`}
         >
@@ -435,7 +435,7 @@ export default function PaymentsPage() {
                 {loadingOnline && (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center">
-                      <Loader2 className="w-7 h-7 animate-spin text-[#D4FF00] mx-auto" />
+                      <Loader2 className="w-7 h-7 animate-spin text-[#DBA12C] mx-auto" />
                     </td>
                   </tr>
                 )}
@@ -450,7 +450,7 @@ export default function PaymentsPage() {
                   const isSettled = pay.status === "CAPTURED" || pay.status === "COMPLETED";
                   return (
                     <tr key={pay.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="px-6 py-4 font-mono-metric text-xs font-bold text-[#D4FF00]">
+                      <td className="px-6 py-4 font-mono-metric text-xs font-bold text-[#F2C14E]">
                         {pay.invoiceNumber || "PENDING"}
                       </td>
                       <td className="px-6 py-4">
@@ -484,7 +484,7 @@ export default function PaymentsPage() {
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full font-mono-metric text-xs font-bold border ${
                             isSettled
-                              ? "bg-[#D4FF00]/15 text-[#D4FF00] border-[#D4FF00]/40"
+                              ? "bg-[#DBA12C]/15 text-[#F2C14E] border-[#DBA12C]/40"
                               : pay.status === "FAILED"
                                 ? "bg-secondary text-muted-foreground border-border"
                                 : "bg-secondary/50 text-foreground border-border"
@@ -499,7 +499,7 @@ export default function PaymentsPage() {
                             type="button"
                             disabled={downloadingReceiptId === pay.id}
                             onClick={() => handleDownloadReceipt(pay.id, pay.invoiceNumber)}
-                            className="touch-target inline-flex items-center gap-1.5 rounded-xl border border-[#D4FF00]/40 bg-[#D4FF00]/10 px-3 py-1.5 text-xs font-bold text-[#D4FF00] hover:bg-[#D4FF00]/20 transition-colors disabled:opacity-50"
+                            className="touch-target inline-flex items-center gap-1.5 rounded-xl border border-[#DBA12C]/40 bg-[#DBA12C]/15 px-3 py-1.5 text-xs font-bold text-[#F2C14E] hover:bg-[#DBA12C]/25 transition-colors disabled:opacity-50"
                             title="Download PDF Receipt"
                           >
                             {downloadingReceiptId === pay.id ? (
@@ -548,7 +548,7 @@ export default function PaymentsPage() {
 
               {subsError && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-red-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                     Failed to load subscription records. Please refresh or sign in again.
                   </td>
                 </tr>
@@ -616,7 +616,7 @@ export default function PaymentsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col items-start gap-1">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${sub.paymentStatus === 'PAID' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${sub.paymentStatus === 'PAID' ? 'bg-[#DBA12C]/15 text-[#F2C14E] border border-[#DBA12C]/30' : 'bg-foreground/10 text-foreground border border-foreground/25'}`}>
                           {sub.paymentStatus || 'PAID'}
                         </span>
                         {sub.paymentMethod && (
@@ -625,14 +625,14 @@ export default function PaymentsPage() {
                           </span>
                         )}
                         {sub.paymentStatus === 'PENDING' && sub.balanceAmount > 0 && (
-                          <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider pl-1 mt-1">
+                          <span className="text-[10px] text-foreground/80 font-bold uppercase tracking-wider pl-1 mt-1">
                             Bal: ₹{sub.balanceAmount}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-[#DBA12C]/15 text-[#F2C14E] border border-[#DBA12C]/30' : 'bg-foreground/10 text-foreground/80 border border-foreground/25'}`}>
                         {isActive && <CheckCircle2 className="w-3 h-3" />}
                         {sub.status}
                       </span>
@@ -648,7 +648,7 @@ export default function PaymentsPage() {
                         </button>
                         <button 
                           onClick={() => handleDelete(sub.id)}
-                          className="p-2 text-muted-foreground hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                          className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-foreground/10"
                           title="Delete Subscription"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -680,21 +680,22 @@ export default function PaymentsPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }} 
               animate={{ opacity: 1, scale: 1, y: 0 }} 
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg glass-panel p-6 sm:p-8 border border-border shadow-2xl shadow-brand-gold/10"
+              className="relative w-[calc(100%-1.5rem)] sm:w-full max-w-lg apple-glass-elevated p-5 sm:p-8 rounded-3xl shadow-2xl max-h-[90dvh] overflow-y-auto"
             >
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-white/10 transition-colors"
+                aria-label="Close modal"
+                className="absolute top-4 right-4 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-foreground/10 transition-colors focus-gold"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <h2 className="text-2xl font-bold mb-6 text-brand-gold">
+              <h2 className="text-2xl font-bold mb-6 text-[#F2C14E]">
                 {modalMode === "ASSIGN" ? "Assign Subscription" : "Edit Subscription"}
               </h2>
 
               {modalError && (
-                <div role="alert" className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+                <div role="alert" className="mb-4 p-3 rounded-xl bg-foreground/[0.08] border border-foreground/25 text-foreground text-sm">
                   {modalError}
                 </div>
               )}
@@ -817,7 +818,7 @@ export default function PaymentsPage() {
                   <button type="button" onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto px-5 py-3 rounded-xl font-medium text-foreground hover:bg-white/5 transition-colors order-2 sm:order-1 border border-border sm:border-transparent">
                     Cancel
                   </button>
-                  <button type="submit" disabled={mutation.isPending || updateMut.isPending} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50 order-1 sm:order-2">
+                  <button type="submit" disabled={mutation.isPending || updateMut.isPending} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold transition-all gold-glow-sm disabled:opacity-50 order-1 sm:order-2 focus-gold">
                     {(mutation.isPending || updateMut.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : (modalMode === "ASSIGN" ? <Plus className="w-4 h-4" /> : <Save className="w-4 h-4" />)}
                     {modalMode === "ASSIGN" ? "Assign Plan" : "Save Changes"}
                   </button>

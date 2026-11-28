@@ -120,10 +120,10 @@ export default function PricingPage() {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`flex flex-col justify-between rounded-xl p-7 transition-colors border ${
+                className={`flex flex-col justify-between rounded-2xl p-7 apple-glass transition-all ${
                   plan.popular
-                    ? "bg-card border-2 border-brand-gold"
-                    : "bg-card/80 border-border hover:border-brand-gold/40"
+                    ? "border-2 border-[#DBA12C] gold-glow"
+                    : "hover:border-[#DBA12C]/45"
                 }`}
               >
                 <div>
@@ -169,10 +169,10 @@ export default function PricingPage() {
                 <div className="pt-8 mt-4">
                   <Link
                     href="/contact"
-                    className={`w-full block text-center py-3 px-5 rounded-lg font-bold text-sm transition-all focus-gold touch-target ${
+                    className={`w-full block text-center py-3 px-5 rounded-xl font-bold text-sm transition-all focus-gold touch-target ${
                       plan.popular
-                        ? "bg-brand-gold text-black hover:brightness-110 active:scale-[0.98]"
-                        : "bg-secondary text-foreground hover:bg-brand-gold hover:text-black active:scale-[0.98]"
+                        ? "bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] gold-glow-sm active:scale-[0.98]"
+                        : "bg-secondary text-foreground hover:bg-[#DBA12C] hover:text-[#0A0A0C] active:scale-[0.98]"
                     }`}
                   >
                     {plan.cta}
@@ -183,7 +183,7 @@ export default function PricingPage() {
           </div>
 
           {/* Custom / Trial Band */}
-          <div className="rounded-xl border border-border bg-card p-8 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="rounded-2xl apple-glass p-8 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2 max-w-xl">
               <div className="inline-flex items-center gap-2 text-brand-gold text-sm font-semibold">
                 <ShieldCheck className="w-4 h-4" aria-hidden="true" />
@@ -198,7 +198,7 @@ export default function PricingPage() {
             </div>
             <Link
               href="/contact"
-              className="shrink-0 px-7 py-3.5 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all focus-gold touch-target"
+              className="shrink-0 px-7 py-3.5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm active:scale-[0.98] transition-all focus-gold touch-target gold-glow-sm"
             >
               Book a free trial
             </Link>

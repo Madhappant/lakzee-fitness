@@ -75,7 +75,7 @@ export async function openRazorpayCheckout(params: {
     },
     notes: params.notes || {},
     theme: {
-      color: "#D4FF00",
+      color: "#DBA12C",
       backdrop_color: "#0A0A0C",
     },
     config: {

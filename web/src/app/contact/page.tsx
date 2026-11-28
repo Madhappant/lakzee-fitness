@@ -55,7 +55,7 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Left: Contact Info & Hours */}
             <div className="lg:col-span-5 space-y-6">
-              <div className="rounded-xl bg-card border border-border p-7 space-y-6">
+              <div className="rounded-2xl apple-glass p-7 space-y-6">
                 <h2 className="text-2xl font-bold font-heading text-foreground">Studio location</h2>
 
                 <div className="space-y-4 text-sm">
@@ -106,8 +106,8 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl bg-card border border-brand-gold/40 p-6 space-y-2">
-                <p className="text-brand-gold font-semibold text-sm">Complimentary trial session</p>
+              <div className="rounded-2xl apple-glass border-[#DBA12C]/40 p-6 space-y-2">
+                <p className="text-[#F2C14E] font-semibold text-sm">Complimentary trial session</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   First-time visitors receive one free training pass and an introductory body assessment after booking.
                 </p>
@@ -116,10 +116,10 @@ export default function ContactPage() {
 
             {/* Right: Consultation Form */}
             <div className="lg:col-span-7">
-              <div className="rounded-xl bg-card border border-border p-7 sm:p-9">
+              <div className="rounded-2xl apple-glass p-6 sm:p-9">
                 {submitted ? (
                   <div className="text-center py-10 space-y-4">
-                    <div className="w-14 h-14 rounded-full bg-green-500/15 text-green-400 flex items-center justify-center mx-auto">
+                    <div className="w-14 h-14 rounded-full bg-[#DBA12C]/15 border border-[#DBA12C]/35 text-[#F2C14E] flex items-center justify-center mx-auto">
                       <CheckCircle2 className="w-7 h-7" aria-hidden="true" />
                     </div>
                     <h2 className="text-2xl font-bold font-heading text-foreground">Walkthrough booked</h2>
@@ -144,7 +144,7 @@ export default function ContactPage() {
                     </div>
 
                     {submitError && (
-                      <div role="alert" className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
+                      <div role="alert" className="p-3 bg-foreground/[0.08] border border-foreground/25 rounded-xl text-foreground text-sm">
                         {submitError}
                       </div>
                     )}
@@ -230,7 +230,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full min-h-[48px] py-3.5 px-6 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 focus-gold touch-target disabled:opacity-50"
+                      className="w-full min-h-[48px] py-3.5 px-6 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 focus-gold touch-target gold-glow-sm disabled:opacity-50"
                     >
                       {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
                       {isSubmitting ? "Booking walkthrough..." : "Book walkthrough"}

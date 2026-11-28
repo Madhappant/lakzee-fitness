@@ -115,7 +115,7 @@ export default function AttendancePage() {
           aria-live="polite"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 shadow-xl rounded-full font-medium text-center ${statusMessage.type === 'success' ? 'bg-green-500/10 border border-green-500/50 text-green-400 backdrop-blur-md' : 'bg-red-500/10 border border-red-500/50 text-red-400 backdrop-blur-md'}`}
+          className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 shadow-xl rounded-full font-medium text-center ${statusMessage.type === 'success' ? 'bg-[#DBA12C]/15 border border-[#DBA12C]/50 text-[#F2C14E] backdrop-blur-md' : 'bg-foreground/10 border border-foreground/30 text-foreground backdrop-blur-md'}`}
         >
           {statusMessage.text}
         </motion.div>
@@ -174,7 +174,7 @@ export default function AttendancePage() {
             <button 
               type="submit" 
               disabled={mutation.isPending}
-              className="flex items-center justify-center gap-2 px-8 h-14 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-brand-gold/20 disabled:opacity-50 focus-gold w-full sm:w-auto shrink-0"
+              className="flex items-center justify-center gap-2 px-8 h-14 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold transition-all gold-glow-sm disabled:opacity-50 focus-gold w-full sm:w-auto shrink-0"
             >
               {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <LogIn className="w-5 h-5" aria-hidden="true" />}
               Check In
@@ -183,23 +183,23 @@ export default function AttendancePage() {
         </div>
 
         {/* Quick Check-out Module */}
-        <div className="glass-panel p-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
-            <LogOut className="w-48 h-48 text-red-500" />
+        <div className="glass-panel p-6 sm:p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+            <LogOut className="w-48 h-48 text-foreground" />
           </div>
           
           <div className="flex items-center justify-between relative z-10 mb-6">
-            <h2 className="text-xl font-bold text-red-500">Check-out Scanner</h2>
+            <h2 className="text-xl font-bold text-foreground">Check-out Scanner</h2>
             <button 
               onClick={() => setIsScanningOut(!isScanningOut)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50 border border-border hover:bg-muted transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50 border border-border hover:bg-muted transition-colors text-sm font-medium focus-gold"
             >
               {isScanningOut ? <><X className="w-4 h-4" /> Close Camera</> : <><Camera className="w-4 h-4" /> Scan QR</>}
             </button>
           </div>
 
           {isScanningOut && (
-            <div className="relative z-10 w-full max-w-sm mx-auto mb-6 overflow-hidden rounded-xl border border-red-500/30 aspect-square bg-background">
+            <div className="relative z-10 w-full max-w-sm mx-auto mb-6 overflow-hidden rounded-xl border border-foreground/30 aspect-square bg-background">
               <Scanner 
                 onScan={handleScan}
                 formats={["qr_code"]}
@@ -209,7 +209,7 @@ export default function AttendancePage() {
           
           <form onSubmit={handleCheckOut} className="flex flex-col sm:flex-row gap-4 relative z-10">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500/50" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input 
                 required
                 type="text" 
@@ -217,13 +217,13 @@ export default function AttendancePage() {
                 placeholder="Scan QR, enter ID, or search Name" 
                 value={checkOutId}
                 onChange={(e) => setCheckOutId(e.target.value)}
-                className="w-full bg-card/50 border border-red-500/30 rounded-xl pl-12 pr-4 py-4 text-lg font-mono text-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all uppercase"
+                className="w-full bg-card/50 border border-border rounded-xl pl-12 pr-4 py-4 text-lg font-mono text-foreground focus:border-[#DBA12C] focus:ring-1 focus:ring-[#DBA12C] outline-none transition-all uppercase"
               />
             </div>
             <button 
               type="submit" 
               disabled={checkoutMut.isPending}
-              className="flex items-center justify-center gap-2 px-8 h-14 rounded-xl text-white bg-gradient-to-r from-red-600 to-red-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 focus-gold w-full sm:w-auto shrink-0"
+              className="flex items-center justify-center gap-2 px-8 h-14 rounded-xl text-[#0A0A0C] bg-[#F5F5F7] hover:bg-white font-bold transition-all shadow-lg disabled:opacity-50 focus-gold w-full sm:w-auto shrink-0"
             >
               {checkoutMut.isPending ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <LogOut className="w-5 h-5" aria-hidden="true" />}
               Check Out
@@ -294,7 +294,7 @@ export default function AttendancePage() {
                     <span className="font-medium text-foreground">{log.member?.user?.firstName} {log.member?.user?.lastName}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${log.checkOut ? 'bg-muted/50 text-muted-foreground border border-border' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${log.checkOut ? 'bg-muted/50 text-muted-foreground border border-border' : 'bg-[#DBA12C]/15 text-[#F2C14E] border border-[#DBA12C]/30'}`}>
                       {log.checkOut ? 'Checked Out' : 'Active'}
                     </span>
                   </td>

@@ -74,7 +74,7 @@ export default function BodyMap({
                 fillClass = "fill-brand-gold/80 hover:fill-brand-gold stroke-brand-gold/50";
               }
               if (selected || isHovered) {
-                fillClass = "fill-yellow-400 stroke-brand-gold filter brightness-125";
+                fillClass = "fill-[#F2C14E] stroke-[#DBA12C] filter brightness-110";
               }
 
               return (

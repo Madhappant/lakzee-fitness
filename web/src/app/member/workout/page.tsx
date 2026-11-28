@@ -361,15 +361,15 @@ export default function MemberWorkoutPage() {
             {!isLiveWorkoutRunning ? (
               <button
                 onClick={startLiveWorkout}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 text-black font-bold text-sm shadow-xl shadow-brand-gold/25 flex items-center justify-center gap-2 transition-all transform active:scale-95 focus-gold touch-target"
+                className="px-6 py-3.5 rounded-2xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm gold-glow-sm flex items-center justify-center gap-2 transition-all transform active:scale-95 focus-gold touch-target"
               >
-                <Play className="w-4 h-4 fill-black" /> Start Workout
+                <Play className="w-4 h-4 fill-[#0A0A0C]" /> Start Workout
               </button>
             ) : (
               <div className="flex items-center gap-2">
                 <button
                   onClick={finishWorkout}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 focus-gold"
+                  className="px-5 py-2.5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-xs gold-glow-sm transition-all flex items-center gap-1.5 focus-gold"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Finish & Log
                 </button>
@@ -451,7 +451,7 @@ export default function MemberWorkoutPage() {
                           key={setIdx}
                           className={`grid grid-cols-12 gap-2 items-center p-2 rounded-xl transition-all ${
                             set.completed
-                              ? "bg-emerald-500/10 border border-emerald-500/30"
+                              ? "bg-[#DBA12C]/15 border border-[#DBA12C]/35"
                               : "bg-muted/20 border border-border/40"
                           }`}
                         >
@@ -486,7 +486,7 @@ export default function MemberWorkoutPage() {
                               onClick={() => toggleSetComplete(exIdx, setIdx)}
                               className={`p-1.5 rounded-lg transition-all focus-gold ${
                                 set.completed
-                                  ? "bg-emerald-600 text-white shadow-sm"
+                                  ? "bg-[#DBA12C] text-[#0A0A0C] shadow-sm"
                                   : "bg-muted text-muted-foreground hover:text-foreground"
                               }`}
                               aria-label={`Mark Set ${set.setNumber} as ${set.completed ? "Incomplete" : "Complete"}`}

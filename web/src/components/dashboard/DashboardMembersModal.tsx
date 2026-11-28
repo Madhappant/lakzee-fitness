@@ -67,13 +67,13 @@ export function DashboardMembersModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.22 }}
-            className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-2rem)] max-w-2xl translate-x-[-50%] translate-y-[-50%] p-6 rounded-2xl obsidian-glass shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-1.5rem)] sm:w-full max-w-2xl translate-x-[-50%] translate-y-[-50%] p-5 sm:p-6 rounded-3xl apple-glass-elevated shadow-2xl overflow-hidden flex flex-col max-h-[85dvh]"
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-5 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#D4FF00]/12 border border-[#D4FF00]/25">
-                  <Icon className="w-5 h-5 text-[#D4FF00]" aria-hidden="true" />
+                <div className="p-2.5 rounded-xl bg-[#DBA12C]/15 border border-[#DBA12C]/30">
+                  <Icon className="w-5 h-5 text-[#DBA12C]" aria-hidden="true" />
                 </div>
                 <div>
                   <h2 className="font-display text-xl font-bold text-foreground">
@@ -86,7 +86,7 @@ export function DashboardMembersModal({
               </div>
               <button
                 onClick={onClose}
-                className="touch-target text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-colors focus-volt"
+                className="touch-target text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-colors focus-gold"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
@@ -101,12 +101,12 @@ export function DashboardMembersModal({
                 placeholder="Search by name, ID, plan or phone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-11 bg-background border border-border rounded-xl pl-10 pr-16 text-sm text-foreground focus:border-[#D4FF00] focus:outline-none transition-colors"
+                className="w-full h-11 bg-background border border-border rounded-xl pl-10 pr-16 text-sm text-foreground focus:border-[#DBA12C] focus:outline-none transition-colors"
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground font-mono-metric text-xs focus-volt rounded px-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground font-mono-metric text-xs focus-gold rounded px-1"
                 >
                   Clear
                 </button>
@@ -130,7 +130,7 @@ export function DashboardMembersModal({
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-foreground">{member.name}</p>
-                          <span className="font-mono-metric text-[11px] px-2 py-0.5 rounded-md bg-background text-[#D4FF00] font-semibold border border-border">
+                          <span className="font-mono-metric text-[11px] px-2 py-0.5 rounded-md bg-background text-[#F2C14E] font-semibold border border-border">
                             {member.memberId}
                           </span>
                         </div>
@@ -141,7 +141,7 @@ export function DashboardMembersModal({
 
                       <div className="flex flex-col sm:items-end gap-2 shrink-0 w-full sm:w-auto">
                         {member.date && (
-                          <span className="font-mono-metric font-semibold text-[#D4FF00] bg-[#D4FF00]/10 border border-[#D4FF00]/25 px-3 py-1 rounded-full text-xs self-start sm:self-auto">
+                          <span className="font-mono-metric font-semibold text-[#F2C14E] bg-[#DBA12C]/15 border border-[#DBA12C]/30 px-3 py-1 rounded-full text-xs self-start sm:self-auto">
                             {dateLabel}: {new Date(member.date).toLocaleDateString()}
                           </span>
                         )}
@@ -149,7 +149,7 @@ export function DashboardMembersModal({
                           {member.phone && (
                             <a
                               href={`tel:${member.phone}`}
-                              className="inline-flex items-center gap-1 font-mono-metric text-xs text-muted-foreground hover:text-foreground transition-colors focus-volt rounded"
+                              className="inline-flex items-center gap-1 font-mono-metric text-xs text-muted-foreground hover:text-foreground transition-colors focus-gold rounded"
                             >
                               <Phone className="w-3 h-3" aria-hidden="true" /> {member.phone}
                             </a>
@@ -158,7 +158,7 @@ export function DashboardMembersModal({
                             <Link
                               href={`/admin/members?viewMember=${member.userId}`}
                               onClick={onClose}
-                              className="inline-flex items-center gap-1 text-xs text-[#D4FF00] hover:underline font-semibold focus-volt rounded"
+                              className="inline-flex items-center gap-1 text-xs text-[#F2C14E] hover:underline font-semibold focus-gold rounded"
                             >
                               Details <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
                             </Link>

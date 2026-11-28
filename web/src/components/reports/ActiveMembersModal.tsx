@@ -52,34 +52,36 @@ export function ActiveMembersModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-[#0A0A0C]/75 backdrop-blur-md z-50"
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-[50%] top-[50%] z-50 w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] p-6 md:p-8 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ type: "spring", stiffness: 360, damping: 32 }}
+            className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-1.5rem)] sm:w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] p-5 sm:p-6 md:p-8 rounded-3xl apple-glass shadow-2xl overflow-hidden flex flex-col max-h-[88dvh]"
           >
             {/* Header */}
-            <div className="flex justify-between items-center mb-6 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-brand-gold/10 border border-brand-gold/20">
-                  <Users className="w-6 h-6 text-brand-gold" />
+            <div className="flex justify-between items-center mb-6 shrink-0 gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-xl bg-[#DBA12C]/15 border border-[#DBA12C]/30 shrink-0">
+                  <Users className="w-6 h-6 text-[#DBA12C]" />
                 </div>
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground truncate">
                     Active Members Details
                   </h2>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5 truncate">
                     Currently active gym memberships and member information
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-foreground/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-gold shrink-0"
                 title="Close"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -154,7 +156,7 @@ export function ActiveMembersModal({
                           <span className="text-xs px-2 py-0.5 rounded-md bg-brand-gold/10 text-brand-gold font-mono font-semibold border border-brand-gold/20">
                             {item.memberId || "MEMBER"}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 border border-green-500/20">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-[#DBA12C]/15 text-[#DBA12C] border border-[#DBA12C]/30">
                             <CheckCircle2 className="w-2.5 h-2.5" />
                             Active
                           </span>

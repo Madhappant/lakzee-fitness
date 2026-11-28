@@ -80,8 +80,8 @@ export default function MemberAttendance() {
                     <span className="text-xs text-brand-gold uppercase tracking-wider font-bold mb-1">Status</span>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
                       checkOut
-                        ? "bg-green-500/20 text-green-400 border-green-500/20"
-                        : "bg-brand-gold/20 text-brand-gold border-brand-gold/30"
+                        ? "bg-[#DBA12C]/15 text-[#F2C14E] border-[#DBA12C]/30"
+                        : "bg-foreground/10 text-foreground border-foreground/25"
                     }`}>
                       {checkOut ? "Completed" : "Checked In"}
                     </span>

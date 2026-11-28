@@ -59,22 +59,22 @@ export default function GymToolsModal({ isOpen, onClose }: GymToolsModalProps) {
   const estimated1RM = calculate1RM(liftWeight, liftReps);
 
   const plateColors: Record<number, string> = {
-    25: "bg-red-600 text-white",
-    20: "bg-blue-600 text-white",
-    15: "bg-yellow-500 text-black",
-    10: "bg-emerald-600 text-white",
-    5: "bg-white text-black border border-gray-400",
-    2.5: "bg-slate-700 text-white",
-    1.25: "bg-zinc-500 text-white",
+    25: "bg-[#DBA12C] text-[#0A0A0C]",
+    20: "bg-[#F2C14E] text-[#0A0A0C]",
+    15: "bg-[#F5F5F7] text-[#0A0A0C]",
+    10: "bg-[#F5F5F7]/80 text-[#0A0A0C]",
+    5: "bg-secondary text-foreground border border-foreground/30",
+    2.5: "bg-secondary/70 text-foreground border border-border",
+    1.25: "bg-[#0A0A0C] text-[#F5F5F7] border border-border",
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-card border border-border w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[#0A0A0C]/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="apple-glass-elevated w-[calc(100%-1.5rem)] sm:w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border/70 flex items-center justify-between bg-muted/20">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-gold/15 border border-brand-gold/30 flex items-center justify-center text-brand-gold">
+            <div className="w-9 h-9 rounded-xl bg-[#DBA12C]/15 border border-[#DBA12C]/30 flex items-center justify-center text-[#DBA12C]">
               <Calculator className="w-5 h-5" />
             </div>
             <div>
@@ -84,7 +84,8 @@ export default function GymToolsModal({ isOpen, onClose }: GymToolsModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus-gold"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -96,7 +97,7 @@ export default function GymToolsModal({ isOpen, onClose }: GymToolsModalProps) {
             onClick={() => setActiveTab("PLATES")}
             className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
               activeTab === "PLATES"
-                ? "bg-brand-gold text-white shadow-sm"
+                ? "bg-[#DBA12C] text-[#0A0A0C] shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >

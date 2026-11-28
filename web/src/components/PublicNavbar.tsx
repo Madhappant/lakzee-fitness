@@ -20,7 +20,7 @@ export function PublicNavbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-background/90 backdrop-blur-md border-b border-border transition-colors">
+    <nav className="sticky top-0 z-40 w-full apple-glass border-x-0 border-t-0 rounded-none border-b border-border transition-colors safe-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18">
           {/* Brand Emblem + Wordmark */}
@@ -71,7 +71,7 @@ export function PublicNavbar() {
             </Link>
             <Link
               href="/member"
-              className="touch-target px-5 rounded-lg bg-brand-gold text-black text-sm font-bold hover:brightness-110 active:scale-[0.98] transition-all focus-gold"
+              className="touch-target px-5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] text-sm font-bold active:scale-[0.98] transition-all focus-gold gold-glow-sm"
             >
               Member portal
             </Link>
@@ -98,7 +98,7 @@ export function PublicNavbar() {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="md:hidden border-b border-border bg-background px-4 pt-3 pb-6 space-y-1">
+        <div className="md:hidden border-b border-border apple-glass-elevated border-x-0 rounded-none px-4 pt-3 pb-6 space-y-1">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -127,7 +127,7 @@ export function PublicNavbar() {
             <Link
               href="/member"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-center h-12 rounded-lg bg-brand-gold text-black text-sm font-bold"
+              className="flex items-center justify-center h-12 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] text-sm font-bold gold-glow-sm"
             >
               Member portal
             </Link>

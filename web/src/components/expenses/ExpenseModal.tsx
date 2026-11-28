@@ -101,21 +101,21 @@ function ExpenseModalContent({
             role="dialog"
             aria-modal="true"
             aria-labelledby="expense-modal-title"
-            className="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-6 rounded-2xl bg-card border border-border shadow-2xl"
+            className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-1.5rem)] sm:w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-5 sm:p-6 rounded-3xl apple-glass-elevated shadow-2xl max-h-[90dvh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-6">
               <h2 id="expense-modal-title" className="text-xl font-bold">{expense ? "Edit Expense" : "Add Expense"}</h2>
               <button 
                 onClick={onClose} 
                 aria-label="Close dialog"
-                className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-full transition-colors focus-gold"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-full transition-colors focus-gold"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {error && (
-              <div role="alert" className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm">
+              <div role="alert" className="mb-6 p-4 bg-foreground/[0.08] border border-foreground/25 rounded-xl text-foreground text-sm">
                 {error}
               </div>
             )}
@@ -133,7 +133,7 @@ function ExpenseModalContent({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Amount (₹)</label>
                   <input
@@ -159,7 +159,7 @@ function ExpenseModalContent({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Category</label>
                   <select
@@ -195,7 +195,7 @@ function ExpenseModalContent({
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full min-h-[48px] flex justify-center items-center gap-2 bg-brand-gold text-black font-bold py-3 px-4 rounded-xl hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 mt-4 focus-gold touch-target"
+                className="w-full min-h-[48px] flex justify-center items-center gap-2 bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold py-3 px-4 rounded-xl active:scale-[0.98] transition-all duration-200 gold-glow-sm disabled:opacity-50 mt-4 focus-gold touch-target"
               >
                 {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {expense ? "Update Expense" : "Save Expense"}

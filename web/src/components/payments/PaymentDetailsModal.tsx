@@ -58,27 +58,27 @@ export function PaymentDetailsModal({
           title: "Today's Collection",
           subtitle: "Members and payments collected today",
           icon: Wallet,
-          colorClass: "text-green-500",
-          bgClass: "bg-green-500/10",
-          borderClass: "border-green-500/20"
+          colorClass: "text-[#F2C14E]",
+          bgClass: "bg-[#DBA12C]/15",
+          borderClass: "border-[#DBA12C]/30"
         };
       case "THIS_MONTH":
         return {
           title: "This Month's Collection",
           subtitle: "Members and payments collected this month",
           icon: CalendarRange,
-          colorClass: "text-brand-gold",
-          bgClass: "bg-brand-gold/10",
-          borderClass: "border-brand-gold/20"
+          colorClass: "text-[#DBA12C]",
+          bgClass: "bg-[#DBA12C]/15",
+          borderClass: "border-[#DBA12C]/30"
         };
       case "PENDING":
         return {
           title: "Pending Amount & Members",
           subtitle: "Members with outstanding dues or pending payments",
           icon: AlertCircle,
-          colorClass: "text-red-500",
-          bgClass: "bg-red-500/10",
-          borderClass: "border-red-500/20"
+          colorClass: "text-foreground",
+          bgClass: "bg-foreground/10",
+          borderClass: "border-foreground/25"
         };
       case "TOTAL":
       default:
@@ -208,7 +208,7 @@ export function PaymentDetailsModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-[50%] top-[50%] z-50 w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] p-6 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+            className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-1.5rem)] sm:w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] p-5 sm:p-6 rounded-3xl apple-glass-elevated shadow-2xl overflow-hidden flex flex-col max-h-[88dvh]"
           >
             {/* Header */}
             <div className="flex justify-between items-start mb-4 shrink-0">
@@ -353,7 +353,7 @@ export function PaymentDetailsModal({
                             <>
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xs text-muted-foreground">Pending Due:</span>
-                                <span className="text-base font-bold text-red-500 bg-red-500/10 px-2.5 py-0.5 rounded-full border border-red-500/20">
+                                <span className="text-base font-bold text-foreground bg-foreground/10 px-2.5 py-0.5 rounded-full border border-foreground/25">
                                   ₹{balance.toLocaleString()}
                                 </span>
                               </div>
@@ -370,8 +370,8 @@ export function PaymentDetailsModal({
                                 <span
                                   className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${
                                     isPaid
-                                      ? "bg-green-500/10 text-green-400 border-green-500/20"
-                                      : "bg-red-500/10 text-red-400 border-red-500/20"
+                                      ? "bg-[#DBA12C]/15 text-[#F2C14E] border-[#DBA12C]/30"
+                                      : "bg-foreground/10 text-foreground border-foreground/25"
                                   }`}
                                 >
                                   {isPaid ? "PAID" : `DUE ₹${balance.toLocaleString()}`}
@@ -383,7 +383,7 @@ export function PaymentDetailsModal({
                                 <span
                                   className={`ml-1 px-1.5 py-0.2 rounded text-[10px] ${
                                     sub.status === "ACTIVE"
-                                      ? "bg-green-500/10 text-green-400"
+                                      ? "bg-[#DBA12C]/15 text-[#F2C14E]"
                                       : "bg-muted text-muted-foreground"
                                   }`}
                                 >
@@ -395,12 +395,12 @@ export function PaymentDetailsModal({
                             <>
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xs text-muted-foreground">Collected:</span>
-                                <span className="text-base font-bold text-green-500 bg-green-500/10 px-2.5 py-0.5 rounded-full border border-green-500/20">
+                                <span className="text-base font-bold text-[#F2C14E] bg-[#DBA12C]/15 px-2.5 py-0.5 rounded-full border border-[#DBA12C]/30">
                                   ₹{paidAmount.toLocaleString()}
                                 </span>
                               </div>
                               {isPending && balance > 0 && (
-                                <p className="text-[11px] text-red-400">
+                                <p className="text-[11px] text-foreground/80">
                                   Balance Due: ₹{balance.toLocaleString()}
                                 </p>
                               )}

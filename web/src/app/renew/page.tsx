@@ -248,17 +248,17 @@ function RenewCheckoutContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center p-6">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4FF00]" aria-hidden="true" />
+      <div className="dark min-h-screen bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center p-6">
+        <Loader2 className="w-8 h-8 animate-spin text-[#DBA12C]" aria-hidden="true" />
       </div>
     );
   }
 
   if (needsLogin) {
     return (
-      <div className="min-h-screen bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center p-6">
-        <div className="max-w-md w-full rounded-2xl border border-[#F5F5F7]/15 bg-[#0A0A0C] p-8 text-center space-y-5">
-          <div className="w-12 h-12 rounded-2xl bg-[#D4FF00]/12 border border-[#D4FF00]/30 text-[#D4FF00] flex items-center justify-center mx-auto">
+      <div className="dark min-h-screen bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-3xl apple-glass p-8 text-center space-y-5">
+          <div className="w-12 h-12 rounded-2xl bg-[#DBA12C]/15 border border-[#DBA12C]/35 text-[#F2C14E] flex items-center justify-center mx-auto">
             <ShieldCheck className="w-6 h-6" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-bold text-[#F5F5F7]">Sign In to Renew</h1>
@@ -268,13 +268,13 @@ function RenewCheckoutContent() {
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Link
               href="/login?redirect=/renew"
-              className="flex-1 touch-target justify-center rounded-xl bg-[#D4FF00] text-[#0A0A0C] font-bold text-sm px-5 py-3 hover:brightness-105 transition-all"
+              className="flex-1 touch-target justify-center rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm px-5 py-3 transition-all focus-gold gold-glow-sm"
             >
               Sign In & Continue
             </Link>
             <Link
               href="/"
-              className="touch-target justify-center rounded-xl border border-[#F5F5F7]/20 text-[#F5F5F7] text-sm px-5 py-3 hover:bg-[#F5F5F7]/5 transition-colors"
+              className="touch-target justify-center rounded-xl border border-[#F5F5F7]/20 text-[#F5F5F7] text-sm px-5 py-3 hover:bg-[#F5F5F7]/5 transition-colors focus-gold"
             >
               Home
             </Link>
@@ -286,13 +286,13 @@ function RenewCheckoutContent() {
 
   if (!context) {
     return (
-      <div className="min-h-screen bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center p-6">
-        <div className="max-w-md w-full rounded-2xl border border-[#F5F5F7]/15 bg-[#0A0A0C] p-8 text-center space-y-4">
+      <div className="dark min-h-screen bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-3xl apple-glass p-8 text-center space-y-4">
           <h1 className="text-2xl font-bold text-[#F5F5F7]">Renewal Link Unavailable</h1>
           <p className="text-sm text-[#F5F5F7]/75">{errorMsg || "This renewal link has expired or is invalid."}</p>
           <Link
             href="/login"
-            className="inline-flex touch-target items-center justify-center rounded-xl bg-[#D4FF00] text-[#0A0A0C] font-bold text-sm px-6 py-3"
+            className="inline-flex touch-target items-center justify-center rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm px-6 py-3 focus-gold gold-glow-sm"
           >
             Sign In to Member Portal
           </Link>
@@ -302,12 +302,16 @@ function RenewCheckoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] text-[#F5F5F7] py-10 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="dark relative min-h-screen bg-[#0A0A0C] text-[#F5F5F7] py-10 px-4 sm:px-6 overflow-x-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed -top-24 right-1/4 h-96 w-96 rounded-full bg-[#DBA12C]/12 blur-[120px]"
+      />
+      <div className="relative z-10 max-w-4xl mx-auto space-y-8">
         {/* Top bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#F5F5F7]/12 pb-5">
           <div>
-            <p className="font-mono-metric text-[11px] uppercase tracking-[0.2em] text-[#D4FF00]">
+            <p className="font-mono-metric text-[11px] uppercase tracking-[0.2em] text-[#F2C14E]">
               LAKZEE FITNESS STUDIO · {context.member.branchName}
             </p>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mt-1 text-[#F5F5F7]">
@@ -317,7 +321,7 @@ function RenewCheckoutContent() {
           {!token && (
             <Link
               href="/member/subscriptions"
-              className="touch-target inline-flex items-center gap-2 rounded-xl border border-[#F5F5F7]/15 px-4 py-2 text-sm text-[#F5F5F7]/85 hover:border-[#D4FF00]/50 hover:text-[#D4FF00] transition-colors"
+              className="touch-target inline-flex items-center gap-2 rounded-xl border border-[#F5F5F7]/15 px-4 py-2 text-sm text-[#F5F5F7]/85 hover:border-[#DBA12C]/50 hover:text-[#F2C14E] transition-colors focus-gold"
             >
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               Back to Subscriptions
@@ -327,13 +331,13 @@ function RenewCheckoutContent() {
 
         {/* Captured Success Receipt Card */}
         {capturedResult ? (
-          <div className="rounded-2xl border border-[#D4FF00]/40 bg-[#0A0A0C] p-6 sm:p-8 space-y-6">
+          <div className="rounded-3xl apple-glass border-[#DBA12C]/45 p-6 sm:p-8 space-y-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#D4FF00] text-[#0A0A0C] flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#DBA12C] text-[#0A0A0C] flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
               </div>
               <div>
-                <span className="inline-block px-3 py-1 rounded-full bg-[#D4FF00]/15 border border-[#D4FF00]/40 text-[#D4FF00] font-mono-metric text-xs font-bold uppercase tracking-wider">
+                <span className="inline-block px-3 py-1 rounded-full bg-[#DBA12C]/15 border border-[#DBA12C]/40 text-[#F2C14E] font-mono-metric text-xs font-bold uppercase tracking-wider">
                   Payment Captured
                 </span>
                 <h2 className="text-2xl font-bold text-[#F5F5F7] mt-2">Membership Renewed Successfully</h2>
@@ -346,7 +350,7 @@ function RenewCheckoutContent() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border border-[#F5F5F7]/12 p-5">
               <div>
                 <p className="text-xs uppercase tracking-wider text-[#F5F5F7]/60">Invoice No.</p>
-                <p className="font-mono-metric text-sm font-bold text-[#D4FF00] mt-1">
+                <p className="font-mono-metric text-sm font-bold text-[#F2C14E] mt-1">
                   {capturedResult.invoiceNumber || "CONFIRMED"}
                 </p>
               </div>
@@ -358,7 +362,7 @@ function RenewCheckoutContent() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-[#F5F5F7]/60">New Valid Until</p>
-                <p className="font-mono-metric text-sm font-bold text-[#D4FF00] mt-1">
+                <p className="font-mono-metric text-sm font-bold text-[#F2C14E] mt-1">
                   {capturedResult.newExpiryDate
                     ? new Date(capturedResult.newExpiryDate).toLocaleDateString("en-IN", {
                         day: "2-digit",
@@ -375,7 +379,7 @@ function RenewCheckoutContent() {
                 type="button"
                 onClick={handleDownloadReceipt}
                 disabled={downloadingPdf}
-                className="touch-target inline-flex items-center gap-2 rounded-xl bg-[#D4FF00] text-[#0A0A0C] font-bold text-sm px-6 py-3 hover:brightness-105 transition-all disabled:opacity-60"
+                className="touch-target inline-flex items-center gap-2 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm px-6 py-3 transition-all disabled:opacity-60 focus-gold gold-glow-sm"
               >
                 {downloadingPdf ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -386,7 +390,7 @@ function RenewCheckoutContent() {
               </button>
               <Link
                 href="/member/subscriptions"
-                className="touch-target inline-flex items-center justify-center rounded-xl border border-[#F5F5F7]/20 text-[#F5F5F7] text-sm font-semibold px-6 py-3 hover:bg-[#F5F5F7]/5 transition-colors"
+                className="touch-target inline-flex items-center justify-center rounded-xl border border-[#F5F5F7]/20 text-[#F5F5F7] text-sm font-semibold px-6 py-3 hover:bg-[#F5F5F7]/5 transition-colors focus-gold"
               >
                 Open Member Portal
               </Link>
@@ -396,12 +400,12 @@ function RenewCheckoutContent() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left 2 Columns: Member Summary + Plan Selection */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="rounded-2xl border border-[#F5F5F7]/14 bg-[#0A0A0C] p-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="rounded-2xl apple-glass p-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[#F5F5F7]/55">Renewing For Member</p>
                   <p className="text-xl font-bold text-[#F5F5F7] mt-1">
                     {context.member.name}{" "}
-                    <span className="font-mono-metric text-sm text-[#D4FF00] ml-2">
+                    <span className="font-mono-metric text-sm text-[#F2C14E] ml-2">
                       #{context.member.memberId}
                     </span>
                   </p>
@@ -413,7 +417,7 @@ function RenewCheckoutContent() {
                       {context.currentSubscription.planName} ·{" "}
                       <span
                         className={
-                          context.currentSubscription.isActive ? "text-[#D4FF00]" : "text-[#F5F5F7]/70"
+                          context.currentSubscription.isActive ? "text-[#F2C14E]" : "text-[#F5F5F7]/70"
                         }
                       >
                         {context.currentSubscription.isActive ? "Expires" : "Expired"}{" "}
@@ -442,10 +446,10 @@ function RenewCheckoutContent() {
                         key={plan.id}
                         type="button"
                         onClick={() => setSelectedPlanId(plan.id)}
-                        className={`text-left rounded-2xl p-5 border transition-all focus-volt ${
+                        className={`text-left rounded-2xl p-5 apple-glass transition-all focus-gold ${
                           isSelected
-                            ? "border-[#D4FF00] bg-[#D4FF00]/8"
-                            : "border-[#F5F5F7]/15 bg-[#0A0A0C] hover:border-[#F5F5F7]/35"
+                            ? "border-[#DBA12C] bg-[#DBA12C]/12 ring-1 ring-[#DBA12C]/40"
+                            : "hover:border-[#F5F5F7]/35"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -454,7 +458,7 @@ function RenewCheckoutContent() {
                             {plan.durationDays}d
                           </span>
                         </div>
-                        <p className="font-mono-metric text-2xl font-bold text-[#D4FF00] mt-3">
+                        <p className="font-mono-metric text-2xl font-bold text-[#F2C14E] mt-3">
                           ₹{plan.price.toLocaleString("en-IN")}
                         </p>
                         <p className="text-xs text-[#F5F5F7]/65 mt-1">
@@ -468,7 +472,7 @@ function RenewCheckoutContent() {
             </div>
 
             {/* Right Column: Payment Summary & Razorpay / UPI Checkout */}
-            <div className="rounded-2xl border border-[#F5F5F7]/15 bg-[#0A0A0C] p-6 space-y-5 h-fit">
+            <div className="rounded-3xl apple-glass-elevated p-6 space-y-5 h-fit">
               <h2 className="text-lg font-bold text-[#F5F5F7]">Order Summary</h2>
 
               {selectedPlan ? (
@@ -484,10 +488,10 @@ function RenewCheckoutContent() {
                   {previewNewExpiry && (
                     <div className="flex justify-between text-[#F5F5F7]/75">
                       <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#D4FF00]" aria-hidden="true" />
+                        <Calendar className="w-3.5 h-3.5 text-[#DBA12C]" aria-hidden="true" />
                         Valid Until
                       </span>
-                      <span className="font-mono-metric font-bold text-[#D4FF00]">
+                      <span className="font-mono-metric font-bold text-[#F2C14E]">
                         {previewNewExpiry.toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
@@ -498,7 +502,7 @@ function RenewCheckoutContent() {
                   )}
                   <div className="border-t border-[#F5F5F7]/12 pt-3 flex justify-between items-baseline">
                     <span className="font-semibold text-[#F5F5F7]">Total Payable</span>
-                    <span className="font-mono-metric text-2xl font-bold text-[#D4FF00]">
+                    <span className="font-mono-metric text-2xl font-bold text-[#F2C14E]">
                       ₹{selectedPlan.price.toLocaleString("en-IN")}
                     </span>
                   </div>
@@ -517,7 +521,7 @@ function RenewCheckoutContent() {
                 type="button"
                 disabled={!selectedPlan || processingPayment}
                 onClick={handlePayNow}
-                className="w-full touch-target inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4FF00] text-[#0A0A0C] font-bold text-sm px-5 py-3.5 hover:brightness-105 transition-all disabled:opacity-50"
+                className="w-full touch-target inline-flex items-center justify-center gap-2 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm px-5 py-3.5 transition-all disabled:opacity-50 focus-gold gold-glow-sm"
               >
                 {processingPayment ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -529,11 +533,11 @@ function RenewCheckoutContent() {
 
               <div className="pt-2 space-y-2 text-xs text-[#F5F5F7]/60">
                 <p className="flex items-center gap-2">
-                  <CreditCard className="w-3.5 h-3.5 text-[#D4FF00]" aria-hidden="true" />
+                  <CreditCard className="w-3.5 h-3.5 text-[#DBA12C]" aria-hidden="true" />
                   Supports GPay, PhonePe, Paytm, BHIM UPI & Cards
                 </p>
                 <p className="flex items-center gap-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#D4FF00]" aria-hidden="true" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#DBA12C]" aria-hidden="true" />
                   Authoritative pricing verified on server · Instant PDF invoice
                 </p>
               </div>
@@ -550,7 +554,7 @@ export default function RenewPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#D4FF00]" aria-hidden="true" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#DBA12C]" aria-hidden="true" />
         </div>
       }
     >

@@ -102,11 +102,11 @@ export default function RestTimer({
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-md animate-in slide-in-from-bottom-5 duration-300">
-      <div className="bg-card/95 backdrop-blur-xl border border-brand-gold/40 shadow-[0_10px_35px_rgba(0,0,0,0.5)] rounded-2xl p-4 text-foreground">
+      <div className="apple-glass-elevated border border-[#DBA12C]/40 shadow-[0_10px_35px_rgba(0,0,0,0.5)] rounded-2xl p-4 text-foreground">
         {/* Progress bar */}
         <div className="w-full bg-muted/60 h-2 rounded-full overflow-hidden mb-3">
           <div
-            className="h-full bg-gradient-to-r from-brand-gold to-yellow-400 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-[#DBA12C] to-[#F2C14E] transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>

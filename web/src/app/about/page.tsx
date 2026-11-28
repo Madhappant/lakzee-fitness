@@ -47,7 +47,7 @@ export default function AboutPage() {
           </div>
 
           {/* Studio Metrics Strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 border border-border rounded-xl overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border bg-card">
+          <div className="grid grid-cols-2 md:grid-cols-4 apple-glass rounded-2xl overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border">
             {stats.map((stat, i) => (
               <div key={i} className="p-6 sm:p-8 space-y-1.5">
                 <p className="text-3xl sm:text-4xl font-extrabold font-heading text-brand-gold tabular-nums">
@@ -70,8 +70,8 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-7 rounded-xl bg-card border border-border space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
+              <div className="p-7 rounded-2xl apple-glass space-y-3 hover:border-[#DBA12C]/40 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-[#DBA12C]/15 border border-[#DBA12C]/30 flex items-center justify-center text-[#F2C14E]">
                   <Dumbbell className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-heading font-bold text-foreground">Olympic-grade floor</h3>
@@ -80,8 +80,8 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="p-7 rounded-xl bg-card border border-border space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
+              <div className="p-7 rounded-2xl apple-glass space-y-3 hover:border-[#DBA12C]/40 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-[#DBA12C]/15 border border-[#DBA12C]/30 flex items-center justify-center text-[#F2C14E]">
                   <HeartPulse className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-heading font-bold text-foreground">Structured tracking</h3>
@@ -90,8 +90,8 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="p-7 rounded-xl bg-card border border-border space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
+              <div className="p-7 rounded-2xl apple-glass space-y-3 hover:border-[#DBA12C]/40 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-[#DBA12C]/15 border border-[#DBA12C]/30 flex items-center justify-center text-[#F2C14E]">
                   <Users className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-heading font-bold text-foreground">Focused atmosphere</h3>
@@ -117,7 +117,7 @@ export default function AboutPage() {
               {trainers.map((t, i) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-border bg-card p-8 flex flex-col justify-between gap-6"
+                  className="rounded-2xl apple-glass p-8 flex flex-col justify-between gap-6"
                 >
                   <div className="flex items-start gap-5">
                     <div
@@ -144,7 +144,7 @@ export default function AboutPage() {
           </div>
 
           {/* Walkthrough CTA */}
-          <div className="rounded-xl border border-border bg-card p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="rounded-2xl apple-glass p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2 max-w-xl">
               <h2 className="text-2xl sm:text-3xl font-bold font-heading text-foreground">
                 Visit the gym in person
@@ -156,7 +156,7 @@ export default function AboutPage() {
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
                 href="/contact"
-                className="px-7 py-3.5 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all text-center focus-gold touch-target"
+                className="px-7 py-3.5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm active:scale-[0.98] transition-all text-center focus-gold touch-target gold-glow-sm"
               >
                 Book a walkthrough
               </Link>

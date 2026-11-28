@@ -265,7 +265,7 @@ function DietPlanForm({ memberId, existingDiet }: { memberId: string; existingDi
           <button
             onClick={() => dietMutation.mutate(dietForm)}
             disabled={dietMutation.isPending}
-            className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 font-bold shadow-lg transition-all active:scale-[0.98] focus-gold touch-target disabled:opacity-50"
+            className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold gold-glow-sm transition-all active:scale-[0.98] focus-gold touch-target disabled:opacity-50"
           >
             {dietMutation.isPending ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -490,7 +490,7 @@ function WorkoutRoutineForm({ memberId, existingWorkout }: { memberId: string; e
               <button
                 onClick={() => workoutMutation.mutate(workoutForm)}
                 disabled={workoutMutation.isPending}
-                className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 font-bold shadow-lg transition-all active:scale-[0.98] focus-gold touch-target disabled:opacity-50"
+                className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold gold-glow-sm transition-all active:scale-[0.98] focus-gold touch-target disabled:opacity-50"
               >
                 {workoutMutation.isPending ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

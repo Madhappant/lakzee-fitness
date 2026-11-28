@@ -123,7 +123,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
   if (!isClient || !user) return null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground relative transition-colors duration-300 theme-adaptive">
       {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
         <div 
@@ -134,7 +134,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 shrink-0 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 shrink-0 apple-glass-elevated border-r border-border rounded-none flex flex-col transition-transform duration-300 ease-in-out safe-top safe-bottom ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
@@ -170,7 +170,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                   onTouchStart={() => handlePrefetch(link.href)}
                   className={`flex items-center gap-3 px-4 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-gold ${
                     isActive 
-                      ? "bg-gradient-to-r from-brand-gold to-yellow-500 text-black font-bold shadow-lg shadow-brand-gold/25" 
+                      ? "bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold gold-glow-sm" 
                       : "text-muted-foreground hover:text-foreground hover:bg-white/5 active:scale-[0.98]"
                   }`}
                 >
@@ -186,7 +186,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         <div className="p-4 border-t border-border shrink-0">
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 min-h-[44px] w-full rounded-xl text-red-500 hover:bg-red-500/10 active:scale-[0.98] transition-colors text-sm focus-gold"
+            className="flex items-center gap-3 px-4 min-h-[44px] w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-transparent hover:border-border active:scale-[0.98] transition-colors text-sm focus-gold"
             aria-label="Log out of member session"
           >
             <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -198,8 +198,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       {/* Main Content */}
       <div className="flex flex-col min-h-screen md:pl-64 w-full">
         {/* Topbar */}
-        <header className="h-20 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-8 z-40 sticky top-0 shrink-0">
-          <div className="flex items-center gap-4">
+        <header className="h-18 sm:h-20 apple-glass border-x-0 border-t-0 rounded-none border-b border-border flex items-center justify-between px-3 sm:px-5 md:px-8 z-40 sticky top-0 shrink-0 safe-top">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button 
               className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-xl focus-gold"
               onClick={() => setIsMobileMenuOpen(true)}
@@ -207,14 +207,14 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
             >
               <Menu className="w-6 h-6" aria-hidden="true" />
             </button>
-            <h2 className="text-xl font-bold hidden md:block text-foreground/90">Member Dashboard</h2>
+            <h2 className="text-lg sm:text-xl font-bold hidden md:block text-foreground/90">Member Dashboard</h2>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
             <ThemeToggle />
             <NotificationDropdown role="MEMBER" />
             
-            <div className="flex items-center gap-3 border-l border-border pl-4 md:pl-6">
+            <div className="hidden sm:flex items-center gap-3 border-l border-border pl-3 sm:pl-4 md:pl-6">
               <div className="hidden md:block text-right">
                 <p className="text-sm font-medium text-foreground uppercase tracking-wider">{user?.firstName}</p>
                 <p className="text-[10px] text-muted-foreground uppercase">{user?.memberProfile?.memberId || 'Member'}</p>

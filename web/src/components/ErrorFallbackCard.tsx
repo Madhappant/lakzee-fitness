@@ -25,10 +25,10 @@ export function ErrorFallbackCard({
       role="alert"
       className="min-h-[70vh] w-full bg-[#0A0A0C] text-[#F5F5F7] flex items-center justify-center p-6"
     >
-      <div className="max-w-lg w-full rounded-2xl border border-[#F5F5F7]/12 bg-[#0A0A0C] p-8 shadow-2xl space-y-6">
+      <div className="max-w-lg w-full rounded-3xl apple-glass p-6 sm:p-8 shadow-2xl space-y-6">
         <div className="flex items-center justify-between gap-3">
-          <div className="w-11 h-11 rounded-xl bg-[#D4FF00]/12 border border-[#D4FF00]/30 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-[#D4FF00]" aria-hidden="true" />
+          <div className="w-11 h-11 rounded-xl bg-[#DBA12C]/15 border border-[#DBA12C]/35 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-[#DBA12C]" aria-hidden="true" />
           </div>
           <span className="font-mono-metric text-[11px] uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-[#F5F5F7]/[0.06] border border-[#F5F5F7]/15 text-[#F5F5F7]/80">
             Session Recovery
@@ -41,7 +41,7 @@ export function ErrorFallbackCard({
           </h1>
           <p className="text-sm text-[#F5F5F7]/70 leading-relaxed">{subtitle}</p>
           {digest && (
-            <p className="font-mono-metric text-xs text-[#D4FF00]/90 pt-1">
+            <p className="font-mono-metric text-xs text-[#F2C14E] pt-1">
               Incident Ref: {digest}
             </p>
           )}
@@ -51,7 +51,7 @@ export function ErrorFallbackCard({
           <button
             type="button"
             onClick={onReset}
-            className="touch-target inline-flex items-center justify-center gap-2 px-5 h-11 rounded-xl bg-[#D4FF00] text-[#0A0A0C] font-bold text-sm hover:brightness-105 transition-all cursor-pointer focus-volt"
+            className="touch-target inline-flex items-center justify-center gap-2 px-5 h-11 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm transition-all cursor-pointer focus-gold gold-glow-sm"
           >
             <RotateCcw className="w-4 h-4" aria-hidden="true" />
             Try Again
@@ -59,9 +59,9 @@ export function ErrorFallbackCard({
 
           <Link
             href={fallbackHref}
-            className="touch-target inline-flex items-center justify-center gap-2 px-5 h-11 rounded-xl border border-[#F5F5F7]/15 bg-[#F5F5F7]/[0.04] text-[#F5F5F7] text-sm font-semibold hover:border-[#D4FF00]/50 transition-colors focus-volt"
+            className="touch-target inline-flex items-center justify-center gap-2 px-5 h-11 rounded-xl border border-[#F5F5F7]/15 bg-[#F5F5F7]/[0.04] text-[#F5F5F7] text-sm font-semibold hover:border-[#DBA12C]/50 transition-colors focus-gold"
           >
-            <ArrowLeft className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />
+            <ArrowLeft className="w-4 h-4 text-[#DBA12C]" aria-hidden="true" />
             {fallbackLabel}
           </Link>
         </div>

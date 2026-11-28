@@ -57,7 +57,7 @@ export default function ExpensesPage() {
         </div>
         <button 
           onClick={openNewModal}
-          className="flex items-center gap-2 bg-brand-gold text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/20 focus-gold touch-target"
+          className="flex items-center gap-2 bg-[#DBA12C] text-[#0A0A0C] font-bold px-6 py-3 rounded-xl hover:bg-[#F2C14E] active:scale-[0.98] transition-all duration-200 gold-glow-sm focus-gold touch-target"
         >
           <Plus className="w-5 h-5" />
           Add Expense
@@ -181,7 +181,7 @@ export default function ExpensesPage() {
                       <button 
                         onClick={() => handleDelete(exp.id)}
                         disabled={deleteMut.isPending}
-                        className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors focus-gold disabled:opacity-50"
+                        className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 rounded-lg transition-colors focus-gold disabled:opacity-50"
                         title="Delete"
                         aria-label={`Delete expense ${exp.title}`}
                       >

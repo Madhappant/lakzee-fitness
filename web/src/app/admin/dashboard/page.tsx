@@ -178,7 +178,7 @@ export default function DashboardOverview() {
     return (
       <div className="flex items-center justify-center min-h-[55vh]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-7 h-7 animate-spin text-[#D4FF00]" aria-hidden="true" />
+          <Loader2 className="w-7 h-7 animate-spin text-[#DBA12C]" aria-hidden="true" />
           <span className="font-mono-metric text-xs text-muted-foreground tracking-widest uppercase">
             Loading Studio Metrics
           </span>
@@ -211,14 +211,14 @@ export default function DashboardOverview() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <Link
             href="/admin/attendance"
-            className="touch-target gap-2 px-5 rounded-xl border border-border bg-secondary/40 text-foreground hover:border-[#D4FF00]/50 hover:bg-secondary font-semibold text-sm transition-colors duration-200 focus-volt w-full sm:w-auto"
+            className="touch-target gap-2 px-5 rounded-xl border border-border bg-secondary/40 text-foreground hover:border-[#DBA12C]/50 hover:bg-secondary font-semibold text-sm transition-colors duration-200 focus-gold w-full sm:w-auto"
           >
-            <QrCode className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />
+            <QrCode className="w-4 h-4 text-[#DBA12C]" aria-hidden="true" />
             Scan QR
           </Link>
           <Link
             href="/admin/members/new"
-            className="touch-target gap-2 px-5 rounded-xl bg-[#D4FF00] text-[#0A0A0C] hover:brightness-105 font-bold text-sm transition-all duration-200 volt-glow-sm focus-volt w-full sm:w-auto"
+            className="touch-target gap-2 px-5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm transition-all duration-200 gold-glow-sm focus-gold w-full sm:w-auto"
           >
             <UserPlus className="w-4 h-4" aria-hidden="true" />
             New Member
@@ -249,7 +249,7 @@ export default function DashboardOverview() {
           </div>
           <button
             onClick={() => refetch()}
-            className="touch-target px-4 rounded-xl bg-[#D4FF00] text-[#0A0A0C] text-xs font-bold hover:brightness-105 transition-all shrink-0 self-start sm:self-auto focus-volt"
+            className="touch-target px-4 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] text-xs font-bold transition-all shrink-0 self-start sm:self-auto focus-gold gold-glow-sm"
           >
             Retry Connection
           </button>
@@ -262,10 +262,10 @@ export default function DashboardOverview() {
           initial={shouldReduceMotion ? false : { opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="rounded-2xl p-4 md:p-5 bg-[#D4FF00]/[0.06] border border-[#D4FF00]/25 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+          className="rounded-2xl p-4 md:p-5 apple-glass border-[#DBA12C]/35 flex flex-col sm:flex-row items-start sm:items-center gap-4"
         >
-          <div className="w-11 h-11 rounded-xl bg-[#D4FF00]/15 border border-[#D4FF00]/30 flex items-center justify-center shrink-0">
-            <Cake className="w-5 h-5 text-[#D4FF00]" aria-hidden="true" />
+          <div className="w-11 h-11 rounded-xl bg-[#DBA12C]/15 border border-[#DBA12C]/30 flex items-center justify-center shrink-0">
+            <Cake className="w-5 h-5 text-[#DBA12C]" aria-hidden="true" />
           </div>
           <div>
             <h3 className="font-display font-bold text-base text-foreground">
@@ -309,13 +309,13 @@ export default function DashboardOverview() {
               }}
               className={`${stat.spanClass} group relative rounded-2xl border transition-all duration-200 ${
                 stat.featured
-                  ? "bg-card border-[#D4FF00]/30 hover:border-[#D4FF00]/60 p-6"
+                  ? "apple-glass border-[#DBA12C]/35 hover:border-[#DBA12C]/65 p-6"
                   : stat.compact
                   ? "glass-card p-5 flex items-center justify-between gap-4"
                   : "glass-card p-6"
               } ${
                 clickable
-                  ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#D4FF00]/50 hover:bg-secondary/50 focus-volt"
+                  ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#DBA12C]/50 hover:bg-secondary/50 focus-gold"
                   : "hover:border-foreground/15"
               }`}
             >
@@ -324,7 +324,7 @@ export default function DashboardOverview() {
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0">
                       <Icon
-                        className={`w-4 h-4 ${clickable ? "text-[#D4FF00]" : "text-foreground/75"}`}
+                        className={`w-4 h-4 ${clickable ? "text-[#DBA12C]" : "text-foreground/75"}`}
                         aria-hidden="true"
                       />
                     </div>
@@ -343,7 +343,7 @@ export default function DashboardOverview() {
                     </p>
                     {clickable && (
                       <ArrowUpRight
-                        className="w-4 h-4 text-muted-foreground group-hover:text-[#D4FF00] transition-colors"
+                        className="w-4 h-4 text-muted-foreground group-hover:text-[#F2C14E] transition-colors"
                         aria-hidden="true"
                       />
                     )}
@@ -359,7 +359,7 @@ export default function DashboardOverview() {
                       <span
                         className={`inline-block font-mono-metric text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-md border ${
                           stat.featured
-                            ? "bg-[#D4FF00]/12 text-[#D4FF00] border-[#D4FF00]/25"
+                            ? "bg-[#DBA12C]/15 text-[#F2C14E] border-[#DBA12C]/30"
                             : "bg-secondary text-muted-foreground border-border"
                         }`}
                       >
@@ -370,9 +370,9 @@ export default function DashboardOverview() {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 transition-colors ${
                         stat.featured
-                          ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+                          ? "bg-[#DBA12C] text-[#0A0A0C] border-[#DBA12C]"
                           : clickable
-                          ? "bg-secondary border-border text-foreground/75 group-hover:border-[#D4FF00]/40 group-hover:text-[#D4FF00]"
+                          ? "bg-secondary border-border text-foreground/75 group-hover:border-[#DBA12C]/45 group-hover:text-[#F2C14E]"
                           : "bg-secondary border-border text-muted-foreground"
                       }`}
                     >
@@ -387,7 +387,7 @@ export default function DashboardOverview() {
                   <p
                     className={`font-mono-metric font-bold tracking-tight ${
                       stat.featured
-                        ? "text-3xl sm:text-4xl text-[#D4FF00]"
+                        ? "text-3xl sm:text-4xl text-[#F2C14E]"
                         : "text-2xl sm:text-3xl text-foreground"
                     }`}
                   >
@@ -413,7 +413,7 @@ export default function DashboardOverview() {
                 Daily subscription & balance collections
               </p>
             </div>
-            <span className="font-mono-metric text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#D4FF00]/10 text-[#D4FF00] border border-[#D4FF00]/25">
+            <span className="font-mono-metric text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#DBA12C]/15 text-[#F2C14E] border border-[#DBA12C]/30">
               14D Series
             </span>
           </div>
@@ -467,7 +467,7 @@ export default function DashboardOverview() {
                         <span className="font-mono-metric">{displayTime}</span>
                       </p>
                     </div>
-                    <p className="font-mono-metric text-sm font-bold text-[#D4FF00] shrink-0">
+                    <p className="font-mono-metric text-sm font-bold text-[#F2C14E] shrink-0">
                       ₹{payment.amount}
                     </p>
                   </div>
@@ -505,8 +505,8 @@ export default function DashboardOverview() {
                     key={activity.id || i}
                     className="flex gap-3.5 relative before:absolute before:left-[17px] before:top-9 before:bottom-[-20px] before:w-px before:bg-border last:before:hidden"
                   >
-                    <div className="w-9 h-9 rounded-full bg-[#D4FF00]/10 flex items-center justify-center shrink-0 border border-[#D4FF00]/25">
-                      <Dumbbell className="w-3.5 h-3.5 text-[#D4FF00]" aria-hidden="true" />
+                    <div className="w-9 h-9 rounded-full bg-[#DBA12C]/15 flex items-center justify-center shrink-0 border border-[#DBA12C]/30">
+                      <Dumbbell className="w-3.5 h-3.5 text-[#DBA12C]" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
                       <p className="font-medium text-sm text-foreground leading-snug">
@@ -537,7 +537,7 @@ export default function DashboardOverview() {
                 Rolling 30-day growth, renewal health, staff sessions &amp; peak floor hours
               </p>
             </div>
-            <span className="font-mono-metric text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#D4FF00]/10 text-[#D4FF00] border border-[#D4FF00]/25 self-start sm:self-auto">
+            <span className="font-mono-metric text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#DBA12C]/15 text-[#F2C14E] border border-[#DBA12C]/30 self-start sm:self-auto">
               Live Telemetry
             </span>
           </div>
@@ -557,7 +557,7 @@ export default function DashboardOverview() {
                 30D Member Velocity
               </p>
               <div className="flex items-baseline gap-2 mt-1.5">
-                <p className="font-mono-metric text-2xl font-bold text-[#D4FF00]">
+                <p className="font-mono-metric text-2xl font-bold text-[#F2C14E]">
                   +{stats.operationalAnalytics.memberGrowthVelocity.last30Days}
                 </p>
                 <span className="font-mono-metric text-xs text-muted-foreground">

@@ -98,7 +98,7 @@ export default function ActivityHeatmap({
     if (count === 0) return "bg-white/5 dark:bg-white/10 hover:bg-white/20";
     if (count === 1) return "bg-brand-gold/40 border border-brand-gold/50";
     if (count === 2) return "bg-brand-gold/70 border border-brand-gold/80";
-    return "bg-brand-gold border border-yellow-300 shadow-[0_0_8px_rgba(217,160,43,0.7)]";
+    return "bg-[#DBA12C] border border-[#F2C14E] shadow-[0_0_8px_rgba(219,161,44,0.65)]";
   };
 
   return (

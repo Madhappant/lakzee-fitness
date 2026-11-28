@@ -259,7 +259,7 @@ function MembersContent() {
 
         <Link
           href="/admin/members/new"
-          className="touch-target gap-2 px-6 rounded-xl bg-[#D4FF00] text-[#0A0A0C] hover:brightness-105 font-bold text-sm transition-all duration-200 volt-glow-sm focus-volt w-full md:w-auto shrink-0"
+          className="touch-target gap-2 px-6 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm transition-all duration-200 gold-glow-sm focus-gold w-full md:w-auto shrink-0"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
           Add New Member
@@ -278,14 +278,14 @@ function MembersContent() {
             placeholder="Search by name, email, or Member No..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-11 bg-background border border-border rounded-xl pl-10 pr-16 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-[#D4FF00] focus:outline-none transition-colors"
+            className="w-full h-11 bg-background border border-border rounded-xl pl-10 pr-16 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-[#DBA12C] focus:outline-none transition-colors"
             aria-label="Search members by name, email, or Member No."
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 font-mono-metric text-xs text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded focus-volt"
+              className="absolute right-3 top-1/2 -translate-y-1/2 font-mono-metric text-xs text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded focus-gold"
             >
               Clear
             </button>
@@ -307,9 +307,9 @@ function MembersContent() {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setStatusFilter(filterOption)}
-                  className={`touch-target px-4 rounded-xl text-xs font-semibold transition-all duration-200 focus-volt border ${
+                  className={`touch-target px-4 rounded-xl text-xs font-semibold transition-all duration-200 focus-gold border ${
                     isSelected
-                      ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00] font-bold"
+                      ? "bg-[#DBA12C] text-[#0A0A0C] border-[#DBA12C] font-bold"
                       : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground hover:border-foreground/20"
                   }`}
                 >
@@ -322,14 +322,14 @@ function MembersContent() {
           {/* Sort Order Selector (Natural Numeric ID & Recency) */}
           <div className="relative flex items-center">
             <ArrowUpDown
-              className="pointer-events-none absolute left-3 w-3.5 h-3.5 text-[#D4FF00]"
+              className="pointer-events-none absolute left-3 w-3.5 h-3.5 text-[#DBA12C]"
               aria-hidden="true"
             />
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as MemberSortOrder)}
               aria-label="Sort members list"
-              className="h-11 min-w-[215px] bg-background border border-border rounded-xl pl-9 pr-9 font-mono-metric text-xs font-semibold text-foreground hover:border-foreground/25 focus:border-[#D4FF00] focus:outline-none transition-colors cursor-pointer appearance-none focus-volt"
+              className="h-11 w-full sm:w-auto sm:min-w-[215px] bg-background border border-border rounded-xl pl-9 pr-9 font-mono-metric text-xs font-semibold text-foreground hover:border-foreground/25 focus:border-[#DBA12C] focus:outline-none transition-colors cursor-pointer appearance-none focus-gold"
             >
               <option value="asc">Ascending (001 → Last)</option>
               <option value="desc">Descending (Last → 001)</option>
@@ -442,14 +442,14 @@ function MembersContent() {
                             }}
                             autoFocus
                             disabled={updateNumberMutation.isPending}
-                            className="w-28 bg-background border border-[#D4FF00] rounded-lg px-2.5 py-1.5 font-mono-metric text-xs text-foreground focus:outline-none"
+                            className="w-28 bg-background border border-[#DBA12C] rounded-lg px-2.5 py-1.5 font-mono-metric text-xs text-foreground focus:outline-none"
                             placeholder="e.g. 101"
                           />
                           <button
                             type="button"
                             onClick={() => handleSaveMemberNo(member.id)}
                             disabled={updateNumberMutation.isPending}
-                            className="p-2 text-[#D4FF00] hover:bg-[#D4FF00]/10 rounded-lg transition-colors focus-volt"
+                            className="p-2 text-[#DBA12C] hover:bg-[#DBA12C]/10 rounded-lg transition-colors focus-gold"
                             title="Save (Enter)"
                             aria-label="Save Member No."
                           >
@@ -463,7 +463,7 @@ function MembersContent() {
                             type="button"
                             onClick={() => setEditingMemberId(null)}
                             disabled={updateNumberMutation.isPending}
-                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors focus-volt"
+                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors focus-gold"
                             title="Cancel (Esc)"
                             aria-label="Cancel editing Member No."
                           >
@@ -478,7 +478,7 @@ function MembersContent() {
                               setEditingMemberId(member.id);
                               setEditNumberValue(member.memberProfile?.memberId || "");
                             }}
-                            className="font-mono-metric font-bold text-xs tracking-wide text-[#D4FF00] hover:underline focus-volt rounded"
+                            className="font-mono-metric font-bold text-xs tracking-wide text-[#F2C14E] hover:underline focus-gold rounded"
                             title="Click to edit Member No."
                           >
                             {member.memberProfile?.memberId || "N/A"}
@@ -490,7 +490,7 @@ function MembersContent() {
                               setEditingMemberId(member.id);
                               setEditNumberValue(member.memberProfile?.memberId || "");
                             }}
-                            className="opacity-0 group-hover/id:opacity-100 focus-visible:opacity-100 p-1.5 text-muted-foreground hover:text-[#D4FF00] hover:bg-[#D4FF00]/10 rounded-lg transition-all focus-volt"
+                            className="opacity-0 group-hover/id:opacity-100 focus-visible:opacity-100 p-1.5 text-muted-foreground hover:text-[#F2C14E] hover:bg-[#DBA12C]/10 rounded-lg transition-all focus-gold"
                             title="Edit Member No."
                             aria-label={`Edit Member No. for ${member.firstName}`}
                           >
@@ -505,7 +505,7 @@ function MembersContent() {
                       <button
                         type="button"
                         onClick={() => setSelectedMember(member)}
-                        className="flex items-center gap-3.5 hover:text-[#D4FF00] transition-colors text-left focus-volt rounded-xl pr-2"
+                        className="flex items-center gap-3.5 hover:text-[#F2C14E] transition-colors text-left focus-gold rounded-xl pr-2"
                       >
                         {member.memberProfile?.photoUrl ? (
                           <Image
@@ -521,12 +521,12 @@ function MembersContent() {
                             unoptimized
                           />
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center font-mono-metric text-[#D4FF00] font-bold text-xs shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center font-mono-metric text-[#F2C14E] font-bold text-xs shrink-0">
                             {member.firstName.charAt(0)}
                             {member.lastName.charAt(0)}
                           </div>
                         )}
-                        <span className="font-semibold text-foreground group-hover:text-[#D4FF00] transition-colors">
+                        <span className="font-semibold text-foreground group-hover:text-[#F2C14E] transition-colors">
                           {member.firstName} {member.lastName}
                         </span>
                       </button>
@@ -551,14 +551,14 @@ function MembersContent() {
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
                             isActive
-                              ? "bg-[#D4FF00]/12 text-[#D4FF00] border-[#D4FF00]/30"
+                              ? "bg-[#DBA12C]/15 text-[#F2C14E] border-[#DBA12C]/30"
                               : "bg-secondary text-muted-foreground border-border"
                           }`}
                         >
                           <span
                             aria-hidden="true"
                             className={`w-1.5 h-1.5 rounded-full ${
-                              isActive ? "bg-[#D4FF00]" : "bg-muted-foreground/50"
+                              isActive ? "bg-[#DBA12C]" : "bg-muted-foreground/50"
                             }`}
                           />
                           {isActive ? "Active" : "Inactive"}
@@ -582,7 +582,7 @@ function MembersContent() {
                               member.memberProfile?.notificationsEnabled === false
                             }
                             onClick={() => sendReminderMutation.mutate(member.id)}
-                            className="touch-target text-[#D4FF00] hover:bg-[#D4FF00]/12 transition-colors rounded-xl focus-volt disabled:opacity-40"
+                            className="touch-target text-[#F2C14E] hover:bg-[#DBA12C]/15 transition-colors rounded-xl focus-gold disabled:opacity-40"
                             title={
                               member.memberProfile?.notificationsEnabled === false
                                 ? "Notifications opted out by member"
@@ -599,7 +599,7 @@ function MembersContent() {
                         )}
                           <Link
                             href={`/admin/members/${member.id}/plan`}
-                            className="touch-target text-muted-foreground hover:text-[#D4FF00] transition-colors rounded-xl hover:bg-[#D4FF00]/10 focus-volt"
+                            className="touch-target text-muted-foreground hover:text-[#F2C14E] transition-colors rounded-xl hover:bg-[#DBA12C]/10 focus-gold"
                             title="Assign Plan"
                             aria-label={`Assign membership plan for ${member.firstName}`}
                           >
@@ -609,7 +609,7 @@ function MembersContent() {
                             type="button"
                             disabled={copyingLinkMemberId === (member.memberProfile?.id || member.id)}
                             onClick={() => copyRenewalLinkMutation.mutate(member.memberProfile?.id || member.id)}
-                            className="touch-target text-muted-foreground hover:text-[#D4FF00] transition-colors rounded-xl hover:bg-[#D4FF00]/10 focus-volt disabled:opacity-40"
+                            className="touch-target text-muted-foreground hover:text-[#F2C14E] transition-colors rounded-xl hover:bg-[#DBA12C]/10 focus-gold disabled:opacity-40"
                             title="Copy Renewal Link"
                             aria-label={`Copy renewal link for ${member.firstName}`}
                           >
@@ -621,7 +621,7 @@ function MembersContent() {
                           </button>
                         <Link
                           href={`/admin/members/${member.id}/edit`}
-                          className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-secondary focus-volt"
+                          className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-secondary focus-gold"
                           title="Edit Member"
                           aria-label={`Edit profile for ${member.firstName}`}
                         >
@@ -630,7 +630,7 @@ function MembersContent() {
                         <button
                           type="button"
                           onClick={() => handleDelete(member.id, member.firstName)}
-                          className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-secondary focus-volt"
+                          className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-secondary focus-gold"
                           title="Delete Member"
                           aria-label={`Delete member ${member.firstName}`}
                         >
@@ -654,7 +654,7 @@ function MembersContent() {
               type="button"
               onClick={handleLoadMore}
               disabled={isLoadingMore}
-              className="touch-target px-5 rounded-xl border border-[#D4FF00]/40 bg-[#D4FF00]/10 text-[#D4FF00] hover:bg-[#D4FF00]/20 font-mono-metric text-xs font-bold transition-colors focus-volt disabled:opacity-50 inline-flex items-center gap-2"
+              className="touch-target px-5 rounded-xl border border-[#DBA12C]/40 bg-[#DBA12C]/15 text-[#F2C14E] hover:bg-[#DBA12C]/25 font-mono-metric text-xs font-bold transition-colors focus-gold disabled:opacity-50 inline-flex items-center gap-2"
             >
               {isLoadingMore && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
               Load Next 100 Members
@@ -684,7 +684,7 @@ function MembersContent() {
               animate={shouldReduceMotion ? { opacity: 1 } : { x: 0 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { x: "100%" }}
               transition={{ duration: 0.25, ease: SUBTLE_EASE }}
-              className="relative z-10 w-full max-w-md h-full obsidian-glass border-l border-[#F5F5F7]/10 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto custom-scrollbar shadow-2xl"
+              className="relative z-10 w-full max-w-md h-full apple-glass-elevated border-l border-border rounded-none p-6 sm:p-8 flex flex-col justify-between overflow-y-auto custom-scrollbar shadow-2xl safe-top safe-bottom"
             >
               <div>
                 {/* Drawer Top Bar */}
@@ -695,7 +695,7 @@ function MembersContent() {
                   <button
                     type="button"
                     onClick={() => setSelectedMember(null)}
-                    className="touch-target text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-colors focus-volt"
+                    className="touch-target text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-colors focus-gold"
                     aria-label="Close member details drawer"
                   >
                     <X className="w-5 h-5" aria-hidden="true" />
@@ -714,11 +714,11 @@ function MembersContent() {
                       alt={`${selectedMember.firstName} ${selectedMember.lastName}`}
                       width={96}
                       height={96}
-                      className="w-24 h-24 rounded-full object-cover border-2 border-[#D4FF00]/40 mb-4"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-[#DBA12C]/45 mb-4"
                       unoptimized
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-secondary border-2 border-[#D4FF00]/30 flex items-center justify-center font-display text-[#D4FF00] font-extrabold text-3xl mb-4">
+                    <div className="w-24 h-24 rounded-full bg-secondary border-2 border-[#DBA12C]/35 flex items-center justify-center font-display text-[#F2C14E] font-extrabold text-3xl mb-4">
                       {selectedMember.firstName.charAt(0)}
                       {selectedMember.lastName.charAt(0)}
                     </div>
@@ -728,7 +728,7 @@ function MembersContent() {
                     {selectedMember.firstName} {selectedMember.lastName}
                   </h3>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="font-mono-metric text-xs font-bold text-[#D4FF00] px-2.5 py-0.5 rounded-md bg-[#D4FF00]/10 border border-[#D4FF00]/25">
+                    <span className="font-mono-metric text-xs font-bold text-[#F2C14E] px-2.5 py-0.5 rounded-md bg-[#DBA12C]/15 border border-[#DBA12C]/30">
                       {selectedMember.memberProfile?.memberId || "Pending ID"}
                     </span>
                     {selectedMember.memberProfile?.subscriptions?.[0]?.plan?.name && (
@@ -795,12 +795,12 @@ function MembersContent() {
                     selectedMember.memberProfile?.notificationsEnabled === false
                   }
                   onClick={() => sendReminderMutation.mutate(selectedMember.id)}
-                  className="w-full touch-target gap-2 bg-secondary/80 hover:border-[#D4FF00]/50 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors focus-volt disabled:opacity-45"
+                  className="w-full touch-target gap-2 bg-secondary/80 hover:border-[#DBA12C]/50 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors focus-gold disabled:opacity-45"
                 >
                   {remindingMemberId === selectedMember.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-[#D4FF00]" aria-hidden="true" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#DBA12C]" aria-hidden="true" />
                   ) : (
-                    <BellRing className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />
+                    <BellRing className="w-4 h-4 text-[#DBA12C]" aria-hidden="true" />
                   )}
                   {selectedMember.memberProfile?.notificationsEnabled === false
                     ? "Reminders Opted Out"
@@ -810,25 +810,25 @@ function MembersContent() {
                   type="button"
                   disabled={copyingLinkMemberId === (selectedMember.memberProfile?.id || selectedMember.id)}
                   onClick={() => copyRenewalLinkMutation.mutate(selectedMember.memberProfile?.id || selectedMember.id)}
-                  className="w-full touch-target gap-2 bg-secondary/80 hover:border-[#D4FF00]/50 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors focus-volt disabled:opacity-45"
+                  className="w-full touch-target gap-2 bg-secondary/80 hover:border-[#DBA12C]/50 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors focus-gold disabled:opacity-45"
                 >
                   {copyingLinkMemberId === (selectedMember.memberProfile?.id || selectedMember.id) ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-[#D4FF00]" aria-hidden="true" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#DBA12C]" aria-hidden="true" />
                   ) : (
-                    <Link2 className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />
+                    <Link2 className="w-4 h-4 text-[#DBA12C]" aria-hidden="true" />
                   )}
                   Copy One-Click Renewal Link
                 </button>
                 <div className="flex gap-3">
                   <Link
                     href={`/admin/members/${selectedMember.id}/edit`}
-                    className="flex-1 touch-target bg-secondary hover:bg-secondary/80 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors text-center focus-volt"
+                    className="flex-1 touch-target bg-secondary hover:bg-secondary/80 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors text-center focus-gold"
                   >
                     Edit Profile
                   </Link>
                   <Link
                     href={`/admin/members/${selectedMember.id}/plan`}
-                    className="flex-1 touch-target bg-[#D4FF00] hover:brightness-105 text-[#0A0A0C] font-bold text-sm rounded-xl transition-all text-center volt-glow-sm focus-volt"
+                    className="flex-1 touch-target bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm rounded-xl transition-all text-center gold-glow-sm focus-gold"
                   >
                     Manage Plan
                   </Link>
@@ -847,7 +847,7 @@ export default function MembersPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="w-7 h-7 animate-spin text-[#D4FF00]" aria-hidden="true" />
+          <Loader2 className="w-7 h-7 animate-spin text-[#DBA12C]" aria-hidden="true" />
         </div>
       }
     >

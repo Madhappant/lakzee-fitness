@@ -9,7 +9,7 @@ import type { BranchRecord } from "@/lib/api/types";
 import { useBranchScope } from "@/lib/branch-context";
 
 /**
- * Minimal Obsidian / Chalk / Volt Lime branch switcher & branch provisioner
+ * Minimal Obsidian / Chalk / Golden Yellow branch switcher & branch provisioner
  * strictly gated to SUPER_ADMIN accounts in the Admin Dashboard header.
  */
 export function BranchSwitcher({ userRole }: { userRole: string | null }) {
@@ -77,14 +77,14 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
       <div className="flex items-center gap-2">
         <div className="relative flex items-center">
           <Building2
-            className="pointer-events-none absolute left-3 w-3.5 h-3.5 text-[#D4FF00]"
+            className="pointer-events-none absolute left-2.5 sm:left-3 w-3.5 h-3.5 text-[#DBA12C]"
             aria-hidden="true"
           />
           <select
             value={activeBranchId}
             onChange={(e) => handleSelectChange(e.target.value)}
             aria-label="Switch active branch"
-            className="h-10 min-w-[120px] max-w-[155px] sm:min-w-[175px] sm:max-w-[230px] bg-secondary/70 border border-border rounded-xl pl-8 pr-7 font-mono-metric text-xs font-semibold text-foreground hover:border-[#D4FF00]/50 focus:border-[#D4FF00] focus:outline-none transition-colors cursor-pointer appearance-none focus-volt truncate"
+            className="h-10 w-[112px] sm:w-auto sm:min-w-[175px] sm:max-w-[230px] apple-glass rounded-xl pl-7 sm:pl-8 pr-6 sm:pr-7 font-mono-metric text-[11px] sm:text-xs font-semibold text-foreground hover:border-[#DBA12C]/50 focus:border-[#DBA12C] focus:outline-none transition-colors cursor-pointer appearance-none focus-gold truncate"
           >
             <option value="all">All Branches (Global)</option>
             {branches.map((b) => (
@@ -104,7 +104,7 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
           onClick={() => setIsModalOpen(true)}
           title="Add Branch"
           aria-label="Add new gym branch"
-          className="h-10 w-10 rounded-xl border border-border bg-secondary/70 hover:border-[#D4FF00]/60 text-muted-foreground hover:text-[#D4FF00] flex items-center justify-center transition-colors focus-volt shrink-0"
+          className="h-10 w-10 rounded-xl apple-glass hover:border-[#DBA12C]/60 text-muted-foreground hover:text-[#F2C14E] flex items-center justify-center transition-colors focus-gold shrink-0"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
         </button>
@@ -115,12 +115,12 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
           role="dialog"
           aria-modal="true"
           aria-label="Add New Gym Branch"
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-[#0A0A0C]/75 backdrop-blur-md"
         >
-          <div className="w-full max-w-md rounded-2xl border border-[#F5F5F7]/15 bg-[#0A0A0C] text-[#F5F5F7] p-6 shadow-2xl space-y-5">
+          <div className="w-[calc(100%-1.5rem)] sm:w-full max-w-md rounded-3xl apple-glass-elevated text-foreground p-6 shadow-2xl space-y-5 max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <p className="font-mono-metric text-[10px] uppercase tracking-[0.18em] text-[#D4FF00]">
+                <p className="font-mono-metric text-[10px] uppercase tracking-[0.18em] text-[#DBA12C]">
                   Multi-Branch Network
                 </p>
                 <h3 className="font-display text-lg font-extrabold tracking-tight">
@@ -131,7 +131,7 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
                 type="button"
                 onClick={() => setIsModalOpen(false)}
                 aria-label="Close branch modal"
-                className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors focus-volt"
+                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors focus-gold"
               >
                 <X className="w-4 h-4" aria-hidden="true" />
               </button>
@@ -147,7 +147,7 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Anna Nagar Flagship"
-                  className="w-full h-11 rounded-xl border border-border bg-secondary/40 px-3.5 text-sm text-foreground focus:border-[#D4FF00] focus:outline-none"
+                  className="w-full h-11 rounded-xl border border-border bg-secondary/40 px-3.5 text-sm text-foreground focus:border-[#DBA12C] focus:outline-none"
                 />
               </div>
 
@@ -160,7 +160,7 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="Auto (e.g. BR-002)"
-                    className="w-full h-11 rounded-xl border border-border bg-secondary/40 px-3.5 font-mono-metric text-sm text-foreground focus:border-[#D4FF00] focus:outline-none uppercase"
+                    className="w-full h-11 rounded-xl border border-border bg-secondary/40 px-3.5 font-mono-metric text-sm text-foreground focus:border-[#DBA12C] focus:outline-none uppercase"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -172,7 +172,7 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. Chennai West"
-                    className="w-full h-11 rounded-xl border border-border bg-secondary/40 px-3.5 text-sm text-foreground focus:border-[#D4FF00] focus:outline-none"
+                    className="w-full h-11 rounded-xl border border-border bg-secondary/40 px-3.5 text-sm text-foreground focus:border-[#DBA12C] focus:outline-none"
                   />
                 </div>
               </div>
@@ -188,7 +188,7 @@ export function BranchSwitcher({ userRole }: { userRole: string | null }) {
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="h-11 px-5 rounded-xl bg-[#D4FF00] text-[#0A0A0C] text-xs font-bold hover:brightness-105 disabled:opacity-50 inline-flex items-center gap-2 transition-all focus-volt"
+                  className="h-11 px-5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] text-xs font-bold disabled:opacity-50 inline-flex items-center gap-2 transition-all focus-gold gold-glow-sm"
                 >
                   {createMutation.isPending && (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />

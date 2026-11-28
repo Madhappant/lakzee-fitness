@@ -38,7 +38,7 @@ export default function MemberSubscriptions() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4FF00]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#DBA12C]" />
       </div>
     );
   }
@@ -57,7 +57,7 @@ export default function MemberSubscriptions() {
         </div>
         <Link
           href="/renew"
-          className="touch-target inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4FF00] text-[#0A0A0C] font-bold text-sm px-5 py-3 hover:brightness-105 transition-all"
+          className="touch-target inline-flex items-center justify-center gap-2 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm px-5 py-3 transition-all focus-gold gold-glow-sm"
         >
           <Smartphone className="w-4 h-4" aria-hidden="true" />
           Renew / Pay via UPI
@@ -68,7 +68,7 @@ export default function MemberSubscriptions() {
       <div className="glass-panel p-6 border border-border">
         <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-[#D4FF00]" />
+            <Receipt className="w-5 h-5 text-[#DBA12C]" />
             Subscription History
           </h2>
         </div>
@@ -102,7 +102,7 @@ export default function MemberSubscriptions() {
                     >
                       <td className="py-4 pr-4">
                         <p className="font-bold text-foreground">{sub.plan?.name}</p>
-                        <p className="text-xs text-[#D4FF00] mt-1">
+                        <p className="text-xs text-[#F2C14E] mt-1">
                           Purchased on {new Date(sub.createdAt).toLocaleDateString()}
                         </p>
                         {sub.invoice?.invoiceNumber && (
@@ -129,14 +129,14 @@ export default function MemberSubscriptions() {
                               : "Payment Pending"}
                           </span>
                         ) : (
-                          <span className="text-xs text-[#D4FF00] font-semibold">Paid</span>
+                          <span className="text-xs text-[#F2C14E] font-semibold">Paid</span>
                         )}
                       </td>
                       <td className="py-4 px-4">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-bold border ${
                             isActive
-                              ? "bg-[#D4FF00]/12 text-[#D4FF00] border-[#D4FF00]/30"
+                              ? "bg-[#DBA12C]/15 text-[#F2C14E] border-[#DBA12C]/30"
                               : "bg-secondary text-muted-foreground border-border"
                           }`}
                         >
@@ -156,14 +156,14 @@ export default function MemberSubscriptions() {
       <div className="glass-panel p-6 border border-border">
         <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Download className="w-5 h-5 text-[#D4FF00]" />
+            <Download className="w-5 h-5 text-[#DBA12C]" />
             Tax Receipts (PDF)
           </h2>
         </div>
 
         {loadingPayments ? (
           <div className="py-8 flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-[#D4FF00]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#DBA12C]" />
           </div>
         ) : receipts.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">
@@ -184,7 +184,7 @@ export default function MemberSubscriptions() {
               <tbody className="divide-y divide-border">
                 {receipts.map((pay) => (
                   <tr key={pay.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="py-4 pr-4 font-mono-metric text-xs font-bold text-[#D4FF00]">
+                    <td className="py-4 pr-4 font-mono-metric text-xs font-bold text-[#F2C14E]">
                       {pay.invoiceNumber || pay.id.slice(0, 8).toUpperCase()}
                     </td>
                     <td className="py-4 px-4">
@@ -204,7 +204,7 @@ export default function MemberSubscriptions() {
                         type="button"
                         disabled={downloadingId === pay.id}
                         onClick={() => handleDownload(pay.id, pay.invoiceNumber)}
-                        className="touch-target inline-flex items-center gap-1.5 rounded-xl border border-[#D4FF00]/40 bg-[#D4FF00]/10 px-3.5 py-2 text-xs font-bold text-[#D4FF00] hover:bg-[#D4FF00]/20 transition-colors disabled:opacity-50"
+                        className="touch-target inline-flex items-center gap-1.5 rounded-xl border border-[#DBA12C]/40 bg-[#DBA12C]/15 px-3.5 py-2 text-xs font-bold text-[#F2C14E] hover:bg-[#DBA12C]/25 transition-colors disabled:opacity-50 focus-gold"
                       >
                         {downloadingId === pay.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />

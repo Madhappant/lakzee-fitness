@@ -67,7 +67,7 @@ export default function ReportsPage() {
                   setIsRevenue30dModalOpen(true);
                 }
               }}
-              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 transition-all duration-300 group focus-gold rounded-2xl"
+              className="apple-glass p-6 relative overflow-hidden cursor-pointer hover:border-[#DBA12C]/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#DBA12C]/15 transition-all duration-300 group focus-gold rounded-2xl"
               title="Click to view 30-day revenue graph"
             >
               <div className="flex justify-between items-start mb-4">
@@ -98,7 +98,7 @@ export default function ReportsPage() {
                   setIsThisMonthModalOpen(true);
                 }
               }}
-              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 transition-all duration-300 group focus-gold rounded-2xl"
+              className="apple-glass p-6 relative overflow-hidden cursor-pointer hover:border-[#DBA12C]/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#DBA12C]/15 transition-all duration-300 group focus-gold rounded-2xl"
               title="Click to view members and payments"
             >
               <div className="flex justify-between items-start mb-4">
@@ -129,7 +129,7 @@ export default function ReportsPage() {
                   setIsActiveMembersModalOpen(true);
                 }
               }}
-              className="glass-panel p-6 border border-border relative overflow-hidden cursor-pointer hover:border-brand-gold/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10 transition-all duration-300 group focus-gold rounded-2xl"
+              className="apple-glass p-6 relative overflow-hidden cursor-pointer hover:border-[#DBA12C]/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#DBA12C]/15 transition-all duration-300 group focus-gold rounded-2xl"
               title="Click to view active members details"
             >
               <div className="flex justify-between items-start mb-4">
@@ -149,16 +149,16 @@ export default function ReportsPage() {
             </div>
 
             {/* 4. Visits (30D) */}
-            <div className="glass-panel p-6 border border-border relative overflow-hidden rounded-2xl">
+            <div className="apple-glass p-6 relative overflow-hidden rounded-2xl">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-muted-foreground text-xs font-bold tracking-wider mb-1 uppercase">VISITS (30D)</h3>
                 </div>
-                <div className="p-2.5 rounded-xl bg-green-500/10">
-                  <CalendarCheck className="w-5 h-5 text-green-500" aria-hidden="true" />
+                <div className="p-2.5 rounded-xl bg-[#DBA12C]/15 border border-[#DBA12C]/30">
+                  <CalendarCheck className="w-5 h-5 text-[#DBA12C]" aria-hidden="true" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-green-400">{stats.visits30d.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-[#F2C14E]">{stats.visits30d.toLocaleString()}</p>
             </div>
           </div>
 

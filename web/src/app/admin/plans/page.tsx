@@ -130,7 +130,7 @@ export default function PlansPage() {
             setFormData({ name: "", description: "", price: "", durationDays: "30" });
             setIsModalOpen(true);
           }}
-          className="touch-target gap-2 px-6 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:brightness-110 font-bold transition-all shadow-lg shadow-brand-gold/20 focus-gold"
+          className="touch-target gap-2 px-6 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold transition-all gold-glow-sm focus-gold"
           aria-label="Create new membership plan"
         >
           <Plus className="w-5 h-5" aria-hidden="true" /> Create New Plan
@@ -162,7 +162,7 @@ export default function PlansPage() {
                 </button>
                 <button 
                   onClick={() => handleDelete(plan.id)} 
-                  className="w-9 h-9 flex items-center justify-center bg-card/90 border border-border/80 shadow-sm hover:border-red-500/50 hover:bg-red-500/20 text-foreground/80 hover:text-red-400 rounded-xl backdrop-blur-md transition-all cursor-pointer focus-gold" 
+                  className="w-9 h-9 flex items-center justify-center bg-card/90 border border-border/80 shadow-sm hover:border-foreground/40 hover:bg-foreground/10 text-foreground/80 hover:text-foreground rounded-xl backdrop-blur-md transition-all cursor-pointer focus-gold" 
                   title="Delete Plan"
                   aria-label={`Delete ${plan.name} plan`}
                 >
@@ -191,7 +191,7 @@ export default function PlansPage() {
               </ul>
               
               <div className="pt-4 border-t border-border">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${plan.isActive ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${plan.isActive ? 'bg-[#DBA12C]/15 text-[#F2C14E] border border-[#DBA12C]/30' : 'bg-foreground/10 text-foreground/80 border border-foreground/25'}`}>
                   {plan.isActive ? "Active Plan" : "Archived"}
                 </span>
               </div>
@@ -209,18 +209,19 @@ export default function PlansPage() {
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-[#0A0A0C]/75 backdrop-blur-md"
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} 
               animate={{ opacity: 1, scale: 1, y: 0 }} 
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg glass-panel p-6 sm:p-8 border border-border shadow-2xl shadow-brand-gold/10"
+              className="relative w-[calc(100%-1.5rem)] sm:w-full max-w-lg apple-glass-elevated p-5 sm:p-8 rounded-3xl shadow-2xl max-h-[90dvh] overflow-y-auto"
             >
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-white/10 transition-colors"
+                className="absolute top-4 right-4 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-foreground/10 transition-colors focus-gold"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -230,7 +231,7 @@ export default function PlansPage() {
               </h2>
 
               {modalError && (
-                <div role="alert" className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+                <div role="alert" className="mb-4 p-3 rounded-xl bg-foreground/[0.08] border border-foreground/25 text-foreground text-sm">
                   {modalError}
                 </div>
               )}
@@ -246,7 +247,7 @@ export default function PlansPage() {
                   <textarea name="description" value={formData.description} onChange={e => setFormData(p => ({...p, description: e.target.value}))} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none resize-none" rows={2} placeholder="Brief description of perks..." />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">Price (₹)</label>
                     <input required type="number" step="0.01" name="price" value={formData.price} onChange={e => setFormData(p => ({...p, price: e.target.value}))} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none" placeholder="0.00" />
@@ -261,7 +262,7 @@ export default function PlansPage() {
                   <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl font-medium text-foreground hover:bg-white/5 transition-colors">
                     Cancel
                   </button>
-                  <button type="submit" disabled={mutation.isPending || updateMut.isPending} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary-foreground bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold transition-all disabled:opacity-50">
+                  <button type="submit" disabled={mutation.isPending || updateMut.isPending} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold transition-all gold-glow-sm disabled:opacity-50">
                     {(mutation.isPending || updateMut.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : (modalMode === "ADD" ? <Plus className="w-4 h-4" /> : <Save className="w-4 h-4" />)}
                     {modalMode === "ADD" ? "Save Plan" : "Save Changes"}
                   </button>

@@ -6,7 +6,7 @@ import { Check, Dumbbell, HeartPulse, CalendarCheck } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors overflow-x-hidden theme-adaptive">
       <PublicNavbar />
 
       {/* Asymmetric Architectural Hero */}
@@ -25,13 +25,13 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
               <Link
                 href="/pricing"
-                className="px-7 py-4 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all text-center focus-gold touch-target"
+                className="px-7 py-4 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm active:scale-[0.98] transition-all text-center focus-gold touch-target gold-glow-sm"
               >
                 See membership plans
               </Link>
               <Link
                 href="/member"
-                className="px-7 py-4 rounded-lg border border-border bg-card text-foreground font-semibold text-sm hover:border-brand-gold/50 active:scale-[0.98] transition-all text-center focus-gold touch-target"
+                className="px-7 py-4 rounded-xl apple-glass text-foreground font-semibold text-sm hover:border-[#DBA12C]/50 active:scale-[0.98] transition-all text-center focus-gold touch-target"
               >
                 Open member portal
               </Link>
@@ -40,7 +40,7 @@ export default function Home() {
 
           {/* Right: Studio Specification Ledger */}
           <div className="lg:col-span-5">
-            <div className="rounded-xl bg-card border border-border p-6 sm:p-8 space-y-6">
+            <div className="rounded-2xl apple-glass p-6 sm:p-8 space-y-6">
               <div className="flex items-center gap-4 pb-6 border-b border-border">
                 <div className="relative w-14 h-14 rounded-full overflow-hidden border border-brand-gold/60 shrink-0">
                   <Image
@@ -101,7 +101,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 border border-border rounded-xl overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border bg-card/40">
+          <div className="grid grid-cols-1 md:grid-cols-3 apple-glass rounded-2xl overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border">
             <div className="p-8 space-y-4">
               <div className="w-10 h-10 rounded-lg bg-brand-gold/10 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
                 <Dumbbell className="w-5 h-5" aria-hidden="true" />
@@ -162,7 +162,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="p-8 rounded-xl bg-card border border-border flex flex-col justify-between gap-6">
+            <div className="p-8 rounded-2xl apple-glass flex flex-col justify-between gap-6">
               <div className="flex items-start gap-5">
                 <div className="w-14 h-14 rounded-lg bg-brand-gold text-black font-heading font-extrabold text-2xl flex items-center justify-center shrink-0">
                   MD
@@ -182,7 +182,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="p-8 rounded-xl bg-card border border-border flex flex-col justify-between gap-6">
+            <div className="p-8 rounded-2xl apple-glass flex flex-col justify-between gap-6">
               <div className="flex items-start gap-5">
                 <div className="w-14 h-14 rounded-lg bg-secondary border border-brand-gold/40 text-brand-gold font-heading font-extrabold text-2xl flex items-center justify-center shrink-0">
                   SV
@@ -227,7 +227,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Student */}
-            <div className="p-7 rounded-xl bg-card border border-border flex flex-col justify-between space-y-6">
+            <div className="p-7 rounded-2xl apple-glass flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div>
                   <h3 className="text-2xl font-heading font-bold text-foreground">Student</h3>
@@ -261,7 +261,7 @@ export default function Home() {
             </div>
 
             {/* Quarterly (Highlighted Tier) */}
-            <div className="p-7 rounded-xl bg-card border-2 border-brand-gold flex flex-col justify-between space-y-6">
+            <div className="p-7 rounded-2xl apple-glass border-2 border-[#DBA12C] gold-glow flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -293,14 +293,14 @@ export default function Home() {
               </div>
               <Link
                 href="/pricing"
-                className="block text-center py-3 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all focus-gold touch-target"
+                className="block text-center py-3 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm active:scale-[0.98] transition-all focus-gold touch-target gold-glow-sm"
               >
                 Choose quarterly
               </Link>
             </div>
 
             {/* Yearly Elite */}
-            <div className="p-7 rounded-xl bg-card border border-border flex flex-col justify-between space-y-6">
+            <div className="p-7 rounded-2xl apple-glass flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div>
                   <h3 className="text-2xl font-heading font-bold text-foreground">Yearly Elite</h3>
@@ -338,7 +338,7 @@ export default function Home() {
 
       {/* Consultation Walkthrough Band */}
       <section id="contact" className="py-20 px-4 sm:px-6 lg:px-8 scroll-mt-20">
-        <div className="max-w-7xl mx-auto rounded-xl bg-card border border-border p-8 sm:p-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <div className="max-w-7xl mx-auto rounded-2xl apple-glass p-8 sm:p-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           <div className="space-y-3 max-w-xl">
             <h2 className="text-3xl sm:text-4xl font-heading font-bold uppercase tracking-tight text-foreground">
               Tour the studio before you commit
@@ -350,7 +350,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 shrink-0">
             <Link
               href="/contact"
-              className="px-7 py-3.5 rounded-lg bg-brand-gold text-black font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all text-center focus-gold touch-target"
+              className="px-7 py-3.5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm active:scale-[0.98] transition-all text-center focus-gold touch-target gold-glow-sm"
             >
               Book a walkthrough
             </Link>

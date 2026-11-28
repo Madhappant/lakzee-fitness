@@ -161,7 +161,7 @@ export default function SettingsPage() {
 
         {/* Automated Expiry Reminders (Branch Scoped) */}
         <div className="glass-panel p-6 sm:p-8 space-y-6">
-          <h2 className="text-xl font-semibold border-b border-border pb-4 text-[#D4FF00] flex items-center gap-2">
+          <h2 className="text-xl font-semibold border-b border-border pb-4 text-[#F2C14E] flex items-center gap-2">
             <BellRing className="w-5 h-5" aria-hidden="true" /> Automated Expiry Reminders
           </h2>
 
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                   setFormData((prev) => ({ ...prev, whatsappRemindersEnabled: e.target.checked }))
                 }
                 aria-label="Enable WhatsApp expiry reminders"
-                className="w-5 h-5 accent-[#D4FF00] cursor-pointer"
+                className="w-5 h-5 accent-[#DBA12C] cursor-pointer"
               />
             </label>
 
@@ -194,7 +194,7 @@ export default function SettingsPage() {
                   setFormData((prev) => ({ ...prev, emailRemindersEnabled: e.target.checked }))
                 }
                 aria-label="Enable Email expiry reminders"
-                className="w-5 h-5 accent-[#D4FF00] cursor-pointer"
+                className="w-5 h-5 accent-[#DBA12C] cursor-pointer"
               />
             </label>
           </div>
@@ -210,9 +210,9 @@ export default function SettingsPage() {
                     type="button"
                     aria-pressed={selected}
                     onClick={() => toggleMilestoneDay(opt.day)}
-                    className={`touch-target px-4 rounded-xl text-xs font-mono-metric font-bold border transition-all focus-volt ${
+                    className={`touch-target px-4 rounded-xl text-xs font-mono-metric font-bold border transition-all focus-gold ${
                       selected
-                        ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+                        ? "bg-[#DBA12C] text-[#0A0A0C] border-[#DBA12C]"
                         : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground"
                     }`}
                   >
@@ -225,14 +225,14 @@ export default function SettingsPage() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex flex-wrap items-center justify-end gap-4">
           {successMessage && (
-            <span role="status" aria-live="polite" className="text-green-400 font-medium text-sm mr-4">{successMessage}</span>
+            <span role="status" aria-live="polite" className="text-[#F2C14E] font-medium text-sm mr-2">{successMessage}</span>
           )}
           <button 
             type="submit" 
             disabled={mutation.isPending}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 shadow-lg shadow-brand-gold/20 disabled:opacity-50 focus-gold touch-target"
+            className="flex items-center gap-2 px-8 py-3 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold active:scale-[0.98] transition-all duration-200 gold-glow-sm disabled:opacity-50 focus-gold touch-target"
           >
             {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             {mutation.isPending ? "Saving..." : "Save Configuration"}

@@ -103,7 +103,7 @@ export default function ExerciseLibraryModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-card border border-border w-full max-w-5xl h-[88vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="apple-glass-elevated w-[calc(100%-1.5rem)] sm:w-full max-w-5xl h-[88dvh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-border/70 flex items-center justify-between bg-muted/20">
           <div className="flex items-center gap-3">
@@ -339,7 +339,7 @@ export default function ExerciseLibraryModal({
 
                     <button
                       onClick={handleAdd}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 text-primary-foreground font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
+                      className="w-full py-3 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm gold-glow-sm flex items-center justify-center gap-2 transition-all focus-gold"
                     >
                       <Check className="w-4 h-4" /> Add to {dayToAssign.toUpperCase()} Routine
                     </button>

@@ -175,8 +175,8 @@ export default function LoginPage() {
           style={shouldReduceMotion ? undefined : { x: reticleX, y: reticleY }}
           className="pointer-events-none hidden lg:block absolute inset-8 border border-[#F5F5F7]/[0.06] rounded-2xl"
         >
-          <span className="absolute -top-px -left-px w-5 h-[2px] bg-[#D4FF00]" />
-          <span className="absolute -top-px -left-px h-5 w-[2px] bg-[#D4FF00]" />
+          <span className="absolute -top-px -left-px w-5 h-[2px] bg-[#DBA12C]" />
+          <span className="absolute -top-px -left-px h-5 w-[2px] bg-[#DBA12C]" />
           <span className="absolute -bottom-px -right-px w-5 h-[2px] bg-[#F5F5F7]/30" />
           <span className="absolute -bottom-px -right-px h-5 w-[2px] bg-[#F5F5F7]/30" />
         </motion.div>
@@ -209,9 +209,9 @@ export default function LoginPage() {
           >
             <Link
               href="/"
-              className="inline-flex items-center gap-3.5 group focus-volt rounded-full pr-2"
+              className="inline-flex items-center gap-3.5 group focus-gold rounded-full pr-2"
             >
-              <div className="relative w-11 h-11 rounded-full overflow-hidden border border-[#F5F5F7]/20 group-hover:border-[#D4FF00] transition-colors">
+              <div className="relative w-11 h-11 rounded-full overflow-hidden border border-[#F5F5F7]/20 group-hover:border-[#DBA12C] transition-colors">
                 <Image
                   src="/logo.jpg"
                   alt="Lakzee Fitness Studio"
@@ -231,9 +231,9 @@ export default function LoginPage() {
               </div>
             </Link>
 
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0A0A0C]/70 border border-[#F5F5F7]/10 backdrop-blur-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4FF00]" aria-hidden="true" />
-              <span className="font-mono-metric text-[11px] text-[#F5F5F7]/75 tracking-wider uppercase">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full apple-glass">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#DBA12C]" aria-hidden="true" />
+              <span className="font-mono-metric text-[11px] text-[#F5F5F7]/80 tracking-wider uppercase">
                 Obsidian Floor 01
               </span>
             </div>
@@ -245,7 +245,7 @@ export default function LoginPage() {
               initial={shouldReduceMotion ? false : { scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT_EXPO }}
-              className="origin-left w-12 h-[2px] bg-[#D4FF00]"
+              className="origin-left w-12 h-[2px] bg-[#DBA12C]"
             />
 
             <div className="overflow-hidden">
@@ -282,7 +282,7 @@ export default function LoginPage() {
               className="pt-4 border-t border-[#F5F5F7]/10 grid grid-cols-3 gap-6"
             >
               <div>
-                <p className="font-mono-metric text-xs text-[#D4FF00] font-bold">10,000+ SQ FT</p>
+                <p className="font-mono-metric text-xs text-[#F2C14E] font-bold">10,000+ SQ FT</p>
                 <p className="text-xs text-[#F5F5F7]/55 mt-0.5">Training Floor</p>
               </div>
               <div>
@@ -300,22 +300,22 @@ export default function LoginPage() {
 
       {/* Right Column: Floating Glassmorphic Auth Card */}
       <div className="relative z-20 lg:col-span-5 flex flex-col justify-center items-center px-4 py-10 sm:px-8 lg:px-10 xl:px-14 bg-transparent lg:bg-[#0A0A0C]">
-        {/* Subtle Volt Radial Ambient Glow on Auth Edge */}
+        {/* Subtle Golden Radial Ambient Glow on Auth Edge */}
         <div
           aria-hidden="true"
-          className="pointer-events-none hidden lg:block absolute top-1/3 left-0 -translate-x-1/2 w-64 h-64 rounded-full bg-[#D4FF00]/[0.06] blur-[110px]"
+          className="pointer-events-none hidden lg:block absolute top-1/3 left-0 -translate-x-1/2 w-64 h-64 rounded-full bg-[#DBA12C]/[0.10] blur-[110px]"
         />
 
         <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.12, ease: EASE_OUT_EXPO }}
-          className="relative w-full max-w-[430px] rounded-2xl p-7 sm:p-9 obsidian-glass shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
+          className="relative w-full max-w-[430px] rounded-3xl p-7 sm:p-9 apple-glass-elevated shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
         >
-          {/* Architectural top Volt Lime edge bar */}
+          {/* Architectural top Golden Yellow edge bar */}
           <span
             aria-hidden="true"
-            className="absolute top-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-[#D4FF00]/70 to-transparent"
+            className="absolute top-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-[#F2C14E]/80 to-transparent"
           />
 
           {/* Compact Brand Header */}
@@ -327,9 +327,9 @@ export default function LoginPage() {
           >
             <Link
               href="/"
-              className="inline-flex items-center gap-3 group focus-volt rounded-full pr-1"
+              className="inline-flex items-center gap-3 group focus-gold rounded-full pr-1"
             >
-              <div className="relative w-11 h-11 rounded-full overflow-hidden border border-[#F5F5F7]/15 group-hover:border-[#D4FF00] transition-colors">
+              <div className="relative w-11 h-11 rounded-full overflow-hidden border border-[#F5F5F7]/15 group-hover:border-[#DBA12C] transition-colors">
                 <Image
                   src="/logo.jpg"
                   alt="Lakzee Fitness Studio"
@@ -349,7 +349,7 @@ export default function LoginPage() {
               </div>
             </Link>
 
-            <span className="font-mono-metric text-[11px] uppercase tracking-[0.16em] text-[#D4FF00] px-2.5 py-1 rounded-full bg-[#D4FF00]/10 border border-[#D4FF00]/25">
+            <span className="font-mono-metric text-[11px] uppercase tracking-[0.16em] text-[#F2C14E] px-2.5 py-1 rounded-full bg-[#DBA12C]/15 border border-[#DBA12C]/30">
               Portal Access
             </span>
           </motion.div>
@@ -390,15 +390,15 @@ export default function LoginPage() {
               className="relative"
             >
               <div
-                className={`relative flex items-center rounded-xl bg-[#0A0A0C]/70 border transition-all duration-200 ${
+                className={`relative flex items-center rounded-xl bg-[#0A0A0C]/65 border transition-all duration-200 ${
                   focusedField === "email"
-                    ? "border-[#D4FF00] shadow-[0_0_0_3px_rgba(212,255,0,0.18)]"
-                    : "border-[#F5F5F7]/12 hover:border-[#F5F5F7]/25"
+                    ? "border-[#DBA12C] shadow-[0_0_0_3px_rgba(219,161,44,0.2)]"
+                    : "border-[#F5F5F7]/14 hover:border-[#F5F5F7]/28"
                 }`}
               >
                 <Mail
                   className={`ml-4 h-4 w-4 shrink-0 transition-colors ${
-                    focusedField === "email" ? "text-[#D4FF00]" : "text-[#F5F5F7]/45"
+                    focusedField === "email" ? "text-[#F2C14E]" : "text-[#F5F5F7]/45"
                   }`}
                   aria-hidden="true"
                 />
@@ -411,7 +411,7 @@ export default function LoginPage() {
                         : "top-1/2 -translate-y-1/2 text-sm"
                     } ${
                       focusedField === "email"
-                        ? "text-[#D4FF00]"
+                        ? "text-[#F2C14E]"
                         : "text-[#F5F5F7]/60"
                     }`}
                   >
@@ -440,15 +440,15 @@ export default function LoginPage() {
               className="space-y-2"
             >
               <div
-                className={`relative flex items-center rounded-xl bg-[#0A0A0C]/70 border transition-all duration-200 ${
+                className={`relative flex items-center rounded-xl bg-[#0A0A0C]/65 border transition-all duration-200 ${
                   focusedField === "password"
-                    ? "border-[#D4FF00] shadow-[0_0_0_3px_rgba(212,255,0,0.18)]"
-                    : "border-[#F5F5F7]/12 hover:border-[#F5F5F7]/25"
+                    ? "border-[#DBA12C] shadow-[0_0_0_3px_rgba(219,161,44,0.2)]"
+                    : "border-[#F5F5F7]/14 hover:border-[#F5F5F7]/28"
                 }`}
               >
                 <Lock
                   className={`ml-4 h-4 w-4 shrink-0 transition-colors ${
-                    focusedField === "password" ? "text-[#D4FF00]" : "text-[#F5F5F7]/45"
+                    focusedField === "password" ? "text-[#F2C14E]" : "text-[#F5F5F7]/45"
                   }`}
                   aria-hidden="true"
                 />
@@ -461,7 +461,7 @@ export default function LoginPage() {
                         : "top-1/2 -translate-y-1/2 text-sm"
                     } ${
                       focusedField === "password"
-                        ? "text-[#D4FF00]"
+                        ? "text-[#F2C14E]"
                         : "text-[#F5F5F7]/60"
                     }`}
                   >
@@ -482,7 +482,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="mr-1.5 touch-target rounded-lg text-[#F5F5F7]/55 hover:text-[#F5F5F7] transition-colors focus-volt"
+                  className="mr-1.5 touch-target rounded-lg text-[#F5F5F7]/55 hover:text-[#F5F5F7] transition-colors focus-gold"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -496,14 +496,14 @@ export default function LoginPage() {
               <div className="flex justify-end">
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-[#F5F5F7]/65 hover:text-[#D4FF00] transition-colors focus-volt rounded py-1"
+                  className="text-xs font-medium text-[#F5F5F7]/65 hover:text-[#F2C14E] transition-colors focus-gold rounded py-1"
                 >
                   Forgot password?
                 </Link>
               </div>
             </motion.div>
 
-            {/* Magnetic + Smooth Fill Volt Lime Submit CTA */}
+            {/* Magnetic + Smooth Fill Golden Yellow Submit CTA */}
             <motion.div
               initial={shouldReduceMotion ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -518,7 +518,7 @@ export default function LoginPage() {
                 onMouseLeave={handleCtaMouseLeave}
                 style={shouldReduceMotion ? undefined : { x: smoothMagX, y: smoothMagY }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.985 }}
-                className="group relative overflow-hidden h-14 w-full rounded-xl bg-[#D4FF00] text-[#0A0A0C] font-bold text-sm tracking-wide transition-shadow duration-300 hover:shadow-[0_0_32px_rgba(212,255,0,0.35)] focus-volt touch-target disabled:opacity-70"
+                className="group relative overflow-hidden h-14 w-full rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm tracking-wide transition-all duration-300 hover:shadow-[0_0_32px_rgba(219,161,44,0.4)] focus-gold touch-target disabled:opacity-70"
               >
                 {/* Smooth Chalk White wipe fill overlay on hover */}
                 <span
@@ -561,7 +561,7 @@ export default function LoginPage() {
           >
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-[#F5F5F7]/65 hover:text-[#F5F5F7] transition-colors focus-volt rounded py-1"
+              className="inline-flex items-center gap-1.5 text-[#F5F5F7]/65 hover:text-[#F5F5F7] transition-colors focus-gold rounded py-1"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               Back to studio home

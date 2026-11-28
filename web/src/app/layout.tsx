@@ -93,7 +93,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`h-full antialiased dark ${syne.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="h-full bg-background text-foreground selection:bg-[#D4FF00]/25 selection:text-foreground">
+      <body className="h-full bg-background text-foreground selection:bg-[#DBA12C]/30 selection:text-foreground">
         <Providers>
           <ServiceWorkerRegister />
           {children}

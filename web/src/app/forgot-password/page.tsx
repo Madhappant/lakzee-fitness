@@ -55,9 +55,13 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background text-foreground p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="rounded-xl bg-card border border-border p-6 sm:p-8 flex flex-col gap-6 w-full">
+    <main className="relative flex min-h-screen items-center justify-center bg-[#0A0A0C] text-[#F5F5F7] p-4 overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-80 w-80 rounded-full bg-[#DBA12C]/15 blur-[110px]"
+      />
+      <div className="relative z-10 w-full max-w-md space-y-6">
+        <div className="rounded-3xl apple-glass p-6 sm:p-8 flex flex-col gap-6 w-full shadow-2xl">
           <div className="flex flex-col items-center gap-3 text-center">
             <Link href="/" className="focus-gold rounded-full">
               <Image
@@ -95,7 +99,7 @@ export default function ForgotPasswordPage() {
                 onSubmit={handleRequestOtp}
               >
                 {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center">
+                  <div role="alert" className="p-3 bg-[#F5F5F7]/[0.08] border border-[#F5F5F7]/25 rounded-xl text-[#F5F5F7] text-sm text-center">
                     {error}
                   </div>
                 )}
@@ -123,7 +127,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-12 flex justify-center items-center gap-2 px-4 rounded-lg text-sm font-bold text-black bg-brand-gold hover:brightness-110 transition-all focus-gold touch-target disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 flex justify-center items-center gap-2 px-4 rounded-xl text-sm font-bold text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] transition-all focus-gold touch-target gold-glow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : null}
                   Send verification code
@@ -141,7 +145,7 @@ export default function ForgotPasswordPage() {
                 onSubmit={handleResetPassword}
               >
                 {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center">
+                  <div role="alert" className="p-3 bg-[#F5F5F7]/[0.08] border border-[#F5F5F7]/25 rounded-xl text-[#F5F5F7] text-sm text-center">
                     {error}
                   </div>
                 )}
@@ -187,7 +191,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-12 flex justify-center items-center gap-2 px-4 rounded-lg text-sm font-bold text-black bg-brand-gold hover:brightness-110 transition-all focus-gold touch-target disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 flex justify-center items-center gap-2 px-4 rounded-xl text-sm font-bold text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] transition-all focus-gold touch-target gold-glow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : null}
                   Verify and reset password
@@ -202,7 +206,7 @@ export default function ForgotPasswordPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center space-y-5"
               >
-                <div className="w-14 h-14 bg-emerald-500/15 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto text-emerald-500">
+                <div className="w-14 h-14 bg-[#DBA12C]/15 border border-[#DBA12C]/35 rounded-full flex items-center justify-center mx-auto text-[#F2C14E]">
                   <CheckCircle2 className="w-7 h-7" aria-hidden="true" />
                 </div>
                 <p className="text-muted-foreground text-sm leading-relaxed">
@@ -210,7 +214,7 @@ export default function ForgotPasswordPage() {
                 </p>
                 <Link
                   href="/login"
-                  className="w-full h-12 flex justify-center items-center px-4 rounded-lg text-sm font-bold text-black bg-brand-gold hover:brightness-110 transition-all focus-gold touch-target"
+                  className="w-full h-12 flex justify-center items-center px-4 rounded-xl text-sm font-bold text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] transition-all focus-gold touch-target gold-glow-sm"
                 >
                   Return to sign in
                 </Link>

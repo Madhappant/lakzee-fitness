@@ -186,7 +186,7 @@ export default function ProfilePage() {
               <button 
                 onClick={copyToClipboard}
                 aria-label="Copy User ID to clipboard"
-                className="flex items-center gap-2 px-6 py-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 shrink-0 shadow-lg shadow-brand-gold/20 focus-gold touch-target"
+                className="flex items-center gap-2 px-6 py-4 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold active:scale-[0.98] transition-all duration-200 shrink-0 gold-glow-sm focus-gold touch-target"
               >
                 {copied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                 <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
@@ -212,7 +212,7 @@ export default function ProfilePage() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="phone-modal-title"
-              className="bg-card border border-border rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden"
+              className="apple-glass-elevated rounded-3xl p-6 md:p-8 w-[calc(100%-1.5rem)] sm:w-full max-w-md shadow-2xl relative overflow-hidden max-h-[90dvh] overflow-y-auto"
             >
               {/* Dynamic Background for Modal */}
               <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-transparent pointer-events-none" />
@@ -234,7 +234,7 @@ export default function ProfilePage() {
                     </div>
 
                     {error && (
-                      <div role="alert" className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
+                      <div role="alert" className="p-3 bg-foreground/[0.08] border border-foreground/25 rounded-xl text-foreground text-sm text-center">
                         {error}
                       </div>
                     )}
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                     <button
                       type="submit"
                       disabled={isLoading || newPhone.length < 5}
-                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
+                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold active:scale-[0.98] transition-all duration-200 gold-glow-sm disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
                     >
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                       Send OTP
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                     </div>
 
                     {error && (
-                      <div role="alert" className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
+                      <div role="alert" className="p-3 bg-foreground/[0.08] border border-foreground/25 rounded-xl text-foreground text-sm text-center">
                         {error}
                       </div>
                     )}
@@ -301,7 +301,7 @@ export default function ProfilePage() {
                     <button
                       type="submit"
                       disabled={isLoading || otp.length !== 6}
-                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-black bg-gradient-to-r from-brand-gold to-yellow-500 hover:from-yellow-400 hover:to-brand-gold font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
+                      className="w-full min-h-[48px] flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold active:scale-[0.98] transition-all duration-200 gold-glow-sm disabled:opacity-50 disabled:cursor-not-allowed focus-gold touch-target"
                     >
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                       Verify & Save
@@ -319,7 +319,7 @@ export default function ProfilePage() {
 
                 {phoneStep === "SUCCESS" && (
                   <div className="text-center space-y-6 py-6">
-                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto text-green-400">
+                    <div className="w-16 h-16 bg-[#DBA12C]/20 border border-[#DBA12C]/35 rounded-full flex items-center justify-center mx-auto text-[#F2C14E]">
                       <CheckCircle2 className="w-8 h-8" />
                     </div>
                     <h3 className="text-xl font-bold text-foreground">Phone Verified!</h3>

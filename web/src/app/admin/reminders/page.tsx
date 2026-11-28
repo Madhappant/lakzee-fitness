@@ -123,21 +123,21 @@ export default function RemindersPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/admin/settings"
-            className="touch-target gap-2 px-4 rounded-xl bg-secondary border border-border text-foreground hover:border-foreground/25 text-xs font-semibold transition-colors focus-volt"
+            className="touch-target gap-2 px-4 rounded-xl bg-secondary border border-border text-foreground hover:border-foreground/25 text-xs font-semibold transition-colors focus-gold"
           >
-            <Settings className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />
+            <Settings className="w-4 h-4 text-[#DBA12C]" aria-hidden="true" />
             Channel Rules
           </Link>
           <button
             type="button"
             disabled={runBatchMutation.isPending}
             onClick={() => runBatchMutation.mutate(true)}
-            className="touch-target gap-2 px-4 rounded-xl bg-secondary border border-border text-foreground hover:border-[#D4FF00]/50 font-mono-metric text-xs font-bold transition-colors focus-volt disabled:opacity-50"
+            className="touch-target gap-2 px-4 rounded-xl bg-secondary border border-border text-foreground hover:border-[#DBA12C]/50 font-mono-metric text-xs font-bold transition-colors focus-gold disabled:opacity-50"
           >
             {runBatchMutation.isPending ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D4FF00]" aria-hidden="true" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DBA12C]" aria-hidden="true" />
             ) : (
-              <Play className="w-3.5 h-3.5 text-[#D4FF00]" aria-hidden="true" />
+              <Play className="w-3.5 h-3.5 text-[#DBA12C]" aria-hidden="true" />
             )}
             Dry-Run Sweep
           </button>
@@ -145,7 +145,7 @@ export default function RemindersPage() {
             type="button"
             disabled={runBatchMutation.isPending}
             onClick={() => runBatchMutation.mutate(false)}
-            className="touch-target gap-2 px-5 rounded-xl bg-[#D4FF00] text-[#0A0A0C] hover:brightness-105 font-bold text-sm transition-all volt-glow-sm focus-volt disabled:opacity-50"
+            className="touch-target gap-2 px-5 rounded-xl bg-[#DBA12C] hover:bg-[#F2C14E] text-[#0A0A0C] font-bold text-sm transition-all gold-glow-sm focus-gold disabled:opacity-50"
           >
             <BellRing className="w-4 h-4" aria-hidden="true" />
             Run Live Sweep
@@ -165,7 +165,7 @@ export default function RemindersPage() {
           <p className="font-mono-metric text-[11px] uppercase tracking-wider text-muted-foreground">
             Delivered (Sent)
           </p>
-          <p className="font-display text-3xl font-extrabold text-[#D4FF00]">{counts.sent}</p>
+          <p className="font-display text-3xl font-extrabold text-[#F2C14E]">{counts.sent}</p>
         </div>
         <div className="glass-panel p-5 space-y-1">
           <p className="font-mono-metric text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -192,9 +192,9 @@ export default function RemindersPage() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => setStatusFilter(st)}
-                className={`touch-target px-4 rounded-xl font-mono-metric text-xs font-bold border transition-all focus-volt ${
+                className={`touch-target px-4 rounded-xl font-mono-metric text-xs font-bold border transition-all focus-gold ${
                   active
-                    ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+                    ? "bg-[#DBA12C] text-[#0A0A0C] border-[#DBA12C]"
                     : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground"
                 }`}
               >
@@ -213,7 +213,7 @@ export default function RemindersPage() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => setChannelFilter(ch)}
-                className={`touch-target px-3.5 rounded-xl font-mono-metric text-xs font-semibold border transition-all focus-volt ${
+                className={`touch-target px-3.5 rounded-xl font-mono-metric text-xs font-semibold border transition-all focus-gold ${
                   active
                     ? "bg-foreground text-background border-foreground"
                     : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground"
@@ -227,10 +227,10 @@ export default function RemindersPage() {
             type="button"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="touch-target px-3 rounded-xl bg-secondary border border-border text-muted-foreground hover:text-foreground transition-colors focus-volt"
+            className="touch-target px-3 rounded-xl bg-secondary border border-border text-muted-foreground hover:text-foreground transition-colors focus-gold"
             aria-label="Refresh delivery logs"
           >
-            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-[#D4FF00]" : ""}`} aria-hidden="true" />
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-[#DBA12C]" : ""}`} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -265,7 +265,7 @@ export default function RemindersPage() {
               {isLoading && (
                 <tr>
                   <td colSpan={6} className="px-6 py-14 text-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#D4FF00] mx-auto" aria-hidden="true" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#DBA12C] mx-auto" aria-hidden="true" />
                   </td>
                 </tr>
               )}
@@ -294,7 +294,7 @@ export default function RemindersPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2.5">
                         {memberNo && (
-                          <span className="font-mono-metric text-xs font-bold text-[#D4FF00]">
+                          <span className="font-mono-metric text-xs font-bold text-[#F2C14E]">
                             {memberNo}
                           </span>
                         )}
@@ -312,7 +312,7 @@ export default function RemindersPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1.5 font-mono-metric text-xs font-semibold text-foreground px-2.5 py-1 rounded-lg bg-secondary border border-border">
                         {log.channel === "WHATSAPP" ? (
-                          <MessageSquare className="w-3.5 h-3.5 text-[#D4FF00]" aria-hidden="true" />
+                          <MessageSquare className="w-3.5 h-3.5 text-[#DBA12C]" aria-hidden="true" />
                         ) : (
                           <Mail className="w-3.5 h-3.5 text-foreground" aria-hidden="true" />
                         )}
@@ -333,16 +333,16 @@ export default function RemindersPage() {
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono-metric text-xs font-bold border ${
                           isSent
-                            ? "bg-[#D4FF00]/12 text-[#D4FF00] border-[#D4FF00]/35"
+                            ? "bg-[#DBA12C]/15 text-[#F2C14E] border-[#DBA12C]/35"
                             : isFailed
-                              ? "bg-secondary text-[#F5F5F7] border-[#F5F5F7]/40"
+                              ? "bg-secondary text-foreground border-foreground/40"
                               : "bg-secondary/50 text-muted-foreground border-border"
                         }`}
                       >
                         {isSent ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#D4FF00]" aria-hidden="true" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#DBA12C]" aria-hidden="true" />
                         ) : isFailed ? (
-                          <ShieldAlert className="w-3.5 h-3.5 text-[#F5F5F7]" aria-hidden="true" />
+                          <ShieldAlert className="w-3.5 h-3.5 text-foreground" aria-hidden="true" />
                         ) : null}
                         {log.status}
                       </span>
@@ -363,7 +363,7 @@ export default function RemindersPage() {
                           type="button"
                           disabled={retryingId === log.id}
                           onClick={() => retryMutation.mutate(log.id)}
-                          className="touch-target inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-[#D4FF00]/50 bg-[#D4FF00]/10 text-[#D4FF00] hover:bg-[#D4FF00]/20 font-mono-metric text-xs font-bold transition-colors focus-volt disabled:opacity-50"
+                          className="touch-target inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-[#DBA12C]/50 bg-[#DBA12C]/12 text-[#F2C14E] hover:bg-[#DBA12C]/22 font-mono-metric text-xs font-bold transition-colors focus-gold disabled:opacity-50"
                           aria-label={`Retry ${log.channel} reminder`}
                         >
                           {retryingId === log.id ? (

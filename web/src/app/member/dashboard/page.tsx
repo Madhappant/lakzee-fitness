@@ -123,7 +123,7 @@ export default function MemberDashboard() {
                     <div className="flex items-center gap-3">
                       <div className="bg-card/50 border border-border rounded-lg px-4 py-2">
                         <p className="text-xs text-muted-foreground uppercase tracking-wider">Days Remaining</p>
-                        <p className={`text-2xl font-bold ${daysRemaining < 7 ? 'text-red-400' : 'text-green-400'}`}>
+                        <p className={`text-2xl font-bold ${daysRemaining < 7 ? 'text-foreground' : 'text-[#F2C14E]'}`}>
                           {daysRemaining}
                         </p>
                       </div>

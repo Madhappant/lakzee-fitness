@@ -259,7 +259,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isClient || !userRole) return null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative transition-colors duration-200">
+    <div className="min-h-screen bg-background text-foreground relative transition-colors duration-200 theme-adaptive">
       {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
         <div
@@ -271,7 +271,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Collapsible Minimal Obsidian Sidebar */}
       <aside
         aria-label="Admin Navigation"
-        className={`fixed inset-y-0 left-0 z-50 shrink-0 bg-sidebar border-r border-border flex flex-col transition-all duration-200 ease-out ${
+        className={`fixed inset-y-0 left-0 z-50 shrink-0 apple-glass-elevated border-r border-border rounded-none flex flex-col transition-all duration-200 ease-out safe-top safe-bottom ${
           isSidebarCollapsed ? "md:w-20" : "md:w-64"
         } w-64 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
@@ -279,7 +279,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="h-18 flex items-center justify-between px-4 border-b border-border shrink-0">
           <Link
             href={userRole === "TRAINER" ? "/admin/members" : "/admin/dashboard"}
-            className={`flex items-center gap-3 group focus-volt rounded-xl p-1 ${
+            className={`flex items-center gap-3 group focus-gold rounded-xl p-1 ${
               isSidebarCollapsed ? "md:mx-auto md:justify-center" : ""
             }`}
           >
@@ -306,7 +306,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-lg focus-volt"
+            className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-lg focus-gold"
             aria-label="Close mobile navigation menu"
           >
             <X className="w-5 h-5" aria-hidden="true" />
@@ -339,7 +339,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       onMouseEnter={() => handlePrefetch(link.href)}
                       onFocus={() => handlePrefetch(link.href)}
                       onTouchStart={() => handlePrefetch(link.href)}
-                      className={`group relative flex items-center gap-3 px-3 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-volt ${
+                      className={`group relative flex items-center gap-3 px-3 min-h-[44px] rounded-xl transition-all duration-200 text-sm focus-gold ${
                         isSidebarCollapsed ? "md:justify-center md:px-0" : ""
                       } ${
                         isActive
@@ -347,18 +347,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-transparent"
                       }`}
                     >
-                      {/* Volt Lime Active Indicator Pill */}
+                      {/* Golden Yellow Active Indicator Pill */}
                       {isActive && (
                         <span
                           aria-hidden="true"
-                          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-[#D4FF00] ${
+                          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-[#DBA12C] ${
                             isSidebarCollapsed ? "md:h-6" : ""
                           }`}
                         />
                       )}
                       <Icon
                         className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                          isActive ? "text-[#D4FF00]" : "text-muted-foreground group-hover:text-foreground"
+                          isActive ? "text-[#F2C14E]" : "text-muted-foreground group-hover:text-foreground"
                         }`}
                         aria-hidden="true"
                       />
@@ -378,7 +378,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-            className={`hidden md:flex items-center gap-3 px-3 min-h-[44px] w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors duration-200 text-xs focus-volt ${
+            className={`hidden md:flex items-center gap-3 px-3 min-h-[44px] w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors duration-200 text-xs focus-gold ${
               isSidebarCollapsed ? "justify-center px-0" : ""
             }`}
             aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -396,7 +396,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button
             onClick={handleLogout}
             title={isSidebarCollapsed ? "Logout" : undefined}
-            className={`flex items-center gap-3 px-3 min-h-[44px] w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent hover:border-border transition-colors duration-200 text-sm focus-volt ${
+            className={`flex items-center gap-3 px-3 min-h-[44px] w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent hover:border-border transition-colors duration-200 text-sm focus-gold ${
               isSidebarCollapsed ? "md:justify-center md:px-0" : ""
             }`}
             aria-label="Log out of admin session"
@@ -414,30 +414,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }`}
       >
         {/* Minimal Topbar */}
-        <header className="h-18 bg-background/85 backdrop-blur-xl border-b border-border flex items-center justify-between px-4 md:px-8 z-40 sticky top-0 shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="h-18 apple-glass border-x-0 border-t-0 rounded-none border-b border-border flex items-center justify-between gap-2 px-3 sm:px-5 md:px-8 z-40 sticky top-0 shrink-0 safe-top">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
-              className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-xl focus-volt"
+              className="md:hidden touch-target text-muted-foreground hover:text-foreground rounded-xl focus-gold shrink-0"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Open mobile navigation menu"
             >
               <Menu className="w-5 h-5" aria-hidden="true" />
             </button>
-            <div className="hidden md:flex items-center gap-2.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4FF00]" aria-hidden="true" />
-              <h2 className="font-display text-base font-bold tracking-tight text-foreground">
+            <div className="hidden md:flex items-center gap-2.5 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#DBA12C] shrink-0" aria-hidden="true" />
+              <h2 className="font-display text-base font-bold tracking-tight text-foreground truncate">
                 {pageTitle}
               </h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2.5 md:gap-4 shrink-0">
             <BranchSwitcher userRole={userRole} />
             <ThemeToggle />
             <NotificationDropdown role="ADMIN" />
 
-            <div className="flex items-center gap-2.5 border-l border-border pl-3 md:pl-5">
-              <div className="hidden sm:block text-right">
+            <div className="hidden sm:flex items-center gap-2.5 border-l border-border pl-3 md:pl-5">
+              <div className="hidden md:block text-right">
                 <p className="font-mono-metric text-[11px] font-bold text-foreground uppercase tracking-widest">
                   {userRole}
                 </p>

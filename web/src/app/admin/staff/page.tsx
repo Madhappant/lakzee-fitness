@@ -78,7 +78,7 @@ export default function StaffPage() {
         <button 
           type="submit" 
           disabled={assignMutation.isPending}
-          className="w-full min-h-[48px] flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-black bg-brand-gold hover:bg-yellow-500 font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 focus-gold touch-target"
+          className="w-full min-h-[48px] flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold active:scale-[0.98] transition-all duration-200 disabled:opacity-50 focus-gold gold-glow-sm touch-target"
         >
           {assignMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
           Assign
@@ -115,7 +115,7 @@ export default function StaffPage() {
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={() => revokeMutation.mutate(user.id)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors focus-gold"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-colors focus-gold"
                       aria-label={`Revoke role for user ${user.id}`}
                     >
                       <UserMinus className="w-4 h-4" /> Revoke

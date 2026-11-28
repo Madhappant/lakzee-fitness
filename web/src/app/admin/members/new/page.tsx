@@ -201,7 +201,7 @@ export default function AddMemberPage() {
                 type="checkbox"
                 {...register("notificationsEnabled")}
                 aria-label="Enable automated WhatsApp and Email expiry reminders"
-                className="w-5 h-5 accent-[#D4FF00] cursor-pointer rounded"
+                className="w-5 h-5 accent-[#DBA12C] cursor-pointer rounded"
               />
             </div>
           </div>
@@ -209,13 +209,13 @@ export default function AddMemberPage() {
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-4">
-          <Link href="/admin/members" className="touch-target px-6 rounded-xl font-medium text-foreground hover:bg-secondary border border-border transition-colors focus-volt">
+          <Link href="/admin/members" className="touch-target px-6 rounded-xl font-medium text-foreground hover:bg-secondary border border-border transition-colors focus-gold">
             Cancel
           </Link>
           <button 
             type="submit" 
             disabled={mutation.isPending}
-            className="touch-target gap-2 px-8 rounded-xl text-[#0A0A0C] bg-[#D4FF00] hover:brightness-105 font-bold transition-all volt-glow-sm focus-volt disabled:opacity-50"
+            className="touch-target gap-2 px-8 rounded-xl text-[#0A0A0C] bg-[#DBA12C] hover:bg-[#F2C14E] font-bold transition-all gold-glow-sm focus-gold disabled:opacity-50"
           >
             {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <Save className="w-5 h-5" aria-hidden="true" />}
             {mutation.isPending ? "Saving..." : "Save Member"}

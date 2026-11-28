@@ -71,14 +71,14 @@ export function EntireDailyRevenueModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-[#0A0A0C]/75 backdrop-blur-md z-50"
             onClick={onClose}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-[50%] top-[50%] z-50 w-full max-w-5xl translate-x-[-50%] translate-y-[-50%] p-6 md:p-8 rounded-2xl bg-card border border-border shadow-2xl overflow-y-auto custom-scrollbar flex flex-col max-h-[92vh]"
+            className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-1.5rem)] sm:w-full max-w-5xl translate-x-[-50%] translate-y-[-50%] p-5 sm:p-6 md:p-8 rounded-3xl apple-glass-elevated shadow-2xl overflow-y-auto custom-scrollbar flex flex-col max-h-[92dvh]"
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-6 shrink-0">
@@ -118,10 +118,10 @@ export function EntireDailyRevenueModal({
 
               <div className="p-4 rounded-xl bg-muted/40 border border-border">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold uppercase mb-1">
-                  <Zap className="w-3.5 h-3.5 text-blue-400" />
+                  <Zap className="w-3.5 h-3.5 text-[#F2C14E]" />
                   Peak Single Day
                 </div>
-                <p className="text-xl md:text-2xl font-extrabold text-blue-400">
+                <p className="text-xl md:text-2xl font-extrabold text-[#F2C14E]">
                   ₹{peakRevenue.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate mt-0.5" title={peakDayName}>
@@ -131,7 +131,7 @@ export function EntireDailyRevenueModal({
 
               <div className="p-4 rounded-xl bg-muted/40 border border-border">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold uppercase mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-green-400" />
+                  <Calendar className="w-3.5 h-3.5 text-[#DBA12C]" />
                   Earliest Record
                 </div>
                 <p className="text-sm md:text-base font-bold text-foreground truncate mt-1" title={earliestDate}>
@@ -141,7 +141,7 @@ export function EntireDailyRevenueModal({
 
               <div className="p-4 rounded-xl bg-muted/40 border border-border">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold uppercase mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                  <Calendar className="w-3.5 h-3.5 text-foreground/80" />
                   Latest Record
                 </div>
                 <p className="text-sm md:text-base font-bold text-foreground truncate mt-1" title={latestDate}>
@@ -163,11 +163,11 @@ export function EntireDailyRevenueModal({
               <div className="w-full h-[320px] md:h-[380px] relative">
                 {mounted ? (
                   <ResponsiveContainer key={`entire-${isOpen}-${data.length}`} width="100%" height={360}>
-                    <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <AreaChart data={data} margin={{ top: 10, right: 12, left: 8, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorRevenueEntireModal" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.35} />
-                          <stop offset="95%" stopColor="#D4AF37" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor="#DBA12C" stopOpacity={0.38} />
+                          <stop offset="95%" stopColor="#F2C14E" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -180,6 +180,7 @@ export function EntireDailyRevenueModal({
                         interval="preserveStartEnd"
                       />
                       <YAxis
+                        width={58}
                         stroke="var(--muted-foreground)"
                         fontSize={11}
                         tickLine={false}
@@ -195,7 +196,7 @@ export function EntireDailyRevenueModal({
                           color: "var(--foreground)",
                           boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
                         }}
-                        itemStyle={{ color: "#D4AF37", fontWeight: "bold" }}
+                        itemStyle={{ color: "#F2C14E", fontWeight: "bold" }}
                         formatter={(value: any) => [`₹${Number(value).toLocaleString()}`, "Revenue"]}
                         labelFormatter={(label, payload) => {
                           const item = payload?.[0]?.payload;
@@ -205,7 +206,7 @@ export function EntireDailyRevenueModal({
                       <Area
                         type="monotone"
                         dataKey="revenue"
-                        stroke="#D4AF37"
+                        stroke="#DBA12C"
                         strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#colorRevenueEntireModal)"
