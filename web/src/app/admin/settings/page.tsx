@@ -3,10 +3,19 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchSettings, updateSettings } from "@/lib/api/settings";
-import { Save, Loader2, Building, Settings2 } from "lucide-react";
+import { useBranchScope } from "@/lib/branch-context";
+import { Save, Loader2, Building, Settings2, BellRing } from "lucide-react";
+
+const MILESTONE_OPTIONS = [
+  { day: "7", label: "7 Days Left" },
+  { day: "3", label: "3 Days Left" },
+  { day: "1", label: "1 Day Left" },
+  { day: "0", label: "Expired Today" },
+] as const;
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
+  const { activeBranchId } = useBranchScope();
   const [formData, setFormData] = useState({
     gymName: "",
     branch: "",
@@ -15,12 +24,15 @@ export default function SettingsPage() {
     contactEmail: "",
     contactPhone: "",
     address: "",
+    whatsappRemindersEnabled: true,
+    emailRemindersEnabled: true,
+    reminderMilestones: "7,3,1,0",
   });
   
   const [successMessage, setSuccessMessage] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["settings"],
+    queryKey: ["settings", activeBranchId],
     queryFn: fetchSettings,
   });
 
@@ -35,6 +47,9 @@ export default function SettingsPage() {
         contactEmail: data.data.contactEmail || "",
         contactPhone: data.data.contactPhone || "",
         address: data.data.address || "",
+        whatsappRemindersEnabled: data.data.whatsappRemindersEnabled ?? true,
+        emailRemindersEnabled: data.data.emailRemindersEnabled ?? true,
+        reminderMilestones: data.data.reminderMilestones || "7,3,1,0",
       });
     }
   }, [data]);
@@ -55,6 +70,25 @@ export default function SettingsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate(formData);
+  };
+
+  const activeMilestonesSet = new Set(
+    (formData.reminderMilestones || "7,3,1,0")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+
+  const toggleMilestoneDay = (day: string) => {
+    const next = new Set(activeMilestonesSet);
+    if (next.has(day)) {
+      if (next.size <= 1) return; // Require at least one active milestone
+      next.delete(day);
+    } else {
+      next.add(day);
+    }
+    const ordered = ["7", "3", "1", "0"].filter((d) => next.has(d)).join(",");
+    setFormData((prev) => ({ ...prev, reminderMilestones: ordered }));
   };
 
   if (isLoading) {
@@ -121,6 +155,71 @@ export default function SettingsPage() {
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-muted-foreground">Complete Address</label>
               <textarea name="address" rows={3} value={formData.address} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus-gold outline-none transition-all resize-none"></textarea>
+            </div>
+          </div>
+        </div>
+
+        {/* Automated Expiry Reminders (Branch Scoped) */}
+        <div className="glass-panel p-6 sm:p-8 space-y-6">
+          <h2 className="text-xl font-semibold border-b border-border pb-4 text-[#D4FF00] flex items-center gap-2">
+            <BellRing className="w-5 h-5" aria-hidden="true" /> Automated Expiry Reminders
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label className="flex items-center justify-between p-4 rounded-xl bg-secondary/40 border border-border cursor-pointer">
+              <div>
+                <p className="text-sm font-semibold text-foreground">WhatsApp Reminders</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Meta Cloud API / Webhook templates</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.whatsappRemindersEnabled}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, whatsappRemindersEnabled: e.target.checked }))
+                }
+                aria-label="Enable WhatsApp expiry reminders"
+                className="w-5 h-5 accent-[#D4FF00] cursor-pointer"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-4 rounded-xl bg-secondary/40 border border-border cursor-pointer">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Email Reminders</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Resend / SMTP renewal alerts</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.emailRemindersEnabled}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, emailRemindersEnabled: e.target.checked }))
+                }
+                aria-label="Enable Email expiry reminders"
+                className="w-5 h-5 accent-[#D4FF00] cursor-pointer"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-2.5">
+            <p className="text-sm font-medium text-muted-foreground">Active Notification Milestones</p>
+            <div className="flex flex-wrap gap-2">
+              {MILESTONE_OPTIONS.map((opt) => {
+                const selected = activeMilestonesSet.has(opt.day);
+                return (
+                  <button
+                    key={opt.day}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleMilestoneDay(opt.day)}
+                    className={`touch-target px-4 rounded-xl text-xs font-mono-metric font-bold border transition-all focus-volt ${
+                      selected
+                        ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+                        : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 "use client";
-import { API_URL } from "@/lib/api/config";
+import { authService } from "@/lib/api/auth";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -23,17 +23,14 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/auth/request-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to request OTP.");
-      
+      const data = await authService.requestPasswordOtp(email);
+
       if (data.simulatedOtp) {
-        setSimulatedData({ otp: data.simulatedOtp, phone: data.phoneMasked, previewUrl: data.previewUrl });
+        setSimulatedData({
+          otp: data.simulatedOtp,
+          phone: data.data?.phoneMasked || data.phoneMasked || "",
+          previewUrl: data.previewUrl,
+        });
       }
       setStep("VERIFY_OTP");
     } catch (err: Error | unknown) {
@@ -48,15 +45,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, newPassword }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to reset password.");
-      
+      await authService.resetPassword({ email, otp, newPassword });
       setStep("SUCCESS");
     } catch (err: Error | unknown) {
       setError((err as Error).message || "Invalid OTP or request expired.");

@@ -1,39 +1,34 @@
-import { API_URL, getAuthToken, handleApiResponse } from "./config";
+import { apiRequest } from "./config";
+import type { ApiResponse, AttendanceRecord } from "./types";
 
-export const fetchTodayAttendance = async () => {
-  const token = getAuthToken();
+export const fetchTodayAttendance = () => {
   const today = new Date();
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
   const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
-  
-  const res = await fetch(`${API_URL}/attendance?start=${startOfDay}&end=${endOfDay}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch attendance logs");
+
+  return apiRequest<ApiResponse<AttendanceRecord[]>>(
+    `/attendance?start=${encodeURIComponent(startOfDay)}&end=${encodeURIComponent(endOfDay)}`,
+    {},
+    "Failed to fetch attendance logs"
+  );
 };
 
-export const checkInMember = async (lakzeeId: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/attendance/checkin`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ lakzeeId }),
-  });
-  return handleApiResponse(res, "Check-in failed");
-};
+export const checkInMember = (lakzeeId: string) =>
+  apiRequest<ApiResponse<AttendanceRecord> & { message: string }>(
+    "/attendance/checkin",
+    { method: "POST", body: { lakzeeId } },
+    "Check-in failed"
+  );
 
-export const checkOutMember = async (lakzeeId: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/attendance/checkout`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ lakzeeId }),
-  });
-  return handleApiResponse(res, "Check-out failed");
+export const checkOutMember = (lakzeeId: string) =>
+  apiRequest<ApiResponse<AttendanceRecord> & { message: string }>(
+    "/attendance/checkout",
+    { method: "POST", body: { lakzeeId } },
+    "Check-out failed"
+  );
+
+export const attendanceService = {
+  getToday: fetchTodayAttendance,
+  checkIn: checkInMember,
+  checkOut: checkOutMember,
 };

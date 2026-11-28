@@ -5,10 +5,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useDeferredValue, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchMembers, updateMember, deleteMember, API_URL } from "@/lib/api/members";
+import { sendManualReminder } from "@/lib/api/notifications";
+import { createMemberRenewalLink } from "@/lib/api/payments";
 import { sortMembers, type MemberSortOrder } from "@/lib/members-sort";
+import { useBranchScope } from "@/lib/branch-context";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Plus, Search, Loader2, Trash2, Edit2, FileText, X, Check, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, Edit2, FileText, X, Check, ArrowUpDown, ChevronDown, BellRing, Link2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -20,6 +23,7 @@ function MembersContent() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const shouldReduceMotion = useReducedMotion();
+  const { activeBranchId } = useBranchScope();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -27,11 +31,54 @@ function MembersContent() {
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editNumberValue, setEditNumberValue] = useState("");
+  const [extraPagesState, setExtraPagesState] = useState<{
+    branchKey: string;
+    rows: any[];
+    cursor: string | null;
+    hasMore: boolean;
+  }>({ branchKey: activeBranchId, rows: [], cursor: null, hasMore: false });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["members"],
-    queryFn: () => fetchMembers("asc"),
+    queryKey: ["members", activeBranchId],
+    queryFn: () => fetchMembers({ sort: "asc", limit: 100 }),
   });
+
+  const activeExtraRows = useMemo(
+    () => (extraPagesState.branchKey === activeBranchId ? extraPagesState.rows : []),
+    [extraPagesState, activeBranchId]
+  );
+  const nextCursor =
+    extraPagesState.branchKey === activeBranchId && extraPagesState.rows.length > 0
+      ? extraPagesState.cursor
+      : data?.meta?.nextCursor ?? null;
+  const hasMore =
+    extraPagesState.branchKey === activeBranchId && extraPagesState.rows.length > 0
+      ? extraPagesState.hasMore
+      : Boolean(data?.meta?.hasMore);
+  const totalBranchMembers = data?.meta?.total ?? (data?.data?.length ?? 0);
+
+  const handleLoadMore = async () => {
+    if (!nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const nextRes = await fetchMembers({ sort: "asc", limit: 100, cursor: nextCursor });
+      const incoming = Array.isArray(nextRes?.data) ? nextRes.data : [];
+      setExtraPagesState((prev) => {
+        const currentRows = prev.branchKey === activeBranchId ? prev.rows : [];
+        return {
+          branchKey: activeBranchId,
+          rows: [...currentRows, ...incoming],
+          cursor: nextRes?.meta?.nextCursor ?? null,
+          hasMore: Boolean(nextRes?.meta?.hasMore),
+        };
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to load additional members");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const viewMemberId = searchParams.get("viewMember");
 
@@ -95,7 +142,72 @@ function MembersContent() {
     }
   };
 
-  const members = useMemo(() => data?.data ?? [], [data?.data]);
+  const [remindingMemberId, setRemindingMemberId] = useState<string | null>(null);
+  const [copyingLinkMemberId, setCopyingLinkMemberId] = useState<string | null>(null);
+  const [renderNowMs] = useState<number>(() => Date.now());
+  const copyRenewalLinkMutation = useMutation({
+    mutationFn: (memberId: string) => createMemberRenewalLink(memberId),
+    onMutate: (memberId) => setCopyingLinkMemberId(memberId),
+    onSuccess: async (res) => {
+      const url = res.data.renewalUrl;
+      let copied = false;
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+          copied = true;
+        } catch {
+          copied = false;
+        }
+      }
+      toast.success(
+        copied
+          ? `Signed renewal link copied for #${res.data.memberCode}`
+          : `Renewal link ready: ${url}`
+      );
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to generate renewal link");
+    },
+    onSettled: () => setCopyingLinkMemberId(null),
+  });
+  const sendReminderMutation = useMutation({
+    mutationFn: (memberId: string) => sendManualReminder({ memberId }),
+    onMutate: (memberId) => setRemindingMemberId(memberId),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["notificationLogs"] });
+      const sentCount = res.data.results.filter((r) => r.status === "SENT").length;
+      const skippedCount = res.data.results.filter((r) => r.status === "SKIPPED").length;
+      if (sentCount > 0) {
+        toast.success(
+          `Reminder sent to ${res.data.memberName} (${sentCount} channel${sentCount === 1 ? "" : "s"}${res.data.dryRun ? ", dry-run" : ""})`
+        );
+      } else if (skippedCount > 0) {
+        toast.info(`Reminder already sent or skipped for ${res.data.memberName} in this cycle`);
+      } else {
+        toast.error(`Failed to deliver reminder to ${res.data.memberName}. Check Reminders log to retry.`);
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to send reminder");
+    },
+    onSettled: () => setRemindingMemberId(null),
+  });
+
+  const isEligibleForRenewalReminder = (member: any): boolean => {
+    const latestSub = member.memberProfile?.subscriptions?.[0];
+    if (!latestSub?.endDate) return false;
+    if (latestSub.status === "EXPIRED") return true;
+    const msLeft = new Date(latestSub.endDate).getTime() - renderNowMs;
+    const daysLeft = Math.ceil(msLeft / 86_400_000);
+    return daysLeft <= 7;
+  };
+
+  const members = useMemo(() => {
+    const base = data?.data ?? [];
+    if (activeExtraRows.length === 0) return base;
+    const seenIds = new Set(base.map((m: any) => m.id));
+    return [...base, ...activeExtraRows.filter((m: any) => !seenIds.has(m.id))];
+  }, [data?.data, activeExtraRows]);
   const deferredSearch = useDeferredValue(searchQuery);
 
   const filteredMembers = useMemo(() => {
@@ -462,14 +574,51 @@ function MembersContent() {
                     {/* Row Actions */}
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">
-                        <Link
-                          href={`/admin/members/${member.id}/plan`}
-                          className="touch-target text-muted-foreground hover:text-[#D4FF00] transition-colors rounded-xl hover:bg-[#D4FF00]/10 focus-volt"
-                          title="Assign Plan"
-                          aria-label={`Assign membership plan for ${member.firstName}`}
-                        >
-                          <FileText className="w-4 h-4" aria-hidden="true" />
-                        </Link>
+                        {isEligibleForRenewalReminder(member) && (
+                          <button
+                            type="button"
+                            disabled={
+                              remindingMemberId === member.id ||
+                              member.memberProfile?.notificationsEnabled === false
+                            }
+                            onClick={() => sendReminderMutation.mutate(member.id)}
+                            className="touch-target text-[#D4FF00] hover:bg-[#D4FF00]/12 transition-colors rounded-xl focus-volt disabled:opacity-40"
+                            title={
+                              member.memberProfile?.notificationsEnabled === false
+                                ? "Notifications opted out by member"
+                                : "Send Renewal Reminder (WhatsApp / Email)"
+                            }
+                            aria-label={`Send reminder to ${member.firstName}`}
+                          >
+                            {remindingMemberId === member.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <BellRing className="w-4 h-4" aria-hidden="true" />
+                            )}
+                          </button>
+                        )}
+                          <Link
+                            href={`/admin/members/${member.id}/plan`}
+                            className="touch-target text-muted-foreground hover:text-[#D4FF00] transition-colors rounded-xl hover:bg-[#D4FF00]/10 focus-volt"
+                            title="Assign Plan"
+                            aria-label={`Assign membership plan for ${member.firstName}`}
+                          >
+                            <FileText className="w-4 h-4" aria-hidden="true" />
+                          </Link>
+                          <button
+                            type="button"
+                            disabled={copyingLinkMemberId === (member.memberProfile?.id || member.id)}
+                            onClick={() => copyRenewalLinkMutation.mutate(member.memberProfile?.id || member.id)}
+                            className="touch-target text-muted-foreground hover:text-[#D4FF00] transition-colors rounded-xl hover:bg-[#D4FF00]/10 focus-volt disabled:opacity-40"
+                            title="Copy Renewal Link"
+                            aria-label={`Copy renewal link for ${member.firstName}`}
+                          >
+                            {copyingLinkMemberId === (member.memberProfile?.id || member.id) ? (
+                              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <Link2 className="w-4 h-4" aria-hidden="true" />
+                            )}
+                          </button>
                         <Link
                           href={`/admin/members/${member.id}/edit`}
                           className="touch-target text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-secondary focus-volt"
@@ -495,6 +644,23 @@ function MembersContent() {
             </tbody>
           </table>
         </div>
+
+        {!isLoading && hasMore && (
+          <div className="px-6 py-4 border-t border-border bg-secondary/25 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="font-mono-metric text-xs text-muted-foreground">
+              Showing {members.length.toLocaleString()} of {totalBranchMembers.toLocaleString()} branch members
+            </p>
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="touch-target px-5 rounded-xl border border-[#D4FF00]/40 bg-[#D4FF00]/10 text-[#D4FF00] hover:bg-[#D4FF00]/20 font-mono-metric text-xs font-bold transition-colors focus-volt disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {isLoadingMore && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
+              Load Next 100 Members
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Member Details Obsidian Glass Slide-Over Drawer */}
@@ -621,19 +787,52 @@ function MembersContent() {
               </div>
 
               {/* Drawer Sticky Actions */}
-              <div className="mt-8 pt-5 border-t border-border flex gap-3">
-                <Link
-                  href={`/admin/members/${selectedMember.id}/edit`}
-                  className="flex-1 touch-target bg-secondary hover:bg-secondary/80 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors text-center focus-volt"
+              <div className="mt-8 pt-5 border-t border-border space-y-2.5">
+                <button
+                  type="button"
+                  disabled={
+                    remindingMemberId === selectedMember.id ||
+                    selectedMember.memberProfile?.notificationsEnabled === false
+                  }
+                  onClick={() => sendReminderMutation.mutate(selectedMember.id)}
+                  className="w-full touch-target gap-2 bg-secondary/80 hover:border-[#D4FF00]/50 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors focus-volt disabled:opacity-45"
                 >
-                  Edit Profile
-                </Link>
-                <Link
-                  href={`/admin/members/${selectedMember.id}/plan`}
-                  className="flex-1 touch-target bg-[#D4FF00] hover:brightness-105 text-[#0A0A0C] font-bold text-sm rounded-xl transition-all text-center volt-glow-sm focus-volt"
+                  {remindingMemberId === selectedMember.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-[#D4FF00]" aria-hidden="true" />
+                  ) : (
+                    <BellRing className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />
+                  )}
+                  {selectedMember.memberProfile?.notificationsEnabled === false
+                    ? "Reminders Opted Out"
+                    : "Send Reminder (WhatsApp / Email)"}
+                </button>
+                <button
+                  type="button"
+                  disabled={copyingLinkMemberId === (selectedMember.memberProfile?.id || selectedMember.id)}
+                  onClick={() => copyRenewalLinkMutation.mutate(selectedMember.memberProfile?.id || selectedMember.id)}
+                  className="w-full touch-target gap-2 bg-secondary/80 hover:border-[#D4FF00]/50 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors focus-volt disabled:opacity-45"
                 >
-                  Manage Plan
-                </Link>
+                  {copyingLinkMemberId === (selectedMember.memberProfile?.id || selectedMember.id) ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-[#D4FF00]" aria-hidden="true" />
+                  ) : (
+                    <Link2 className="w-4 h-4 text-[#D4FF00]" aria-hidden="true" />
+                  )}
+                  Copy One-Click Renewal Link
+                </button>
+                <div className="flex gap-3">
+                  <Link
+                    href={`/admin/members/${selectedMember.id}/edit`}
+                    className="flex-1 touch-target bg-secondary hover:bg-secondary/80 border border-border text-foreground font-semibold text-sm rounded-xl transition-colors text-center focus-volt"
+                  >
+                    Edit Profile
+                  </Link>
+                  <Link
+                    href={`/admin/members/${selectedMember.id}/plan`}
+                    className="flex-1 touch-target bg-[#D4FF00] hover:brightness-105 text-[#0A0A0C] font-bold text-sm rounded-xl transition-all text-center volt-glow-sm focus-volt"
+                  >
+                    Manage Plan
+                  </Link>
+                </div>
               </div>
             </motion.div>
           </div>

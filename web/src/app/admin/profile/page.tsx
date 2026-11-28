@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { API_URL } from "@/lib/api/config";
+import { authService } from "@/lib/api/auth";
 
 import { useEffect, useState } from "react";
 import { UserCircle, Mail, ShieldCheck, Copy, CheckCircle2, Phone, X, Loader2 } from "lucide-react";
@@ -43,21 +43,14 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("lakzee_token");
-      const res = await fetch(`${API_URL}/auth/request-phone-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ email: user.email, newPhone }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to request OTP.");
-      
+      const data = await authService.requestPhoneOtp({ email: user.email, newPhone });
+
       if (data.simulatedOtp) {
-        setSimulatedData({ otp: data.simulatedOtp, phone: data.phoneMasked, previewUrl: data.previewUrl });
+        setSimulatedData({
+          otp: data.simulatedOtp,
+          phone: data.data?.phoneMasked || data.phoneMasked || "",
+          previewUrl: data.previewUrl,
+        });
       }
       setPhoneStep("VERIFY_OTP");
     } catch (err: Error | unknown) {
@@ -72,25 +65,13 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("lakzee_token");
-      const res = await fetch(`${API_URL}/auth/verify-phone`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ email: user.email, otp }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to verify OTP.");
-      
-      // Update local storage and state
+      const data = await authService.verifyPhoneOtp({ email: user.email, otp });
+
       const updatedUser = data.data.user;
       const fullLocalUser = { ...user, phone: updatedUser.phone };
       localStorage.setItem("lakzee_user", JSON.stringify(fullLocalUser));
       setUser(fullLocalUser);
-      
+
       setPhoneStep("SUCCESS");
       setTimeout(() => {
         setPhoneStep("IDLE");

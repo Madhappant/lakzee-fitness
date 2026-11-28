@@ -18,6 +18,15 @@ const addMemberSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   phone: z.string().optional(),
+  whatsappNumber: z
+    .string()
+    .trim()
+    .refine(
+      (val) => !val || /^\+[1-9]\d{7,14}$/.test(val.replace(/[\s\-().]+/g, "")),
+      "WhatsApp number must use E.164 format (e.g., +919876543210)"
+    )
+    .optional(),
+  notificationsEnabled: z.boolean().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   bloodGroup: z.string().optional(),
   address: z.string().optional(),
@@ -33,7 +42,7 @@ export default function AddMemberPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<AddMemberFormValues>({
     resolver: zodResolver(addMemberSchema),
     defaultValues: {
-      firstName: "", lastName: "", email: "", password: "", phone: "", gender: "MALE", bloodGroup: "", address: "", emergencyContact: "", dob: ""
+      firstName: "", lastName: "", email: "", password: "", phone: "", whatsappNumber: "", notificationsEnabled: true, gender: "MALE", bloodGroup: "", address: "", emergencyContact: "", dob: ""
     }
   });
 
@@ -71,7 +80,11 @@ export default function AddMemberPage() {
   const onSubmit = (data: AddMemberFormValues) => {
     const payload = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      if (value) payload.append(key, value);
+      if (typeof value === "boolean") {
+        payload.append(key, String(value));
+      } else if (value) {
+        payload.append(key, value);
+      }
     });
     if (photo) {
       payload.append('photo', photo);
@@ -151,6 +164,11 @@ export default function AddMemberPage() {
               <input type="tel" {...register("phone")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">WhatsApp Number (E.164)</label>
+              <input type="tel" placeholder="+919876543210" {...register("whatsappNumber")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 font-mono-metric text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+              {errors.whatsappNumber && <p className="font-mono-metric text-foreground/90 text-xs">{errors.whatsappNumber.message}</p>}
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Gender</label>
               <select {...register("gender")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors appearance-none">
                 <option value="MALE">Male</option>
@@ -173,6 +191,18 @@ export default function AddMemberPage() {
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-muted-foreground">Address</label>
               <textarea rows={3} {...register("address")} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors resize-none"></textarea>
+            </div>
+            <div className="sm:col-span-2 flex items-center justify-between p-4 rounded-xl bg-secondary/40 border border-border">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Automated Expiry Reminders</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Allow scheduled WhatsApp and Email renewal reminders (7d, 3d, 1d, expired).</p>
+              </div>
+              <input
+                type="checkbox"
+                {...register("notificationsEnabled")}
+                aria-label="Enable automated WhatsApp and Email expiry reminders"
+                className="w-5 h-5 accent-[#D4FF00] cursor-pointer rounded"
+              />
             </div>
           </div>
         </div>

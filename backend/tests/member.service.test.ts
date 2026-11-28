@@ -1,14 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  compareMemberIds,
-  generateUniqueMemberId,
-  parseMemberSortOrder,
-  sortMembers,
-} from '../src/services/member.service';
+
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'unit-test-secret-lakzee';
+
+let compareMemberIds: any;
+let generateUniqueMemberId: any;
+let parseMemberSortOrder: any;
+let sortMembers: any;
 
 describe('member ID natural comparison and 3-mode sorting', () => {
+  before(async () => {
+    const mod = await import('../src/services/member.service');
+    compareMemberIds = mod.compareMemberIds;
+    generateUniqueMemberId = mod.generateUniqueMemberId;
+    parseMemberSortOrder = mod.parseMemberSortOrder;
+    sortMembers = mod.sortMembers;
+  });
+
   it('compareMemberIds sorts numerically/naturally rather than alphabetically', () => {
     const raw = ['010', '2', '001', '011', '100', '002'];
     const sorted = [...raw].sort(compareMemberIds);
@@ -31,13 +40,13 @@ describe('member ID natural comparison and 3-mode sorting', () => {
     assert.equal(parseMemberSortOrder('desc'), 'desc');
     assert.equal(parseMemberSortOrder('latest'), 'latest');
 
-    const ascIds = sortMembers(sample, 'asc').map((m) => m.memberProfile?.memberId);
+    const ascIds = sortMembers(sample, 'asc').map((m: any) => m.memberProfile?.memberId);
     assert.deepEqual(ascIds, ['001', '002', '010', '011', '025']);
 
-    const descIds = sortMembers(sample, 'desc').map((m) => m.memberProfile?.memberId);
+    const descIds = sortMembers(sample, 'desc').map((m: any) => m.memberProfile?.memberId);
     assert.deepEqual(descIds, ['025', '011', '010', '002', '001']);
 
-    const latestIds = sortMembers(sample, 'latest').map((m) => m.memberProfile?.memberId);
+    const latestIds = sortMembers(sample, 'latest').map((m: any) => m.memberProfile?.memberId);
     assert.deepEqual(latestIds, ['002', '010', '001', '025', '011']);
   });
 });
@@ -59,7 +68,6 @@ describe('generateUniqueMemberId sequential ordering', () => {
     const db = {
       memberProfile: {
         findMany: async () => existing,
-        // Simulate a concurrent admin claiming '011' just before our write
         findUnique: async ({ where }: any) =>
           where.memberId === '011' ? { id: 'taken' } : null,
       },
@@ -68,7 +76,6 @@ describe('generateUniqueMemberId sequential ordering', () => {
     const nextId = await generateUniqueMemberId(db);
     assert.equal(nextId, '012');
 
-    // Confirm generated ID places new member at the very bottom of ascending sort
     const combined = [...existing.map((e) => e.memberId), nextId].sort(compareMemberIds);
     assert.equal(combined[combined.length - 1], '012');
   });

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchTodayAttendance, checkInMember, checkOutMember } from "@/lib/api/attendance";
 import { fetchMembers } from "@/lib/api/members";
+import { useBranchScope } from "@/lib/branch-context";
 import { LogIn, LogOut, Loader2, Search, Camera, X } from "lucide-react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -16,6 +17,7 @@ const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(mod => mod
 
 export default function AttendancePage() {
   const queryClient = useQueryClient();
+  const { activeBranchId } = useBranchScope();
   const [lakzeeId, setLakzeeId] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [checkOutId, setCheckOutId] = useState("");
@@ -23,7 +25,7 @@ export default function AttendancePage() {
   const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["attendance"],
+    queryKey: ["attendance", activeBranchId],
     queryFn: fetchTodayAttendance,
     refetchInterval: 30000, // Auto refresh every 30s
     refetchIntervalInBackground: false,
@@ -31,7 +33,7 @@ export default function AttendancePage() {
 
   const logs = data?.data || [];
   
-  const { data: membersData } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
+  const { data: membersData } = useQuery({ queryKey: ["members", activeBranchId], queryFn: fetchMembers });
   const membersList = membersData?.data || [];
 
   const mutation = useMutation({

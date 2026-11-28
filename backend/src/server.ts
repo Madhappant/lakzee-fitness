@@ -6,6 +6,12 @@ import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
 
 import app, { prisma } from './app';
+import { securityEnv } from './config/env';
+import { setServerDraining } from './config/lifecycle';
+import { errorTracker } from './utils/error-tracker';
+import { logger } from './utils/logger';
+import { telemetry } from './utils/telemetry';
+import { startReminderScheduler, stopReminderScheduler } from './services/reminder-scheduler.service';
 
 const PORT = process.env.PORT || 5000;
 const KEEP_ALIVE_INTERVAL_MS = 4 * 60 * 1000;
@@ -14,12 +20,15 @@ let isShuttingDown = false;
 
 async function bootstrap() {
   try {
+    setServerDraining(false);
     await prisma.$connect();
-    console.log('Connected to Database');
+    logger.info('Connected to PostgreSQL database');
 
     const server = app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info('HTTP server listening', {
+        port: PORT,
+        nodeEnv: securityEnv.nodeEnv,
+      });
     });
 
     // Align timeouts above common reverse proxies (Render / Nginx 60s) to prevent 502 resets
@@ -29,30 +38,37 @@ async function bootstrap() {
     // Periodic lightweight DB ping so pooled remote Postgres connections stay warm 24/7
     const keepAliveTimer = setInterval(() => {
       prisma.$queryRaw`SELECT 1`.catch((err) => {
-        console.warn('Database keep-alive ping warning:', (err as Error).message);
+        const reason = (err as Error).message;
+        logger.warn('Database keep-alive ping warning', { error: reason });
+        telemetry.recordHealthFailure(reason);
       });
     }, KEEP_ALIVE_INTERVAL_MS);
     keepAliveTimer.unref();
 
+    startReminderScheduler();
+
     const shutdown = async (signal: string) => {
       if (isShuttingDown) return;
       isShuttingDown = true;
-      console.log(`Received ${signal}. Draining HTTP server and disconnecting database...`);
+      setServerDraining(true);
+      logger.info('Initiating graceful shutdown drain', { signal });
       clearInterval(keepAliveTimer);
+      stopReminderScheduler();
 
       const forceExitTimer = setTimeout(() => {
-        console.error('Forced exit after shutdown timeout');
+        logger.error('Forced exit after shutdown drain timeout');
         process.exit(1);
       }, 10000);
       forceExitTimer.unref();
 
+      server.closeIdleConnections?.();
       server.close(async () => {
         try {
           await prisma.$disconnect();
-          console.log('Shutdown completed cleanly');
+          logger.info('Graceful shutdown completed cleanly', { signal });
           process.exit(0);
         } catch (err) {
-          console.error('Error during database disconnect:', err);
+          logger.error('Error during database disconnect on shutdown', { error: err });
           process.exit(1);
         }
       });
@@ -65,10 +81,15 @@ async function bootstrap() {
       void shutdown('SIGINT');
     });
     process.on('unhandledRejection', (reason) => {
-      console.error('Unhandled Promise Rejection:', reason);
+      logger.error('Unhandled promise rejection', { error: reason });
+      errorTracker.captureException(reason, { source: 'unhandledRejection' });
+    });
+    process.on('uncaughtException', (err) => {
+      logger.error('Uncaught exception', { error: err });
+      errorTracker.captureException(err, { source: 'uncaughtException' });
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to bootstrap backend server', { error });
     await prisma.$disconnect();
     process.exit(1);
   }

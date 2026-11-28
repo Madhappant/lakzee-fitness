@@ -5,7 +5,9 @@ import http from 'node:http';
 import { Duplex } from 'node:stream';
 import express from 'express';
 
-// Ensure JWT module initializes safely even when run outside a local .env environment
+// Ensure JWT and DB URLs stay isolated even when run outside a local .env environment
+process.env.NODE_ENV = 'test';
+process.env.DATABASE_URL = 'postgresql://isolated_test:isolated_test@127.0.0.1:5432/lakzee_isolated_test?schema=public';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'unit-test-secret-lakzee';
 
 let app: any;

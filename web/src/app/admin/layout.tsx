@@ -11,7 +11,11 @@ import { fetchPlans } from "@/lib/api/plans";
 import { fetchSubscriptions } from "@/lib/api/subscriptions";
 import { fetchReports } from "@/lib/api/reports";
 import { fetchExpenses } from "@/lib/api/expenses";
+import { fetchNotificationLogs } from "@/lib/api/notifications";
+import { logoutUser } from "@/lib/api/auth";
 import { clearPersistedQueryCache } from "@/lib/query-persistence";
+import { useBranchScope } from "@/lib/branch-context";
+import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import {
@@ -31,6 +35,7 @@ import {
   UserCircle,
   Megaphone,
   Receipt,
+  BellRing,
 } from "lucide-react";
 
 const sidebarGroups = [
@@ -48,6 +53,7 @@ const sidebarGroups = [
       { name: "Payments", href: "/admin/payments", icon: CreditCard, roles: ["ADMIN", "RECEPTIONIST"] },
       { name: "Expenses", href: "/admin/expenses", icon: Receipt, roles: ["ADMIN", "RECEPTIONIST"] },
       { name: "Announcements", href: "/admin/announcements", icon: Megaphone, roles: ["ADMIN"] },
+      { name: "Reminders", href: "/admin/reminders", icon: BellRing, roles: ["ADMIN"] },
     ],
   },
   {
@@ -77,7 +83,42 @@ const sidebarGroups = [
   },
 ];
 
-const STAFF_ROLES = new Set(["ADMIN", "RECEPTIONIST", "TRAINER"]);
+const STAFF_ROLES = new Set([
+  "SUPER_ADMIN",
+  "BRANCH_ADMIN",
+  "ADMIN",
+  "RECEPTIONIST",
+  "TRAINER",
+  "STAFF",
+]);
+
+function hasUiRole(userRole: string | null, allowedRoles: string[]): boolean {
+  if (!userRole) return false;
+  if (userRole === "SUPER_ADMIN") return true;
+  if ((userRole === "ADMIN" || userRole === "BRANCH_ADMIN") && !allowedRoles.includes("SUPER_ADMIN_ONLY")) {
+    return true;
+  }
+  if (userRole === "STAFF") {
+    return allowedRoles.some((r) => ["RECEPTIONIST", "TRAINER", "STAFF"].includes(r));
+  }
+  return allowedRoles.includes(userRole);
+}
+
+function getDefaultStaffRoute(role: string): string {
+  return role === "TRAINER" ? "/admin/members" : "/admin/dashboard";
+}
+
+function isRouteAuthorizedForRole(pathname: string, role: string): boolean {
+  if (role === "SUPER_ADMIN" || role === "BRANCH_ADMIN" || role === "ADMIN") return true;
+  for (const group of sidebarGroups) {
+    for (const item of group.items) {
+      if (pathname === item.href || pathname.startsWith(item.href + "/")) {
+        return hasUiRole(role, item.roles);
+      }
+    }
+  }
+  return true;
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -110,39 +151,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsClient(true);
     const token = localStorage.getItem("lakzee_token");
     const userStr = localStorage.getItem("lakzee_user");
 
     if (!token || !userStr) {
-      router.push("/login");
+      router.replace("/login");
       return;
     }
 
     try {
       const user = JSON.parse(userStr);
       if (user.role === "MEMBER") {
-        router.push("/member/dashboard");
+        router.replace("/member/dashboard");
         return;
       }
       if (!STAFF_ROLES.has(user.role)) {
-        router.push("/login");
+        router.replace("/login");
         return;
       }
+      if (!isRouteAuthorizedForRole(pathname, user.role)) {
+        router.replace(getDefaultStaffRoute(user.role));
+        return;
+      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsClient(true);
       setUserRole(user.role);
     } catch {
-      router.push("/login");
+      router.replace("/login");
     }
-  }, [router]);
+  }, [router, pathname]);
 
   const queryClient = useQueryClient();
+  const { activeBranchId, refreshBranchScope } = useBranchScope();
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (isClient) {
+      refreshBranchScope();
+    }
+  }, [isClient, refreshBranchScope]);
+
+  const handleLogout = async () => {
     clearPersistedQueryCache();
     queryClient.clear();
-    localStorage.removeItem("lakzee_token");
-    localStorage.removeItem("lakzee_user");
+    await logoutUser();
     router.push("/login");
   };
 
@@ -151,31 +202,54 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const timer = setTimeout(() => {
       router.prefetch("/admin/members");
       router.prefetch("/admin/attendance");
-      if (userRole === "ADMIN" || userRole === "RECEPTIONIST") {
+      if (hasUiRole(userRole, ["ADMIN", "RECEPTIONIST"])) {
         router.prefetch("/admin/dashboard");
         router.prefetch("/admin/payments");
-        void queryClient.prefetchQuery({ queryKey: ["dashboardStats"], queryFn: fetchDashboardStats });
+        void queryClient.prefetchQuery({
+          queryKey: ["dashboardStats", activeBranchId],
+          queryFn: fetchDashboardStats,
+        });
       }
-      void queryClient.prefetchQuery({ queryKey: ["members"], queryFn: () => fetchMembers("asc") });
-      void queryClient.prefetchQuery({ queryKey: ["plans"], queryFn: fetchPlans });
+      void queryClient.prefetchQuery({
+        queryKey: ["members", activeBranchId],
+        queryFn: () => fetchMembers({ sort: "asc", limit: 100 }),
+      });
+      void queryClient.prefetchQuery({ queryKey: ["plans", activeBranchId], queryFn: fetchPlans });
     }, 350);
     return () => clearTimeout(timer);
-  }, [userRole, queryClient, router]);
+  }, [userRole, activeBranchId, queryClient, router]);
 
   const handlePrefetch = (href: string) => {
     try {
       if (href === "/admin/dashboard") {
-        queryClient.prefetchQuery({ queryKey: ["dashboardStats"], queryFn: fetchDashboardStats });
+        queryClient.prefetchQuery({
+          queryKey: ["dashboardStats", activeBranchId],
+          queryFn: fetchDashboardStats,
+        });
       } else if (href === "/admin/members") {
-        queryClient.prefetchQuery({ queryKey: ["members"], queryFn: () => fetchMembers("asc") });
+        queryClient.prefetchQuery({
+          queryKey: ["members", activeBranchId],
+          queryFn: () => fetchMembers({ sort: "asc", limit: 100 }),
+        });
       } else if (href === "/admin/plans") {
-        queryClient.prefetchQuery({ queryKey: ["plans"], queryFn: fetchPlans });
+        queryClient.prefetchQuery({ queryKey: ["plans", activeBranchId], queryFn: fetchPlans });
       } else if (href === "/admin/payments") {
-        queryClient.prefetchQuery({ queryKey: ["subscriptions"], queryFn: () => fetchSubscriptions() });
+        queryClient.prefetchQuery({
+          queryKey: ["subscriptions", activeBranchId],
+          queryFn: () => fetchSubscriptions(),
+        });
       } else if (href === "/admin/reports") {
-        queryClient.prefetchQuery({ queryKey: ["reports"], queryFn: fetchReports });
+        queryClient.prefetchQuery({ queryKey: ["reports", activeBranchId], queryFn: fetchReports });
       } else if (href === "/admin/expenses") {
-        queryClient.prefetchQuery({ queryKey: ["expenses"], queryFn: () => fetchExpenses() });
+        queryClient.prefetchQuery({
+          queryKey: ["expenses", activeBranchId],
+          queryFn: () => fetchExpenses(),
+        });
+      } else if (href === "/admin/reminders") {
+        queryClient.prefetchQuery({
+          queryKey: ["notificationLogs", activeBranchId],
+          queryFn: () => fetchNotificationLogs({ limit: 100 }),
+        });
       }
     } catch {
       // Ignore prefetch errors
@@ -242,7 +316,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Nav Groups */}
         <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-5 custom-scrollbar">
           {sidebarGroups.map((group) => {
-            const visibleItems = group.items.filter((item) => item.roles.includes(userRole));
+            const visibleItems = group.items.filter((item) => hasUiRole(userRole, item.roles));
             if (visibleItems.length === 0) return null;
             return (
               <div key={group.title} className="space-y-1">
@@ -357,7 +431,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-5">
+          <div className="flex items-center gap-3 md:gap-4">
+            <BranchSwitcher userRole={userRole} />
             <ThemeToggle />
             <NotificationDropdown role="ADMIN" />
 

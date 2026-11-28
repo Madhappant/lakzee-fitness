@@ -5,10 +5,29 @@ import type { MemberSortOrder } from "../members-sort";
 export { API_URL, getAuthToken };
 export type { MemberSortOrder };
 
-export const fetchMembers = (sort?: MemberSortOrder | unknown) => {
+export interface FetchMembersOptions {
+  sort?: MemberSortOrder | unknown;
+  limit?: number;
+  cursor?: string | null;
+}
+
+export const fetchMembers = (sortOrOptions?: MemberSortOrder | FetchMembersOptions | unknown) => {
+  const isOptionsObj =
+    typeof sortOrOptions === "object" && sortOrOptions !== null && !Array.isArray(sortOrOptions);
+  const opts = isOptionsObj ? (sortOrOptions as FetchMembersOptions) : { sort: sortOrOptions };
   const resolvedSort: MemberSortOrder =
-    sort === "asc" || sort === "desc" || sort === "latest" ? sort : "asc";
-  return apiRequest(`/members?sort=${resolvedSort}`, {}, "Failed to fetch members");
+    opts.sort === "asc" || opts.sort === "desc" || opts.sort === "latest" ? opts.sort : "asc";
+
+  const params = new URLSearchParams();
+  params.set("sort", resolvedSort);
+  if (typeof opts.limit === "number" && opts.limit > 0) {
+    params.set("limit", String(opts.limit));
+  }
+  if (typeof opts.cursor === "string" && opts.cursor.trim()) {
+    params.set("cursor", opts.cursor.trim());
+  }
+
+  return apiRequest(`/members?${params.toString()}`, {}, "Failed to fetch members");
 };
 
 export const createMember = (memberData: any) =>
@@ -42,3 +61,15 @@ export const assignWorkoutRoutine = (memberId: string, data: any) =>
     { method: "POST", body: data },
     "Failed to assign workout routine"
   );
+
+export const memberService = {
+  list: fetchMembers,
+  create: createMember,
+  getById: fetchMemberById,
+  update: updateMember,
+  delete: deleteMember,
+  getDietPlan: fetchMemberDietPlan,
+  assignDietPlan,
+  getWorkoutRoutine: fetchMemberWorkoutRoutine,
+  assignWorkoutRoutine,
+};

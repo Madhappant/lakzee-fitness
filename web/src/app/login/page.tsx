@@ -11,6 +11,7 @@ import { fetchDashboardStats } from "@/lib/api/dashboard";
 import { fetchMembers } from "@/lib/api/members";
 import { fetchMyProfile, fetchMyAttendance } from "@/lib/api/portal";
 import { clearPersistedQueryCache } from "@/lib/query-persistence";
+import { useBranchScope } from "@/lib/branch-context";
 import { toast } from "sonner";
 import {
   motion,
@@ -25,6 +26,7 @@ const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 export default function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { refreshBranchScope } = useBranchScope();
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -94,6 +96,11 @@ export default function LoginPage() {
       queryClient.clear();
       localStorage.setItem("lakzee_token", data.data.token);
       localStorage.setItem("lakzee_user", JSON.stringify(data.data.user));
+      const nextBranch =
+        data.data.user.role === "SUPER_ADMIN"
+          ? "all"
+          : data.data.user.branchId || "branch-primary-001";
+      refreshBranchScope();
 
       toast.success("Signed in");
 
@@ -103,9 +110,15 @@ export default function LoginPage() {
         router.push("/member/dashboard");
       } else {
         if (data.data.user.role !== "TRAINER") {
-          void queryClient.prefetchQuery({ queryKey: ["dashboardStats"], queryFn: fetchDashboardStats });
+          void queryClient.prefetchQuery({
+            queryKey: ["dashboardStats", nextBranch],
+            queryFn: fetchDashboardStats,
+          });
         }
-        void queryClient.prefetchQuery({ queryKey: ["members"], queryFn: () => fetchMembers("asc") });
+        void queryClient.prefetchQuery({
+          queryKey: ["members", nextBranch],
+          queryFn: () => fetchMembers({ sort: "asc", limit: 100 }),
+        });
         router.push(data.data.user.role === "TRAINER" ? "/admin/members" : "/admin/dashboard");
       }
     },

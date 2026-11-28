@@ -31,6 +31,8 @@ export default function EditMemberPage() {
     email: "",
     password: "",
     phone: "",
+    whatsappNumber: "",
+    notificationsEnabled: true,
     gender: "MALE",
     bloodGroup: "",
     address: "",
@@ -52,6 +54,8 @@ export default function EditMemberPage() {
         email: email || "",
         password: "", // Keep password empty
         phone: phone || "",
+        whatsappNumber: memberProfile?.whatsappNumber || "",
+        notificationsEnabled: memberProfile?.notificationsEnabled ?? true,
         gender: memberProfile?.gender || "MALE",
         bloodGroup: memberProfile?.bloodGroup || "",
         address: memberProfile?.address || "",
@@ -108,7 +112,11 @@ export default function EditMemberPage() {
     const payload = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       if (key === 'password' && !value) return; // Skip empty password
-      payload.append(key, value);
+      if (typeof value === 'boolean') {
+        payload.append(key, String(value));
+        return;
+      }
+      payload.append(key, String(value));
     });
     if (photo) {
       payload.append('photo', photo);
@@ -200,6 +208,10 @@ export default function EditMemberPage() {
               <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">WhatsApp Number (E.164)</label>
+              <input type="tel" name="whatsappNumber" placeholder="+919876543210" value={formData.whatsappNumber} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 font-mono-metric text-foreground focus:border-brand-gold/50 outline-none transition-colors" />
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Gender</label>
               <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors appearance-none">
                 <option value="MALE">Male</option>
@@ -222,6 +234,19 @@ export default function EditMemberPage() {
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-muted-foreground">Address</label>
               <textarea name="address" rows={3} value={formData.address} onChange={handleChange} className="w-full bg-card/50 border border-border rounded-xl px-4 py-3 text-foreground focus:border-brand-gold/50 outline-none transition-colors resize-none"></textarea>
+            </div>
+            <div className="sm:col-span-2 flex items-center justify-between p-4 rounded-xl bg-secondary/40 border border-border">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Automated Expiry Reminders</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Opt-in preference for automated WhatsApp & Email membership renewal alerts.</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.notificationsEnabled}
+                onChange={(e) => setFormData((prev) => ({ ...prev, notificationsEnabled: e.target.checked }))}
+                aria-label="Enable automated WhatsApp and Email expiry reminders"
+                className="w-5 h-5 accent-[#D4FF00] cursor-pointer rounded"
+              />
             </div>
           </div>
         </div>

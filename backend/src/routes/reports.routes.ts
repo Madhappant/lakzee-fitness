@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { getReports } from '../controllers/reports.controller';
-import { authenticate, authorize } from '../middlewares/auth.middleware';
+import { requireAuth, requireRole } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-router.use(authenticate);
-router.get('/', authorize('ADMIN'), getReports);
+router.use(requireAuth);
+router.get('/', requireRole(['SUPER_ADMIN', 'ADMIN']), getReports);
 
 export default router;

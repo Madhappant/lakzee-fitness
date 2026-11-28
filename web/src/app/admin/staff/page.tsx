@@ -4,13 +4,15 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchStaff, assignRole, revokeRole } from "@/lib/api/staff";
+import { useBranchScope } from "@/lib/branch-context";
 import { ShieldCheck, Loader2, UserMinus } from "lucide-react";
 
 export default function StaffPage() {
   const queryClient = useQueryClient();
+  const { activeBranchId } = useBranchScope();
   const [formData, setFormData] = useState({ userId: "", role: "RECEPTIONIST" });
 
-  const { data, isLoading } = useQuery({ queryKey: ["staff"], queryFn: fetchStaff });
+  const { data, isLoading } = useQuery({ queryKey: ["staff", activeBranchId], queryFn: fetchStaff });
   const staff = data?.data || [];
 
   const assignMutation = useMutation({
@@ -66,7 +68,10 @@ export default function StaffPage() {
           >
             <option value="RECEPTIONIST">receptionist</option>
             <option value="TRAINER">trainer</option>
+            <option value="STAFF">staff</option>
+            <option value="BRANCH_ADMIN">branch_admin</option>
             <option value="ADMIN">admin</option>
+            <option value="SUPER_ADMIN">super_admin</option>
           </select>
         </div>
 

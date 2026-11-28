@@ -4,9 +4,11 @@
 import { useState, useMemo, useDeferredValue } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchSubscriptions, createSubscription, fetchPaymentStats, updateSubscription, deleteSubscription } from "@/lib/api/subscriptions";
+import { downloadPaymentReceipt, fetchOnlinePayments } from "@/lib/api/payments";
 import { fetchMembers } from "@/lib/api/members";
 import { fetchPlans } from "@/lib/api/plans";
-import { Plus, X, Loader2, Calendar as CalendarIcon, CheckCircle2, CalendarRange, Wallet, ListTree, Edit2, Trash2, Save, Search } from "lucide-react";
+import { useBranchScope } from "@/lib/branch-context";
+import { Plus, X, Loader2, Calendar as CalendarIcon, CheckCircle2, CalendarRange, Wallet, ListTree, Edit2, Trash2, Save, Search, Download, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
@@ -19,6 +21,7 @@ const PaymentDetailsModal = dynamic(
 
 export default function PaymentsPage() {
   const queryClient = useQueryClient();
+  const { activeBranchId } = useBranchScope();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"ASSIGN" | "EDIT">("ASSIGN");
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
@@ -37,21 +40,61 @@ export default function PaymentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
+  const [activeTab, setActiveTab] = useState<"SUBSCRIPTIONS" | "ONLINE">("SUBSCRIPTIONS");
+  const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
 
   // Fetching Data
   const { data: subsData, isLoading: loadingSubs, isError: subsError } = useQuery({ 
-    queryKey: ["subscriptions"], 
+    queryKey: ["subscriptions", activeBranchId], 
     queryFn: () => fetchSubscriptions() 
   });
-  const { data: statsData } = useQuery({ queryKey: ["paymentStats"], queryFn: fetchPaymentStats });
-  const { data: membersData } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
-  const { data: plansData } = useQuery({ queryKey: ["plans"], queryFn: fetchPlans });
+  const { data: onlinePaymentsData, isLoading: loadingOnline } = useQuery({
+    queryKey: ["onlinePayments", activeBranchId],
+    queryFn: () => fetchOnlinePayments({ limit: 150 }),
+  });
+  const { data: statsData } = useQuery({ queryKey: ["paymentStats", activeBranchId], queryFn: fetchPaymentStats });
+  const { data: membersData } = useQuery({ queryKey: ["members", activeBranchId], queryFn: fetchMembers });
+  const { data: plansData } = useQuery({ queryKey: ["plans", activeBranchId], queryFn: fetchPlans });
 
   const subscriptions = useMemo(() => subsData?.data ?? [], [subsData?.data]);
+  const onlineTransactions = useMemo(() => onlinePaymentsData?.data ?? [], [onlinePaymentsData?.data]);
   const stats = statsData?.data || { todaysCollection: 0, thisMonth: 0, totalRecords: 0, totalPending: 0 };
   const members = membersData?.data || [];
   const plans = plansData?.data || [];
   const deferredSearch = useDeferredValue(searchQuery);
+
+  const filteredOnlineTransactions = useMemo(() => {
+    const q = deferredSearch.toLowerCase().trim();
+    return onlineTransactions.filter((pay) => {
+      const fullName = `${pay.member?.user?.firstName || ""} ${pay.member?.user?.lastName || ""}`.toLowerCase();
+      const memberCode = (pay.member?.memberId || "").toLowerCase();
+      const invoice = (pay.invoiceNumber || "").toLowerCase();
+      const planName = (pay.plan?.name || "").toLowerCase();
+      const method = (pay.method || "").toLowerCase();
+      const txn = (pay.razorpayPaymentId || pay.razorpayOrderId || "").toLowerCase();
+      return (
+        !q ||
+        fullName.includes(q) ||
+        memberCode.includes(q) ||
+        invoice.includes(q) ||
+        planName.includes(q) ||
+        method.includes(q) ||
+        txn.includes(q)
+      );
+    });
+  }, [onlineTransactions, deferredSearch]);
+
+  const handleDownloadReceipt = async (paymentId: string, invoiceNumber?: string | null) => {
+    setDownloadingReceiptId(paymentId);
+    try {
+      await downloadPaymentReceipt(paymentId, `Receipt-${invoiceNumber || paymentId.slice(0, 8)}.pdf`);
+      toast.success("Receipt PDF downloaded");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to download PDF receipt");
+    } finally {
+      setDownloadingReceiptId(null);
+    }
+  };
 
   const filteredSubscriptions = useMemo(() => {
     const q = deferredSearch.toLowerCase().trim();
@@ -300,6 +343,33 @@ export default function PaymentsPage() {
         </button>
       </div>
 
+      {/* View Switcher & Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("SUBSCRIPTIONS")}
+          className={`touch-target px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-colors ${
+            activeTab === "SUBSCRIPTIONS"
+              ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+              : "bg-secondary/60 text-muted-foreground border-border hover:text-foreground"
+          }`}
+        >
+          Subscriptions Ledger
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("ONLINE")}
+          className={`touch-target inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-colors ${
+            activeTab === "ONLINE"
+              ? "bg-[#D4FF00] text-[#0A0A0C] border-[#D4FF00]"
+              : "bg-secondary/60 text-muted-foreground border-border hover:text-foreground"
+          }`}
+        >
+          <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
+          Razorpay & Online Transactions ({onlineTransactions.length})
+        </button>
+      </div>
+
       {/* Filters & Search */}
       <div className="glass-panel p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
@@ -346,7 +416,112 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      {/* Subscriptions Table */}
+      {activeTab === "ONLINE" ? (
+        <div className="glass-panel overflow-hidden border border-border">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-muted/50 border-b border-border text-muted-foreground text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4 font-medium">Invoice No.</th>
+                  <th className="px-6 py-4 font-medium">Member</th>
+                  <th className="px-6 py-4 font-medium">Plan & Validity</th>
+                  <th className="px-6 py-4 font-medium">Method / Ref</th>
+                  <th className="px-6 py-4 font-medium">Amount</th>
+                  <th className="px-6 py-4 font-medium">Status</th>
+                  <th className="px-6 py-4 font-medium text-right">Receipt</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {loadingOnline && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-[#D4FF00] mx-auto" />
+                    </td>
+                  </tr>
+                )}
+                {!loadingOnline && filteredOnlineTransactions.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                      No payment transactions match your current filter.
+                    </td>
+                  </tr>
+                )}
+                {filteredOnlineTransactions.map((pay) => {
+                  const isSettled = pay.status === "CAPTURED" || pay.status === "COMPLETED";
+                  return (
+                    <tr key={pay.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-6 py-4 font-mono-metric text-xs font-bold text-[#D4FF00]">
+                        {pay.invoiceNumber || "PENDING"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-foreground">
+                          {pay.member?.user?.firstName} {pay.member?.user?.lastName}
+                        </p>
+                        <p className="font-mono-metric text-xs text-muted-foreground">
+                          #{pay.member?.memberId || "N/A"}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-foreground">{pay.plan?.name || "Membership"}</p>
+                        {pay.newExpiryDate && (
+                          <p className="font-mono-metric text-xs text-muted-foreground mt-0.5">
+                            Valid until {new Date(pay.newExpiryDate).toLocaleDateString("en-IN")}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-mono-metric text-xs font-bold uppercase text-foreground">
+                          {pay.method}
+                        </p>
+                        <p className="font-mono-metric text-[11px] text-muted-foreground truncate max-w-[160px]">
+                          {pay.razorpayPaymentId || pay.razorpayOrderId || "Counter Settlement"}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 font-mono-metric font-bold text-foreground">
+                        ₹{Number(pay.amount || 0).toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full font-mono-metric text-xs font-bold border ${
+                            isSettled
+                              ? "bg-[#D4FF00]/15 text-[#D4FF00] border-[#D4FF00]/40"
+                              : pay.status === "FAILED"
+                                ? "bg-secondary text-muted-foreground border-border"
+                                : "bg-secondary/50 text-foreground border-border"
+                          }`}
+                        >
+                          {pay.status === "CAPTURED" ? "Captured" : pay.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {isSettled ? (
+                          <button
+                            type="button"
+                            disabled={downloadingReceiptId === pay.id}
+                            onClick={() => handleDownloadReceipt(pay.id, pay.invoiceNumber)}
+                            className="touch-target inline-flex items-center gap-1.5 rounded-xl border border-[#D4FF00]/40 bg-[#D4FF00]/10 px-3 py-1.5 text-xs font-bold text-[#D4FF00] hover:bg-[#D4FF00]/20 transition-colors disabled:opacity-50"
+                            title="Download PDF Receipt"
+                          >
+                            {downloadingReceiptId === pay.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                            )}
+                            Download Receipt
+                          </button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+      /* Subscriptions Table */
       <div className="glass-panel overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-sm">
@@ -487,6 +662,7 @@ export default function PaymentsPage() {
           </table>
         </div>
       </div>
+      )}
 
       {/* Assign Plan Modal */}
       <AnimatePresence>

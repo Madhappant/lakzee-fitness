@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAnnouncements, createAnnouncement, deleteAnnouncement } from "@/lib/api/announcements";
+import { useBranchScope } from "@/lib/branch-context";
 import { Megaphone, Loader2, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -21,10 +22,11 @@ type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 
 export default function AnnouncementsPage() {
   const queryClient = useQueryClient();
+  const { activeBranchId } = useBranchScope();
   const [isCreating, setIsCreating] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["announcements"],
+    queryKey: ["announcements", activeBranchId],
     queryFn: fetchAnnouncements
   });
 

@@ -1,0 +1,62 @@
+name: Automated Encrypted DB Backup
+
+on:
+  schedule:
+    # Daily snapshot at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      verify_dry_run:
+        description: 'Run restore --dry-run verification right after upload'
+        required: false
+        default: 'true'
+
+concurrency:
+  group: db-backup-production
+  cancel-in-progress: false
+
+jobs:
+  encrypted-backup:
+    name: pg_dump -> gzip -> AES-256-GCM -> R2/S3 (GFS Retention)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install PostgreSQL client tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Execute encrypted backup, SHA-256 verification & GFS retention pruning
+        if: ${{ secrets.DIRECT_URL != '' || secrets.DATABASE_URL != '' }}
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          BACKUP_S3_REGION: ${{ secrets.BACKUP_S3_REGION || 'auto' }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          BACKUP_S3_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          BACKUP_S3_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+          BACKUP_S3_PREFIX: lakzee-backups
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          node scripts/backup-db.mjs --out-dir ./backups
+          if [ "${{ github.event.inputs.verify_dry_run || 'true' }}" = "true" ]; then
+            node scripts/restore-db.mjs --latest --backup-dir ./backups --dry-run
+          fi
+
+      - name: Alert webhook when scheduled backup job fails
+        if: ${{ failure() && secrets.ALERT_WEBHOOK_URL != '' }}
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: |
+          curl --fail --silent --show-error -X POST "$ALERT_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"rule":"BACKUP_WORKFLOW_FAILED","severity":"critical","text":"[CRITICAL] Lakzee daily encrypted PostgreSQL backup workflow failed in GitHub Actions."}'

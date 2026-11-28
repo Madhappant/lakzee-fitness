@@ -1,15 +1,17 @@
 import { Router } from 'express';
 import { createSubscription, getSubscriptions, getPaymentStats, updateSubscription, deleteSubscription } from '../controllers/subscription.controller';
-import { authenticate, authorize } from '../middlewares/auth.middleware';
+import { requireAuth, requireRole } from '../middlewares/auth.middleware';
+import { validateRequest } from '../middlewares/validate.middleware';
+import { createSubscriptionBodySchema, updateSubscriptionBodySchema } from '../validators/domain.schemas';
 
 const router = Router();
 
-router.use(authenticate);
+router.use(requireAuth);
 
-router.post('/', authorize('ADMIN', 'RECEPTIONIST'), createSubscription);
-router.get('/', authorize('ADMIN', 'RECEPTIONIST'), getSubscriptions);
-router.get('/stats', authorize('ADMIN', 'RECEPTIONIST'), getPaymentStats);
-router.put('/:id', authorize('ADMIN', 'RECEPTIONIST'), updateSubscription);
-router.delete('/:id', authorize('ADMIN', 'RECEPTIONIST'), deleteSubscription);
+router.post('/', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), validateRequest({ body: createSubscriptionBodySchema }), createSubscription);
+router.get('/', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), getSubscriptions);
+router.get('/stats', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), getPaymentStats);
+router.put('/:id', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), validateRequest({ body: updateSubscriptionBodySchema }), updateSubscription);
+router.delete('/:id', requireRole(['SUPER_ADMIN', 'ADMIN']), deleteSubscription);
 
 export default router;

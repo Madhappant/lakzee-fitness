@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PublicNavbar } from "@/components/PublicNavbar";
 import { PublicFooter } from "@/components/PublicFooter";
-import { API_URL } from "@/lib/api/config";
+import { contactService } from "@/lib/api/contact";
 import { MapPin, Phone, Mail, Clock, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,15 +24,7 @@ export default function ContactPage() {
     setSubmitError("");
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(json.message || "Could not send request. Please verify your details and try again.");
-      }
+      await contactService.submitInquiry(form);
       setSubmitted(true);
       toast.success("Walkthrough request saved");
     } catch (err: unknown) {

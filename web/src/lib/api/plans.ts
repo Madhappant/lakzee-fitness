@@ -28,3 +28,10 @@ export const deletePlan = (id: string) =>
     { method: "DELETE" },
     "Failed to delete plan"
   );
+
+export const planService = {
+  list: fetchPlans,
+  create: createPlan,
+  update: updatePlan,
+  delete: deletePlan,
+};

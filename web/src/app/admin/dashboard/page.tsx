@@ -5,6 +5,7 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardStats } from "@/lib/api/dashboard";
+import { useBranchScope } from "@/lib/branch-context";
 import {
   Users,
   Activity,
@@ -55,8 +56,9 @@ export default function DashboardOverview() {
   const [isActiveMembersModalOpen, setIsActiveMembersModalOpen] = useState(false);
   const [isNewMembersModalOpen, setIsNewMembersModalOpen] = useState(false);
 
+  const { activeBranchId } = useBranchScope();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["dashboardStats"],
+    queryKey: ["dashboardStats", activeBranchId],
     queryFn: fetchDashboardStats,
   });
 
@@ -79,6 +81,22 @@ export default function DashboardOverview() {
     pendingMembersList: [],
     expiringMembersList: [],
     expiredMembersList: [],
+    operationalAnalytics: null as null | {
+      dailyActiveAdminSessions: number;
+      memberGrowthVelocity: {
+        last30Days: number;
+        prev30Days: number;
+        growthPercent: number;
+        avgPerWeek: number;
+      };
+      renewalExpirationTrends: {
+        activeSubscriptions: number;
+        expiredSubscriptions: number;
+        renewalRatePercent: number;
+        expirationRatePercent: number;
+      };
+      peakUsageHours: { hour: string; checkIns: number }[];
+    },
   };
 
   // Asymmetric Bento span choreography preserving all 9 metrics & click handlers
@@ -506,6 +524,76 @@ export default function DashboardOverview() {
           </div>
         </div>
       </div>
+
+      {/* Privacy-First Operational & Usage Analytics */}
+      {stats.operationalAnalytics && (
+        <div className="glass-panel p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+            <div>
+              <h2 className="font-display text-base font-bold text-foreground">
+                Studio Telemetry &amp; Operations Velocity
+              </h2>
+              <p className="font-mono-metric text-[11px] text-muted-foreground mt-0.5">
+                Rolling 30-day growth, renewal health, staff sessions &amp; peak floor hours
+              </p>
+            </div>
+            <span className="font-mono-metric text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#D4FF00]/10 text-[#D4FF00] border border-[#D4FF00]/25 self-start sm:self-auto">
+              Live Telemetry
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="rounded-xl bg-secondary/40 border border-border p-4">
+              <p className="font-mono-metric text-[10px] uppercase tracking-wider text-muted-foreground">
+                Active Staff Sessions (24h)
+              </p>
+              <p className="font-mono-metric text-2xl font-bold text-foreground mt-1.5">
+                {stats.operationalAnalytics.dailyActiveAdminSessions}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-secondary/40 border border-border p-4">
+              <p className="font-mono-metric text-[10px] uppercase tracking-wider text-muted-foreground">
+                30D Member Velocity
+              </p>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <p className="font-mono-metric text-2xl font-bold text-[#D4FF00]">
+                  +{stats.operationalAnalytics.memberGrowthVelocity.last30Days}
+                </p>
+                <span className="font-mono-metric text-xs text-muted-foreground">
+                  ({stats.operationalAnalytics.memberGrowthVelocity.avgPerWeek}/wk)
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-secondary/40 border border-border p-4">
+              <p className="font-mono-metric text-[10px] uppercase tracking-wider text-muted-foreground">
+                Renewal / Expiration
+              </p>
+              <p className="font-mono-metric text-2xl font-bold text-foreground mt-1.5">
+                {stats.operationalAnalytics.renewalExpirationTrends.renewalRatePercent}%{" "}
+                <span className="text-xs font-normal text-muted-foreground">
+                  / {stats.operationalAnalytics.renewalExpirationTrends.expirationRatePercent}% exp
+                </span>
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-secondary/40 border border-border p-4">
+              <p className="font-mono-metric text-[10px] uppercase tracking-wider text-muted-foreground">
+                Peak Check-In Hours
+              </p>
+              <p className="font-mono-metric text-sm font-bold text-foreground mt-2 truncate">
+                {stats.operationalAnalytics.peakUsageHours.length > 0
+                  ? stats.operationalAnalytics.peakUsageHours
+                      .slice(0, 3)
+                      .map((h: { hour: string; checkIns: number }) => `${h.hour} (${h.checkIns})`)
+                      .join(" · ")
+                  : "No check-ins in window"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Existing Modals — State & Props Preserved */}
       <PendingMembersModal

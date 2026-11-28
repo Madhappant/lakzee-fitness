@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchExpenses, deleteExpense } from "@/lib/api/expenses";
+import { useBranchScope } from "@/lib/branch-context";
 import { ExpenseModal, ExpenseItem } from "@/components/expenses/ExpenseModal";
 import { Plus, Receipt, IndianRupee, Trash2, Edit2, Loader2, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
+  const { activeBranchId } = useBranchScope();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   
@@ -17,7 +19,7 @@ export default function ExpensesPage() {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const { data, isLoading } = useQuery({
-    queryKey: ["expenses", selectedMonth, selectedYear],
+    queryKey: ["expenses", activeBranchId, selectedMonth, selectedYear],
     queryFn: () => fetchExpenses(selectedMonth, selectedYear),
   });
 

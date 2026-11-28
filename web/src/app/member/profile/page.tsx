@@ -1,5 +1,6 @@
 "use client";
-import { API_URL } from "@/lib/api/config";
+import { authService } from "@/lib/api/auth";
+import { resolveMediaUrl } from "@/lib/api/config";
 
 import { useState, useRef } from "react";
 import { UserCircle, Mail, ShieldCheck, CheckCircle2, Phone, X, Loader2, Camera } from "lucide-react";
@@ -57,19 +58,7 @@ export default function MemberProfilePage() {
     setIsPhoneLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("lakzee_token");
-      const res = await fetch(`${API_URL}/auth/request-phone-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ email: user?.email, newPhone }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to request OTP.");
-      
+      await authService.requestPhoneOtp({ email: user?.email, newPhone });
       setPhoneStep("VERIFY_OTP");
     } catch (err: Error | unknown) {
       setError((err as Error).message || "An unexpected error occurred.");
@@ -83,20 +72,8 @@ export default function MemberProfilePage() {
     setIsPhoneLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("lakzee_token");
-      const res = await fetch(`${API_URL}/auth/verify-phone`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ email: user?.email, otp }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to verify OTP.");
-      
-      // Sync local storage 
+      const data = await authService.verifyPhoneOtp({ email: user?.email, otp });
+
       const updatedUser = data.data.user;
       const localStr = localStorage.getItem("lakzee_user");
       if (localStr) {
@@ -133,8 +110,7 @@ export default function MemberProfilePage() {
     );
   }
 
-  const base = API_URL.replace("/api", "");
-  const photoUrl = profile?.photoUrl ? (profile.photoUrl.startsWith('http') ? profile.photoUrl : `${base}${profile.photoUrl}`) : null;
+  const photoUrl = resolveMediaUrl(profile?.photoUrl) || null;
 
   if (!profile || !user) return null;
 

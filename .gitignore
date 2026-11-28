@@ -35,6 +35,12 @@ Thumbs.db
 # Testing
 coverage/
 
+# Database backups (never commit encrypted or decrypted dumps to Git)
+backups/
+*.dump
+*.sql.gz
+*.sql.gz.enc
+
 # Prisma
 backend/prisma/*.db
 backend/prisma/*.db-journal

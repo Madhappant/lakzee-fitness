@@ -1,9 +1,10 @@
-import { API_URL, redirectOnMissingToken, handleApiResponse } from "./config";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { apiRequest } from "./config";
+import type { ApiResponse } from "./types";
 
-export const fetchReports = async () => {
-  const token = redirectOnMissingToken();
-  const res = await fetch(`${API_URL}/reports`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch reports");
+export const fetchReports = () =>
+  apiRequest<ApiResponse<any>>("/reports", {}, "Failed to fetch reports");
+
+export const reportService = {
+  getOverview: fetchReports,
 };

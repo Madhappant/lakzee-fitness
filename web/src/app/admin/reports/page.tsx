@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchReports } from "@/lib/api/reports";
+import { useBranchScope } from "@/lib/branch-context";
 import { TrendingUp, Wallet, Users, CalendarCheck, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 const Revenue30dModal = dynamic(() => import("@/components/reports/Revenue30dModal").then((m) => m.Revenue30dModal), { ssr: false });
@@ -15,7 +16,11 @@ const ReportsCharts = dynamic(() => import("@/components/charts/ReportsCharts"),
 });
 
 export default function ReportsPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["reports"], queryFn: fetchReports });
+  const { activeBranchId } = useBranchScope();
+  const { data, isLoading } = useQuery({
+    queryKey: ["reports", activeBranchId],
+    queryFn: fetchReports,
+  });
   const [isRevenue30dModalOpen, setIsRevenue30dModalOpen] = useState(false);
   const [isThisMonthModalOpen, setIsThisMonthModalOpen] = useState(false);
   const [isActiveMembersModalOpen, setIsActiveMembersModalOpen] = useState(false);

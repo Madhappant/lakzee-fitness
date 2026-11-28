@@ -1,0 +1,123 @@
+name: CD Zero-Downtime Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
+jobs:
+  migrate-database:
+    name: Safe Backward-Compatible DB Sync
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master'))
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Push additive Prisma schema changes & backfill multi-branch links safely
+        if: ${{ secrets.DATABASE_URL != '' }}
+        run: |
+          npm ci
+          npx prisma db push --accept-data-loss=false
+          npm run db:migrate:branches
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+
+  deploy-backend:
+    name: Deploy Backend & Verify Health
+    needs: migrate-database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render zero-downtime deployment
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl --fail --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Smoke-test /api/health (200 OK & DB connected)
+        if: ${{ secrets.BACKEND_HEALTH_URL != '' }}
+        run: |
+          for attempt in $(seq 1 24); do
+            echo "Health probe attempt $attempt/24..."
+            BODY=$(curl --silent --show-error --max-time 10 -w "\n%{http_code}" "${{ secrets.BACKEND_HEALTH_URL }}" || true)
+            CODE=$(echo "$BODY" | tail -n1)
+            JSON=$(echo "$BODY" | sed '$d')
+            if [ "$CODE" = "200" ] && echo "$JSON" | grep -q '"db":"up"'; then
+              echo "Health check passed: $JSON"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "ERROR: /api/health failed after 24 attempts (last HTTP $CODE)"
+          exit 1
+
+      - name: Trigger automatic rollback on backend smoke failure
+        if: ${{ failure() && secrets.RENDER_ROLLBACK_HOOK_URL != '' }}
+        run: |
+          echo "Initiating automatic backend rollback..."
+          curl --fail --silent --show-error -X POST "${{ secrets.RENDER_ROLLBACK_HOOK_URL }}"
+
+  deploy-frontend:
+    name: Stage, Smoke-Test & Promote Frontend on Vercel
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Skip gracefully when Vercel CI secrets are not configured
+        if: ${{ env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == '' }}
+        run: echo "Vercel secrets not set; relying on Vercel Git integration."
+
+      - name: Install Vercel CLI
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel production env vars & build prebuilt output
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        working-directory: web
+        run: |
+          vercel pull --yes --environment=production
+          vercel build --prod
+
+      - name: Stage production deployment without shifting live domain
+        id: stage
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        working-directory: web
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --skip-domain)
+          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "Staged URL: $DEPLOY_URL"
+
+      - name: Verify staged frontend responds 200 before atomic promote
+        if: ${{ steps.stage.outputs.url != '' }}
+        run: |
+          curl --fail --silent --show-error --max-time 15 "${{ steps.stage.outputs.url }}/login" > /dev/null
+          curl --fail --silent --show-error --max-time 15 "${{ steps.stage.outputs.url }}/manifest.webmanifest" > /dev/null
+
+      - name: Atomically promote staged deployment to live production domain
+        if: ${{ steps.stage.outputs.url != '' }}
+        run: vercel promote "${{ steps.stage.outputs.url }}" --yes

@@ -10,6 +10,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
+import { logoutUser } from "@/lib/api/auth";
 import { clearPersistedQueryCache } from "@/lib/query-persistence";
 import { fetchMyProfile, fetchMyAttendance, fetchMyWorkoutRoutine, fetchMyDietPlan, fetchMySubscriptions } from "@/lib/api/portal";
 import { 
@@ -95,11 +96,10 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
   const queryClient = useQueryClient();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearPersistedQueryCache();
     queryClient.clear();
-    localStorage.removeItem("lakzee_token");
-    localStorage.removeItem("lakzee_user");
+    await logoutUser();
     router.push("/login");
   };
 

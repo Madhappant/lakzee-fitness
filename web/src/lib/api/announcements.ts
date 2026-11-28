@@ -16,3 +16,9 @@ export const deleteAnnouncement = (id: string) =>
     { method: "DELETE" },
     "Failed to delete announcement"
   );
+
+export const announcementService = {
+  list: fetchAnnouncements,
+  create: createAnnouncement,
+  delete: deleteAnnouncement,
+};

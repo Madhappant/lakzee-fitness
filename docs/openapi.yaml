@@ -1,0 +1,1557 @@
+openapi: 3.1.0
+info:
+  title: Lakzee Fitness Studio API
+  version: 1.0.0
+  description: >-
+    Multi-branch Gym Management System REST API powered by Express 5, Prisma, PostgreSQL,
+    Dual-Token JWT Auth (Bearer access + HttpOnly rotating refresh cookie), RBAC, and Redis/in-memory caching.
+servers:
+  - url: http://localhost:5000
+    description: Local Development Server
+  - url: https://api.example.com
+    description: Production Server Placeholder
+
+tags:
+  - name: Health
+    description: Liveness, database readiness, and shutdown drain probes
+  - name: Auth
+    description: Dual-token JWT login, silent rotation, logout, and OTP recovery
+  - name: Branches
+    description: Multi-branch provisioning and SUPER_ADMIN scope management
+  - name: Members
+    description: Sequential per-branch member CRUD, sorting (asc/desc/latest), and cursor pagination
+  - name: Dashboard & Reports
+    description: Cached analytics KPIs and revenue reports
+  - name: Attendance
+    description: Member check-in/check-out and daily presence logs
+  - name: Billing
+    description: Membership plans, subscriptions, invoices, payments, and expenses
+  - name: Studio & Staff
+    description: Role assignments, studio settings, announcements, and notifications
+  - name: Portal & Routines
+    description: Member self-service endpoints and personalized diet/workout routines
+  - name: AI & Leads
+    description: OpenRouter AI assistant and public consultation lead submission
+  - name: Observability & Audit
+    description: Audit logs, APM latency metrics, alerts, and Web Vitals telemetry
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived (15m) access JWT returned by /api/auth/login, /register, or /refresh
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: lakzee_refresh_token
+      description: 7-day HttpOnly rotating refresh cookie scoped to /api/auth
+
+  parameters:
+    BranchHeaderParam:
+      name: X-Branch-Id
+      in: header
+      required: false
+      description: Optional branch scope override exclusive to SUPER_ADMIN ("all" or specific branch UUID/ID). Non-SUPER_ADMIN cross-branch values return 403.
+      schema:
+        type: string
+    BranchQueryParam:
+      name: branchId
+      in: query
+      required: false
+      description: Query alternative to X-Branch-Id (exclusive to SUPER_ADMIN; 403 for other roles if targeting another branch).
+      schema:
+        type: string
+    ResourceIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    SuccessMeta:
+      type: object
+      additionalProperties: true
+      properties:
+        total:
+          type: integer
+        count:
+          type: integer
+        sort:
+          type: string
+        cached:
+          type: boolean
+        branchId:
+          type: string
+        limit:
+          type: integer
+        nextCursor:
+          type: ["string", "null"]
+        hasMore:
+          type: boolean
+
+    ErrorEnvelope:
+      type: object
+      required: [success, status, message]
+      properties:
+        success:
+          type: boolean
+          const: false
+        status:
+          type: string
+          const: error
+        code:
+          type: string
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    AuthUserSummary:
+      type: object
+      required: [id, email, role, branchId, firstName, lastName]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [SUPER_ADMIN, BRANCH_ADMIN, ADMIN, RECEPTIONIST, TRAINER, STAFF, MEMBER]
+        branchId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    AuthTokenResponse:
+      type: object
+      required: [success, status, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        status:
+          type: string
+          const: success
+        data:
+          type: object
+          required: [user, token, accessToken]
+          properties:
+            user:
+              $ref: "#/components/schemas/AuthUserSummary"
+            token:
+              type: string
+            accessToken:
+              type: string
+
+    BranchRecord:
+      type: object
+      required: [id, name, code, location, status]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MemberListItem:
+      type: object
+      required: [id, email, firstName, lastName, role]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: ["string", "null"]
+        role:
+          type: string
+        branchId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        memberProfile:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: string
+            branchId:
+              type: ["string", "null"]
+            memberId:
+              type: string
+            photoUrl:
+              type: ["string", "null"]
+            gender:
+              type: ["string", "null"]
+              enum: [MALE, FEMALE, OTHER, null]
+            bloodGroup:
+              type: ["string", "null"]
+            joiningDate:
+              type: string
+              format: date-time
+            qrCode:
+              type: string
+            subscriptions:
+              type: array
+              items:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  plan:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      price:
+                        type: number
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        branchId:
+          type: ["string", "null"]
+        actorId:
+          type: ["string", "null"]
+        actorRole:
+          type: ["string", "null"]
+        action:
+          type: string
+          enum: [ADMIN_LOGIN, LOGIN_FAILED, MEMBER_CREATED, MEMBER_UPDATED, MEMBER_DELETED, ROLE_CHANGED, BRANCH_CREATED, BRANCH_UPDATED]
+        targetId:
+          type: ["string", "null"]
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Validation failed or malformed input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Unauthorized:
+      description: Missing, invalid, or expired authentication token/cookie
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Forbidden:
+      description: Insufficient RBAC role or cross-branch access denied
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Target resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RateLimited:
+      description: Rate limit window exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Fast process liveness probe (optional DB probe via ?deep=1)
+      security: []
+      parameters:
+        - name: deep
+          in: query
+          schema:
+            type: string
+            enum: ["1"]
+      responses:
+        "200":
+          description: Service alive
+        "503":
+          description: Draining during shutdown or DB check failed
+
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Production database readiness & container health probe
+      security: []
+      parameters:
+        - name: shallow
+          in: query
+          schema:
+            type: string
+            enum: ["1"]
+      responses:
+        "200":
+          description: API & PostgreSQL healthy
+        "503":
+          description: Database unreachable or server draining
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new member account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        "201":
+          description: Registered and refresh cookie issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Access token returned and HttpOnly refresh cookie set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate refresh cookie and issue new short-lived access token
+      security:
+        - refreshCookie: []
+      responses:
+        "200":
+          description: Token pair rotated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke active refresh session and clear refresh cookie
+      security: []
+      responses:
+        "200":
+          description: Session logged out
+
+  /api/auth/request-otp:
+    post:
+      tags: [Auth]
+      summary: Request 6-digit password reset OTP via email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: OTP request processed
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password using 6-digit OTP
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp, newPassword]
+              properties:
+                email:
+                  type: string
+                  format: email
+                otp:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                newPassword:
+                  type: string
+                  minLength: 6
+      responses:
+        "200":
+          description: Password updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/auth/request-phone-otp:
+    post:
+      tags: [Auth]
+      summary: Request verification OTP for changing phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newPhone]
+              properties:
+                email:
+                  type: string
+                  format: email
+                newPhone:
+                  type: string
+                  minLength: 5
+      responses:
+        "200":
+          description: OTP sent
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/auth/verify-phone:
+    post:
+      tags: [Auth]
+      summary: Verify phone OTP and update user phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp]
+              properties:
+                email:
+                  type: string
+                  format: email
+                otp:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        "200":
+          description: Phone number updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/branches:
+    get:
+      tags: [Branches]
+      summary: List all branches (SUPER_ADMIN) or caller's assigned branch
+      responses:
+        "200":
+          description: Branch list returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  status:
+                    type: string
+                    const: success
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BranchRecord"
+                  meta:
+                    $ref: "#/components/schemas/SuccessMeta"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Branches]
+      summary: Provision a new gym branch (SUPER_ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, location]
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                code:
+                  type: string
+                  pattern: "^[A-Za-z0-9_-]+$"
+                location:
+                  type: string
+                  minLength: 2
+                  maxLength: 200
+                status:
+                  type: string
+                  enum: [ACTIVE, INACTIVE]
+      responses:
+        "201":
+          description: Branch created
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/branches/{id}:
+    get:
+      tags: [Branches]
+      summary: Fetch single branch details
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Branch returned
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Branches]
+      summary: Update branch metadata or status (SUPER_ADMIN only)
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                location:
+                  type: string
+                status:
+                  type: string
+                  enum: [ACTIVE, INACTIVE]
+      responses:
+        "200":
+          description: Branch updated
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/members:
+    get:
+      tags: [Members]
+      summary: List members sorted asc/desc/latest with optional cursor pagination
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - $ref: "#/components/parameters/BranchQueryParam"
+        - name: sort
+          in: query
+          required: false
+          description: Sort mode; defaults to ascending Member ID (001 first -> last).
+          schema:
+            type: string
+            enum: [asc, desc, latest]
+            default: asc
+        - name: limit
+          in: query
+          required: false
+          description: Page size (1..200) enabling cursor pagination.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+        - name: cursor
+          in: query
+          required: false
+          description: Last seen User.id returned in meta.nextCursor.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Member directory payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  status:
+                    type: string
+                    const: success
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MemberListItem"
+                  meta:
+                    $ref: "#/components/schemas/SuccessMeta"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Members]
+      summary: Create a member profile with sequential per-branch ID allocation
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                branchId:
+                  type: string
+                phone:
+                  type: string
+                gender:
+                  type: string
+                  enum: [MALE, FEMALE, OTHER]
+                dob:
+                  type: string
+                bloodGroup:
+                  type: string
+                address:
+                  type: string
+                emergencyContact:
+                  type: string
+          multipart/form-data:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Member created with next sequential Member ID
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/members/{id}:
+    get:
+      tags: [Members]
+      summary: Retrieve full details for one member (branch-isolated; MEMBER sees self only)
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Member details
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Members]
+      summary: Update member profile fields or uploaded photo
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Member updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Members]
+      summary: Delete member record (Admin / Branch Admin / Super Admin)
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Member deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/dashboard/stats:
+    get:
+      tags: [Dashboard & Reports]
+      summary: Get branch-scoped KPI dashboard metrics (cached 30s)
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - $ref: "#/components/parameters/BranchQueryParam"
+      responses:
+        "200":
+          description: Dashboard KPI metrics
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/reports:
+    get:
+      tags: [Dashboard & Reports]
+      summary: Get financial, subscription, and check-in trend reports
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - $ref: "#/components/parameters/BranchQueryParam"
+      responses:
+        "200":
+          description: Analytics overview returned
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/attendance:
+    get:
+      tags: [Attendance]
+      summary: List branch attendance logs optionally filtered by start/end timestamps
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Attendance logs list
+
+  /api/attendance/checkin:
+    post:
+      tags: [Attendance]
+      summary: Check member in using sequential ID, QR UUID, or unique name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lakzeeId]
+              properties:
+                lakzeeId:
+                  type: string
+      responses:
+        "201":
+          description: Member checked in
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/attendance/checkout:
+    post:
+      tags: [Attendance]
+      summary: Check out active member attendance session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lakzeeId]
+              properties:
+                lakzeeId:
+                  type: string
+      responses:
+        "200":
+          description: Member checked out
+
+  /api/plans:
+    get:
+      tags: [Billing]
+      summary: List active public membership plans
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - $ref: "#/components/parameters/BranchQueryParam"
+      responses:
+        "200":
+          description: Active plans returned
+    post:
+      tags: [Billing]
+      summary: Create membership plan (Admin+)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, price, durationDays]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                  minimum: 0
+                durationDays:
+                  type: integer
+                  minimum: 1
+                gstPercentage:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                isActive:
+                  type: boolean
+      responses:
+        "201":
+          description: Plan created
+
+  /api/plans/{id}:
+    put:
+      tags: [Billing]
+      summary: Update membership plan
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Plan updated
+    delete:
+      tags: [Billing]
+      summary: Soft-deactivate membership plan
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Plan deactivated
+
+  /api/subscriptions:
+    get:
+      tags: [Billing]
+      summary: List subscriptions with search and status filters
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: paymentStatus
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Subscription list returned
+    post:
+      tags: [Billing]
+      summary: Create subscription plus atomic GST invoice and payment ledger entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [memberId, planId, startDate]
+              properties:
+                memberId:
+                  type: string
+                planId:
+                  type: string
+                startDate:
+                  type: string
+                  format: date
+                status:
+                  type: string
+                  enum: [ACTIVE, EXPIRED, FROZEN, CANCELLED]
+                paymentStatus:
+                  type: string
+                  enum: [PAID, PENDING]
+                paymentMethod:
+                  type: string
+                  enum: [CASH, UPI, CREDIT_CARD, DEBIT_CARD, BANK_TRANSFER, SPLIT]
+                balanceAmount:
+                  type: number
+                  minimum: 0
+      responses:
+        "201":
+          description: Subscription and invoice created
+
+  /api/subscriptions/stats:
+    get:
+      tags: [Billing]
+      summary: Get branch payment ledger statistics
+      responses:
+        "200":
+          description: Payment stats returned
+
+  /api/subscriptions/{id}:
+    put:
+      tags: [Billing]
+      summary: Update subscription status, payment settlement, or plan
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Subscription updated
+    delete:
+      tags: [Billing]
+      summary: Delete subscription record
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Subscription deleted
+
+  /api/expenses:
+    get:
+      tags: [Billing]
+      summary: List branch operating expenses optionally filtered by month/year
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Expenses returned
+    post:
+      tags: [Billing]
+      summary: Record operating expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, amount]
+              properties:
+                title:
+                  type: string
+                category:
+                  type: string
+                  enum: [SALARY, MAINTENANCE, RENT, WATER, ELECTRICITY, CLEANING, OTHER]
+                amount:
+                  type: number
+                  minimum: 0
+                date:
+                  type: string
+                paymentMethod:
+                  type: string
+                  enum: [CASH, UPI, BANK_TRANSFER, CREDIT_CARD]
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Expense logged
+
+  /api/expenses/{id}:
+    put:
+      tags: [Billing]
+      summary: Update expense record
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Expense updated
+    delete:
+      tags: [Billing]
+      summary: Delete expense record
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Expense deleted
+
+  /api/staff:
+    get:
+      tags: [Studio & Staff]
+      summary: List staff accounts visible to actor branch
+      responses:
+        "200":
+          description: Staff roster returned
+
+  /api/staff/assign:
+    post:
+      tags: [Studio & Staff]
+      summary: Assign staff role (logs ROLE_CHANGED AuditLog)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, role]
+              properties:
+                userId:
+                  type: string
+                role:
+                  type: string
+                  enum: [SUPER_ADMIN, BRANCH_ADMIN, ADMIN, RECEPTIONIST, TRAINER, STAFF]
+                branchId:
+                  type: string
+      responses:
+        "200":
+          description: Role assigned
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/staff/{id}/revoke:
+    post:
+      tags: [Studio & Staff]
+      summary: Revoke staff privileges and revert role to MEMBER
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Role revoked
+
+  /api/settings:
+    get:
+      tags: [Studio & Staff]
+      summary: Fetch studio settings (cached 300s)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - $ref: "#/components/parameters/BranchQueryParam"
+      responses:
+        "200":
+          description: Studio settings object
+    put:
+      tags: [Studio & Staff]
+      summary: Update branch studio settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Settings updated
+
+  /api/announcements:
+    get:
+      tags: [Studio & Staff]
+      summary: List announcements scoped to active branch
+      responses:
+        "200":
+          description: Announcements returned
+    post:
+      tags: [Studio & Staff]
+      summary: Create branch announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, message]
+              properties:
+                title:
+                  type: string
+                  maxLength: 100
+                message:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "201":
+          description: Announcement created
+
+  /api/announcements/{id}:
+    delete:
+      tags: [Studio & Staff]
+      summary: Delete announcement
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdPath"
+      responses:
+        "200":
+          description: Announcement deleted
+
+  /api/notifications:
+    get:
+      tags: [Studio & Staff]
+      summary: Fetch expiry and birthday notifications for authenticated user
+      parameters:
+        - name: tzOffset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notifications feed returned
+
+  /api/portal/me:
+    get:
+      tags: [Portal & Routines]
+      summary: Fetch authenticated member profile (MEMBER role)
+      responses:
+        "200":
+          description: Own member profile returned
+
+  /api/portal/attendance:
+    get:
+      tags: [Portal & Routines]
+      summary: Fetch authenticated member attendance history
+      responses:
+        "200":
+          description: Attendance logs returned
+
+  /api/portal/subscriptions:
+    get:
+      tags: [Portal & Routines]
+      summary: Fetch authenticated member subscriptions & invoices
+      responses:
+        "200":
+          description: Subscriptions returned
+
+  /api/portal/photo:
+    post:
+      tags: [Portal & Routines]
+      summary: Upload authenticated member profile photo (max 5MB)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Photo updated
+
+  /api/portal/diet:
+    get:
+      tags: [Portal & Routines]
+      summary: Fetch authenticated member active diet plan
+      responses:
+        "200":
+          description: Diet plan returned
+
+  /api/portal/workout:
+    get:
+      tags: [Portal & Routines]
+      summary: Fetch authenticated member active workout routine
+      responses:
+        "200":
+          description: Workout routine returned
+
+  /api/plans-routines/diet/{memberId}:
+    post:
+      tags: [Portal & Routines]
+      summary: Assign personalized diet plan to member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mealsData]
+              properties:
+                title:
+                  type: string
+                notes:
+                  type: string
+                mealsData:
+                  oneOf:
+                    - type: string
+                    - type: object
+                      additionalProperties:
+                        type: string
+      responses:
+        "201":
+          description: Diet plan assigned
+    get:
+      tags: [Portal & Routines]
+      summary: Read active diet plan for member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Diet plan returned
+
+  /api/plans-routines/workout/{memberId}:
+    post:
+      tags: [Portal & Routines]
+      summary: Assign personalized workout routine to member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [exercisesData]
+              properties:
+                title:
+                  type: string
+                notes:
+                  type: string
+                exercisesData:
+                  oneOf:
+                    - type: string
+                    - type: object
+                      additionalProperties:
+                        type: string
+      responses:
+        "201":
+          description: Workout routine assigned
+    get:
+      tags: [Portal & Routines]
+      summary: Read active workout routine for member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workout routine returned
+
+  /api/ai/status:
+    get:
+      tags: [AI & Leads]
+      summary: Check whether OPENROUTER_API_KEY is configured
+      security: []
+      responses:
+        "200":
+          description: Configuration state returned
+
+  /api/ai/chat:
+    post:
+      tags: [AI & Leads]
+      summary: Studio admin AI assistant supporting member/plan tool calls
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    type: object
+                model:
+                  type: string
+      responses:
+        "200":
+          description: Assistant response returned
+
+  /api/ai/voice:
+    post:
+      tags: [AI & Leads]
+      summary: Public Studio Voice AI concierge endpoint
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Voice assistant response returned
+
+  /api/contact:
+    post:
+      tags: [AI & Leads]
+      summary: Submit public gym consultation inquiry lead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, phone, goal]
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                goal:
+                  type: string
+                message:
+                  type: string
+      responses:
+        "201":
+          description: Inquiry recorded
+
+  /api/metrics:
+    get:
+      tags: [Observability & Audit]
+      summary: Fetch APM latency, cache hit rate, pool status, Web Vitals, alerts, and immutable Audit Logs
+      parameters:
+        - $ref: "#/components/parameters/BranchHeaderParam"
+        - $ref: "#/components/parameters/BranchQueryParam"
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ADMIN_LOGIN, LOGIN_FAILED, MEMBER_CREATED, MEMBER_UPDATED, MEMBER_DELETED, ROLE_CHANGED, BRANCH_CREATED, BRANCH_UPDATED]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Full telemetry and AuditLog payload returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  status:
+                    type: string
+                    const: success
+                  data:
+                    type: object
+                    properties:
+                      branchId:
+                        type: string
+                      apm:
+                        type: object
+                      cache:
+                        type: object
+                      pool:
+                        type: object
+                      system:
+                        type: object
+                      webVitals:
+                        type: object
+                      analytics:
+                        type: ["object", "null"]
+                      recentErrors:
+                        type: array
+                        items:
+                          type: object
+                      alerts:
+                        type: array
+                        items:
+                          type: object
+                      auditLogs:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/AuditLogEntry"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/telemetry/client:
+    post:
+      tags: [Observability & Audit]
+      summary: Ingest redacted frontend Web Vitals and uncaught browser errors
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type]
+              properties:
+                type:
+                  type: string
+                  enum: [web-vital, error]
+                name:
+                  type: string
+                  enum: [LCP, INP, CLS, FCP, TTFB]
+                value:
+                  type: number
+                  minimum: 0
+                  maximum: 120000
+                rating:
+                  type: string
+                  enum: [good, needs-improvement, poor]
+                route:
+                  type: string
+                message:
+                  type: string
+                stack:
+                  type: string
+                componentStack:
+                  type: string
+      responses:
+        "202":
+          description: Telemetry sample accepted asynchronously
+        "400":
+          $ref: "#/components/responses/BadRequest"

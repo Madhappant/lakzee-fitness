@@ -1,17 +1,5 @@
-import { API_URL, getAuthToken, handleApiResponse } from "./config";
-
-export const fetchExpenses = async (month?: number, year?: number) => {
-  const token = getAuthToken();
-  let url = `${API_URL}/expenses`;
-  if (month && year) {
-    url += `?month=${month}&year=${year}`;
-  }
-  
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch expenses");
-};
+import { apiRequest } from "./config";
+import type { ApiResponse, ExpenseRecord } from "./types";
 
 export interface ExpenseData {
   title: string;
@@ -22,37 +10,39 @@ export interface ExpenseData {
   notes?: string;
 }
 
-export const createExpense = async (data: ExpenseData) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/expenses`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return handleApiResponse(res, "Failed to create expense");
+export const fetchExpenses = (month?: number, year?: number) => {
+  const query = month && year ? `?month=${month}&year=${year}` : "";
+  return apiRequest<ApiResponse<ExpenseRecord[]>>(
+    `/expenses${query}`,
+    {},
+    "Failed to fetch expenses"
+  );
 };
 
-export const updateExpense = async (id: string, data: Partial<ExpenseData>) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/expenses/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return handleApiResponse(res, "Failed to update expense");
-};
+export const createExpense = (data: ExpenseData) =>
+  apiRequest<ApiResponse<ExpenseRecord>>(
+    "/expenses",
+    { method: "POST", body: data },
+    "Failed to create expense"
+  );
 
-export const deleteExpense = async (id: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/expenses/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to delete expense");
+export const updateExpense = (id: string, data: Partial<ExpenseData>) =>
+  apiRequest<ApiResponse<ExpenseRecord>>(
+    `/expenses/${id}`,
+    { method: "PUT", body: data },
+    "Failed to update expense"
+  );
+
+export const deleteExpense = (id: string) =>
+  apiRequest<ApiResponse<null>>(
+    `/expenses/${id}`,
+    { method: "DELETE" },
+    "Failed to delete expense"
+  );
+
+export const expenseService = {
+  list: fetchExpenses,
+  create: createExpense,
+  update: updateExpense,
+  delete: deleteExpense,
 };

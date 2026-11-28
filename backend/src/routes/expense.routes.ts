@@ -1,15 +1,16 @@
 import { Router } from 'express';
 import { createExpense, getExpenses, updateExpense, deleteExpense } from '../controllers/expense.controller';
-import { authenticate, authorize } from '../middlewares/auth.middleware';
+import { requireAuth, requireRole } from '../middlewares/auth.middleware';
+import { validateRequest } from '../middlewares/validate.middleware';
+import { createExpenseBodySchema, updateExpenseBodySchema } from '../validators/domain.schemas';
 
 const router = Router();
 
-router.use(authenticate);
-router.use(authorize('ADMIN', 'RECEPTIONIST')); // Allow Admin and Receptionist to manage expenses
+router.use(requireAuth);
 
-router.post('/', createExpense);
-router.get('/', getExpenses);
-router.put('/:id', updateExpense);
-router.delete('/:id', deleteExpense);
+router.post('/', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), validateRequest({ body: createExpenseBodySchema }), createExpense);
+router.get('/', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), getExpenses);
+router.put('/:id', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), validateRequest({ body: updateExpenseBodySchema }), updateExpense);
+router.delete('/:id', requireRole(['SUPER_ADMIN', 'ADMIN']), deleteExpense);
 
 export default router;

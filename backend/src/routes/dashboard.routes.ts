@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { getDashboardStats } from '../controllers/dashboard.controller';
-import { authenticate, authorize } from '../middlewares/auth.middleware';
+import { requireAuth, requireRole } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-router.use(authenticate);
-router.get('/stats', authorize('ADMIN', 'RECEPTIONIST'), getDashboardStats);
+router.use(requireAuth);
+router.get('/stats', requireRole(['ADMIN', 'RECEPTIONIST', 'STAFF']), getDashboardStats);
 
 export default router;

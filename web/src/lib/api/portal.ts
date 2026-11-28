@@ -1,56 +1,38 @@
-import { API_URL, getAuthToken, handleApiResponse } from "./config";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { API_URL, apiRequest, getAuthToken } from "./config";
+import type { ApiResponse } from "./types";
 export { API_URL, getAuthToken };
 
-export const fetchMyProfile = async () => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/portal/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch profile");
-};
+export const fetchMyProfile = () =>
+  apiRequest<ApiResponse<any>>("/portal/me", {}, "Failed to fetch profile");
 
-export const fetchMyAttendance = async () => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/portal/attendance`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch attendance");
-};
+export const fetchMyAttendance = () =>
+  apiRequest<ApiResponse<any[]>>("/portal/attendance", {}, "Failed to fetch attendance");
 
-export const fetchMySubscriptions = async () => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/portal/subscriptions`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch subscriptions");
-};
+export const fetchMySubscriptions = () =>
+  apiRequest<ApiResponse<any[]>>("/portal/subscriptions", {}, "Failed to fetch subscriptions");
 
-export const uploadMyPhoto = async (file: File) => {
-  const token = getAuthToken();
+export const uploadMyPhoto = (file: File) => {
   const formData = new FormData();
-  formData.append('photo', file);
-
-  const res = await fetch(`${API_URL}/portal/photo`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-
-  return handleApiResponse(res, "Failed to upload photo");
+  formData.append("photo", file);
+  return apiRequest<ApiResponse<{ photoUrl: string }>>(
+    "/portal/photo",
+    { method: "POST", body: formData },
+    "Failed to upload photo"
+  );
 };
 
-export const fetchMyDietPlan = async () => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/portal/diet`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch diet plan");
-};
+export const fetchMyDietPlan = () =>
+  apiRequest<ApiResponse<any>>("/portal/diet", {}, "Failed to fetch diet plan");
 
-export const fetchMyWorkoutRoutine = async () => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/portal/workout`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleApiResponse(res, "Failed to fetch workout routine");
+export const fetchMyWorkoutRoutine = () =>
+  apiRequest<ApiResponse<any>>("/portal/workout", {}, "Failed to fetch workout routine");
+
+export const portalService = {
+  getProfile: fetchMyProfile,
+  getAttendance: fetchMyAttendance,
+  getSubscriptions: fetchMySubscriptions,
+  uploadPhoto: uploadMyPhoto,
+  getDietPlan: fetchMyDietPlan,
+  getWorkoutRoutine: fetchMyWorkoutRoutine,
 };

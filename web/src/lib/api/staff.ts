@@ -16,3 +16,9 @@ export const revokeRole = (userId: string) =>
     { method: "POST" },
     "Failed to revoke role"
   );
+
+export const staffService = {
+  list: fetchStaff,
+  assignRole,
+  revokeRole,
+};

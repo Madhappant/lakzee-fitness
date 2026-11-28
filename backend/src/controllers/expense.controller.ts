@@ -1,82 +1,35 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Request, Response } from 'express';
-import { prisma } from '../app';
-import { z } from 'zod';
+import { Response } from 'express';
+import { AuthRequest } from '../middlewares/auth.middleware';
 import { asyncHandler } from '../middlewares/error.middleware';
-import { BadRequestError } from '../utils/errors';
+import { billingService } from '../services/billing.service';
+import { sendSuccess } from '../utils/response';
+import { resolveWriteBranchId } from '../utils/tenant';
 
-const createExpenseSchema = z.object({
-  title: z.string().trim().min(1, 'Title is required').max(150),
-  category: z.enum(['SALARY', 'MAINTENANCE', 'RENT', 'WATER', 'ELECTRICITY', 'CLEANING', 'OTHER']).default('OTHER'),
-  amount: z.preprocess((v) => Number(v), z.number().min(0, 'Amount must be positive')),
-  date: z.string().refine((s) => !s || !isNaN(Date.parse(s)), 'Invalid date').optional(),
-  paymentMethod: z.enum(['CASH', 'UPI', 'BANK_TRANSFER', 'CREDIT_CARD']).default('CASH'),
-  notes: z.string().max(1000).optional(),
-});
-
-const updateExpenseSchema = createExpenseSchema.partial();
-
-export const createExpense = asyncHandler(async (req: Request, res: Response) => {
-  const validated = createExpenseSchema.parse(req.body);
-
-  const expense = await prisma.expense.create({
-    data: {
-      title: validated.title,
-      category: validated.category,
-      amount: Math.round(validated.amount * 100) / 100,
-      date: validated.date ? new Date(validated.date) : new Date(),
-      paymentMethod: validated.paymentMethod,
-      notes: validated.notes,
-    },
+export const createExpense = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const branchId = resolveWriteBranchId({
+    userRole: req.user?.role,
+    userBranchId: req.user?.branchId,
+    requestedBranchId: req.body.branchId ?? req.tenant?.branchId,
   });
-
-  res.status(201).json({ status: 'success', data: expense });
+  const expense = await billingService.createExpense({ ...req.body, branchId });
+  return sendSuccess(res, { statusCode: 201, data: expense });
 });
 
-export const getExpenses = asyncHandler(async (req: Request, res: Response) => {
-  const { month, year } = req.query;
-  const whereClause: any = {};
-
-  if (month && year) {
-    const m = Number(month);
-    const y = Number(year);
-    if (isNaN(m) || isNaN(y) || m < 1 || m > 12 || y < 2000 || y > 2100) {
-      throw new BadRequestError('Invalid month or year parameter');
-    }
-    const startDate = new Date(y, m - 1, 1);
-    const endDate = new Date(y, m, 0, 23, 59, 59, 999);
-    whereClause.date = { gte: startDate, lte: endDate };
-  }
-
-  const expenses = await prisma.expense.findMany({
-    where: whereClause,
-    orderBy: { date: 'desc' },
+export const getExpenses = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { month, year } = req.validated?.query ?? req.query;
+  const expenses = await billingService.listExpenses(month, year, req.tenant?.branchId);
+  return sendSuccess(res, {
+    data: expenses,
+    meta: { total: expenses.length, branchId: req.tenant?.branchId ?? 'all' },
   });
-
-  res.json({ status: 'success', data: expenses });
 });
 
-export const updateExpense = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id as string;
-  const validated = updateExpenseSchema.parse(req.body);
-
-  const expense = await prisma.expense.update({
-    where: { id },
-    data: {
-      ...(validated.title !== undefined && { title: validated.title }),
-      ...(validated.category !== undefined && { category: validated.category }),
-      ...(validated.amount !== undefined && { amount: Math.round(validated.amount * 100) / 100 }),
-      ...(validated.date !== undefined && { date: validated.date ? new Date(validated.date) : new Date() }),
-      ...(validated.paymentMethod !== undefined && { paymentMethod: validated.paymentMethod }),
-      ...(validated.notes !== undefined && { notes: validated.notes }),
-    },
-  });
-
-  res.json({ status: 'success', data: expense });
+export const updateExpense = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const expense = await billingService.updateExpense(req.params.id as string, req.body, req.tenant);
+  return sendSuccess(res, { data: expense });
 });
 
-export const deleteExpense = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id as string;
-  await prisma.expense.delete({ where: { id } });
-  res.json({ status: 'success', message: 'Expense deleted successfully' });
+export const deleteExpense = asyncHandler(async (req: AuthRequest, res: Response) => {
+  await billingService.deleteExpense(req.params.id as string, req.tenant);
+  return sendSuccess(res, { message: 'Expense deleted successfully' });
 });

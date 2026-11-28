@@ -4,12 +4,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchPlans, createPlan, updatePlan, deletePlan } from "@/lib/api/plans";
+import { useBranchScope } from "@/lib/branch-context";
 import { Plus, X, Check, Loader2, DollarSign, Edit2, Trash2, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 export default function PlansPage() {
   const queryClient = useQueryClient();
+  const { activeBranchId } = useBranchScope();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT">("ADD");
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export default function PlansPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["plans"],
+    queryKey: ["plans", activeBranchId],
     queryFn: fetchPlans,
   });
   const plans = data?.data || [];

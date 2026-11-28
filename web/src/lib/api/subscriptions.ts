@@ -1,76 +1,69 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_URL, getAuthToken, handleApiResponse } from "./config";
+import { apiRequest } from "./config";
+import type { ApiResponse, PaymentStats, SubscriptionRecord } from "./types";
 
-export const fetchSubscriptions = async (params?: { search?: string; status?: string; paymentStatus?: string }) => {
-  const token = getAuthToken();
-  if (!token && typeof window !== "undefined") {
-    window.location.href = "/login?session_expired=1";
-    throw new Error("No authentication token found. Please log in.");
-  }
-
+export const fetchSubscriptions = (params?: {
+  search?: string;
+  status?: string;
+  paymentStatus?: string;
+}) => {
   const queryParams = new URLSearchParams();
   if (params?.search) queryParams.set("search", params.search);
-  if (params?.status && params.status !== "All Status" && params.status !== "ALL") queryParams.set("status", params.status);
-  if (params?.paymentStatus && params.paymentStatus !== "All Payments" && params.paymentStatus !== "ALL") queryParams.set("paymentStatus", params.paymentStatus);
-
-  const url = `${API_URL}/subscriptions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  return handleApiResponse(res, "Failed to fetch subscriptions");
-};
-
-export const createSubscription = async (subData: { memberId: string, planId: string, startDate: string }) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/subscriptions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(subData),
-  });
-  
-  return handleApiResponse(res, "Failed to create subscription");
-};
-
-export const fetchPaymentStats = async () => {
-  const token = getAuthToken();
-  if (!token && typeof window !== "undefined") {
-    window.location.href = "/login?session_expired=1";
-    throw new Error("No authentication token found. Please log in.");
+  if (params?.status && params.status !== "All Status" && params.status !== "ALL") {
+    queryParams.set("status", params.status);
+  }
+  if (params?.paymentStatus && params.paymentStatus !== "All Payments" && params.paymentStatus !== "ALL") {
+    queryParams.set("paymentStatus", params.paymentStatus);
   }
 
-  const res = await fetch(`${API_URL}/subscriptions/stats`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  return handleApiResponse(res, "Failed to fetch payment stats");
+  const query = queryParams.toString();
+  return apiRequest<ApiResponse<SubscriptionRecord[]>>(
+    `/subscriptions${query ? `?${query}` : ""}`,
+    {},
+    "Failed to fetch subscriptions"
+  );
 };
 
-export const updateSubscription = async (id: string, data: any) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/subscriptions/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  
-  return handleApiResponse(res, "Failed to update subscription");
-};
+export const createSubscription = (subData: {
+  memberId: string;
+  planId: string;
+  startDate: string;
+  status?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  balanceAmount?: number | string;
+}) =>
+  apiRequest<ApiResponse<SubscriptionRecord>>(
+    "/subscriptions",
+    { method: "POST", body: subData },
+    "Failed to create subscription"
+  );
 
-export const deleteSubscription = async (id: string) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_URL}/subscriptions/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  
-  return handleApiResponse(res, "Failed to delete subscription");
+export const fetchPaymentStats = () =>
+  apiRequest<ApiResponse<PaymentStats>>(
+    "/subscriptions/stats",
+    {},
+    "Failed to fetch payment stats"
+  );
+
+export const updateSubscription = (id: string, data: any) =>
+  apiRequest<ApiResponse<SubscriptionRecord>>(
+    `/subscriptions/${id}`,
+    { method: "PUT", body: data },
+    "Failed to update subscription"
+  );
+
+export const deleteSubscription = (id: string) =>
+  apiRequest<ApiResponse<null>>(
+    `/subscriptions/${id}`,
+    { method: "DELETE" },
+    "Failed to delete subscription"
+  );
+
+export const subscriptionService = {
+  list: fetchSubscriptions,
+  create: createSubscription,
+  getPaymentStats: fetchPaymentStats,
+  update: updateSubscription,
+  delete: deleteSubscription,
 };

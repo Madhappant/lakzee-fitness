@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { isServer, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, isServer } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
+import { TelemetryObserver } from "@/components/TelemetryObserver";
+import { BranchProvider } from "@/lib/branch-context";
 import {
   hydrateQueryCacheFromStorage,
   subscribeQueryCachePersistence,
@@ -54,7 +56,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <BranchProvider>
+          <TelemetryObserver />
+          {children}
+        </BranchProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

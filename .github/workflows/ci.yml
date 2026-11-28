@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-ci:
+    name: Backend Build, Unit/Integration Tests & Coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies cleanly
+        run: npm ci
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+        env:
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+
+      - name: Production TypeScript build (no source maps)
+        run: npm run build:prod
+
+      - name: Run baseline node:test suites
+        run: npm run test:baseline
+        env:
+          JWT_SECRET: ci-ephemeral-access-secret-for-test-only
+          JWT_REFRESH_SECRET: ci-ephemeral-refresh-secret-for-test-only
+
+      - name: Run Vitest unit & Supertest integration suites with coverage
+        run: npm run test:coverage
+
+      - name: Upload backend coverage summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: backend/coverage
+          retention-days: 14
+
+      - name: Security dependency audit (high/critical)
+        run: npm audit --omit=dev --audit-level=high
+
+  web-ci:
+    name: Frontend Lint, TypeCheck, Build & Audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies cleanly
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Run Next.js production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.com/api
+          NEXT_PUBLIC_APP_URL: https://app.example.com
+
+      - name: Security dependency audit (high/critical)
+        run: npm audit --omit=dev --audit-level=high
+
+  e2e-ci:
+    name: Playwright E2E Browser QA (Desktop & Mobile)
+    needs: [backend-ci, web-ci]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            web/package-lock.json
+
+      - name: Install backend & web dependencies
+        run: |
+          npm --prefix backend ci
+          npm --prefix backend exec prisma generate
+          npm --prefix web ci
+
+      - name: Install Playwright Chromium & system dependencies
+        working-directory: web
+        run: npx playwright install chromium --with-deps
+
+      - name: Build frontend configured for isolated E2E test API
+        working-directory: web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:5055/api
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+
+      - name: Execute Playwright E2E suite (Desktop & Mobile viewports)
+        working-directory: web
+        run: npm run test:e2e
+        env:
+          E2E_USE_PREBUILT: "1"
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-report
+          path: web/playwright-report
+          retention-days: 14

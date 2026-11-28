@@ -6,17 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { apiRequest, getAuthToken } from "@/lib/api/config";
-
-type Notification = {
-  id: string;
-  type: "EXPIRY" | "PAYMENT" | "SYSTEM" | "ANNOUNCEMENT";
-  title: string;
-  message: string;
-  date: string;
-  link: string;
-  read: boolean;
-};
+import { notificationService } from "@/lib/api/notifications";
 
 export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {}) {
   void role;
@@ -35,18 +25,7 @@ export function NotificationDropdown({ role }: { role?: "ADMIN" | "MEMBER" } = {
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications"],
-    queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) return [];
-
-      const tzOffset = new Date().getTimezoneOffset();
-      const json = await apiRequest(
-        `/notifications?tzOffset=${tzOffset}`,
-        { requireAuth: false, includeAuth: true, redirectOnUnauthorized: true },
-        "Failed to fetch notifications"
-      );
-      return json.data as Notification[];
-    },
+    queryFn: notificationService.list,
     staleTime: 30000,
     refetchInterval: 60000,
     refetchIntervalInBackground: false,

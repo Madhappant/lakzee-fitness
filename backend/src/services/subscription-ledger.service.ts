@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { CACHE_KEYS, invalidateCacheScopes, memoryCache } from '../utils/cache';
+import { BillingRepository, billingRepository } from '../repositories/billing.repository';
+import { CACHE_KEYS, invalidateTenantCacheScopes, memoryCache } from '../utils/cache';
 import { NotFoundError } from '../utils/errors';
+import { assertBranchOwnership, PRIMARY_BRANCH_ID, scopedCacheKey, type TenantScope } from '../utils/tenant';
 
 export type PaymentStatus = 'PAID' | 'PENDING' | string;
 
@@ -65,26 +67,31 @@ export interface CreateSubscriptionInput {
   memberId: string;
   planId: string;
   startDate: Date | string;
+  branchId?: string;
   status?: 'ACTIVE' | 'EXPIRED' | 'FROZEN' | 'CANCELLED';
   paymentStatus?: 'PAID' | 'PENDING';
   paymentMethod?: 'CASH' | 'UPI' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER' | 'SPLIT';
   balanceAmount?: number;
 }
 
-export async function createSubscriptionWithInvoice(db: PrismaClient, input: CreateSubscriptionInput) {
+export async function createSubscriptionWithRepository(
+  repo: BillingRepository,
+  input: CreateSubscriptionInput,
+  tenant?: TenantScope
+) {
   const paymentStatus = input.paymentStatus ?? 'PAID';
   const paymentMethod = input.paymentMethod ?? 'CASH';
 
-  const [member, plan] = await Promise.all([
-    db.memberProfile.findUnique({ where: { id: input.memberId }, select: { id: true } }),
-    db.membershipPlan.findUnique({
-      where: { id: input.planId },
-      select: { id: true, name: true, price: true, durationDays: true, gstPercentage: true },
-    }),
-  ]);
-
+  const [member, plan] = await repo.findSubscriptionCreateContext(input.memberId, input.planId);
   if (!member) throw new NotFoundError('Member not found');
   if (!plan) throw new NotFoundError('Plan not found');
+
+  const resolvedBranchId =
+    (member as { branchId?: string | null }).branchId ??
+    input.branchId ??
+    tenant?.branchId ??
+    PRIMARY_BRANCH_ID;
+  assertBranchOwnership(resolvedBranchId, tenant);
 
   const start = input.startDate instanceof Date ? new Date(input.startDate) : new Date(input.startDate);
   const end = new Date(start);
@@ -97,74 +104,59 @@ export async function createSubscriptionWithInvoice(db: PrismaClient, input: Cre
   const breakdown = computeInvoiceBreakdown(plan.price, plan.gstPercentage, paymentStatus, input.balanceAmount ?? 0);
   const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
-  const subscription = await db.$transaction(async (tx) => {
-    const sub = await tx.subscription.create({
-      data: {
-        memberId: input.memberId,
-        planId: input.planId,
-        startDate: start,
-        endDate: end,
-        status: computedStatus,
-        paymentStatus,
-        paymentMethod,
-        balanceAmount: breakdown.effectiveBalance,
-      },
-    });
-
-    const invoice = await tx.invoice.create({
-      data: {
-        invoiceNumber,
-        memberId: input.memberId,
-        subscriptionId: sub.id,
-        subtotal: breakdown.subtotal,
-        discount: 0,
-        gstAmount: breakdown.gstAmount,
-        totalAmount: breakdown.totalAmount,
-        status: breakdown.invoiceStatus,
-      },
-    });
-
-    if (breakdown.paidAmount > 0) {
-      await tx.payment.create({
-        data: {
-          invoiceId: invoice.id,
-          amount: breakdown.paidAmount,
-          method: paymentMethod,
-          status: 'COMPLETED',
-        },
-      });
-    }
-
-    return sub;
+  const subscription = await repo.createSubscriptionLedgerTransaction({
+    branchId: resolvedBranchId,
+    memberId: input.memberId,
+    planId: input.planId,
+    startDate: start,
+    endDate: end,
+    status: computedStatus,
+    paymentStatus,
+    paymentMethod,
+    balanceAmount: breakdown.effectiveBalance,
+    invoiceNumber,
+    subtotal: breakdown.subtotal,
+    gstAmount: breakdown.gstAmount,
+    totalAmount: breakdown.totalAmount,
+    invoiceStatus: breakdown.invoiceStatus,
+    paidAmount: breakdown.paidAmount,
   });
 
-  invalidateCacheScopes('dashboard', 'reports', 'members');
+  invalidateTenantCacheScopes(resolvedBranchId, 'dashboard', 'reports', 'members');
   return { subscription, plan, endDate: end };
+}
+
+export function createSubscriptionWithInvoice(db: PrismaClient | undefined, input: CreateSubscriptionInput) {
+  const repo = db ? new BillingRepository(db) : billingRepository;
+  return createSubscriptionWithRepository(repo, input);
 }
 
 /**
  * Prevents issuing an UPDATE lock on every GET /api/subscriptions call by cooling down syncs.
  */
-export async function syncExpiredSubscriptions(db: PrismaClient, cooldownSeconds = 300): Promise<number> {
-  const recentlySynced = memoryCache.get<boolean>(CACHE_KEYS.SUBSCRIPTIONS_EXPIRY_SYNC);
+export async function syncExpiredWithRepository(
+  repo: BillingRepository,
+  cooldownSeconds = 300,
+  branchId?: string | null
+): Promise<number> {
+  const syncKey = scopedCacheKey(CACHE_KEYS.SUBSCRIPTIONS_EXPIRY_SYNC, branchId);
+  const recentlySynced = memoryCache.get<boolean>(syncKey);
   if (recentlySynced) return 0;
 
   const todayMidnight = new Date();
   todayMidnight.setHours(0, 0, 0, 0);
 
-  const result = await db.subscription.updateMany({
-    where: {
-      status: 'ACTIVE',
-      endDate: { lt: todayMidnight },
-    },
-    data: { status: 'EXPIRED' },
-  });
-
-  memoryCache.set(CACHE_KEYS.SUBSCRIPTIONS_EXPIRY_SYNC, true, cooldownSeconds);
+  const result = await repo.expireOverdueActiveSubscriptions(todayMidnight, branchId);
+  memoryCache.set(syncKey, true, cooldownSeconds);
 
   if (result.count > 0) {
-    invalidateCacheScopes('dashboard', 'reports', 'members');
+    invalidateTenantCacheScopes(branchId, 'dashboard', 'reports', 'members');
   }
 
   return result.count;
+}
+
+export function syncExpiredSubscriptions(db: PrismaClient | undefined, cooldownSeconds = 300): Promise<number> {
+  const repo = db ? new BillingRepository(db) : billingRepository;
+  return syncExpiredWithRepository(repo, cooldownSeconds);
 }

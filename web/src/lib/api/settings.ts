@@ -14,3 +14,8 @@ export const updateSettings = (settingsData: any) =>
     { method: "PUT", body: settingsData },
     "Failed to update settings"
   );
+
+export const settingsService = {
+  get: fetchSettings,
+  update: updateSettings,
+};
