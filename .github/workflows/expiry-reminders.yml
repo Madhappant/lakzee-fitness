@@ -1,0 +1,68 @@
+name: Daily WhatsApp & Email Expiry Reminders
+
+on:
+  schedule:
+    # Runs daily at 03:30 UTC (09:00 AM IST)
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run dry-run sweep without calling external WhatsApp/SMTP APIs'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: daily-expiry-reminders
+  cancel-in-progress: false
+
+jobs:
+  dispatch-expiry-reminders:
+    name: Trigger Daily Reminder Sweep (/api/cron/expiry-reminders)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip cleanly when cron secrets are not configured yet
+        if: ${{ secrets.BACKEND_BASE_URL == '' || secrets.CRON_SECRET == '' }}
+        run: |
+          echo "BACKEND_BASE_URL or CRON_SECRET GitHub secret is not set yet. Configure both under Repository Settings -> Secrets -> Actions."
+
+      - name: Wake Render & run daily expiry reminder batch
+        if: ${{ secrets.BACKEND_BASE_URL != '' && secrets.CRON_SECRET != '' }}
+        env:
+          BACKEND_BASE_URL: ${{ secrets.BACKEND_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          BASE_URL="${BACKEND_BASE_URL%/}"
+          # Wake Render Free instance cleanly if sleeping before invoking cron endpoint
+          for attempt in $(seq 1 12); do
+            STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 15 "${BASE_URL}/api/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Backend ready (HTTP 200)"
+              break
+            fi
+            echo "Waiting for backend warmup (attempt $attempt/12, HTTP $STATUS)..."
+            sleep 10
+          done
+
+          RESPONSE=$(curl --silent --show-error --max-time 60 -w "\n%{http_code}" \
+            -X POST "${BASE_URL}/api/cron/expiry-reminders" \
+            -H "Content-Type: application/json" \
+            -H "X-Cron-Secret: ${CRON_SECRET}" \
+            -d "{\"dryRun\": ${DRY_RUN_INPUT}}")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "Cron response HTTP ${HTTP_CODE}: ${BODY}"
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            exit 1
+          fi
+
+      - name: Notify alert webhook on failure
+        if: ${{ failure() && secrets.ALERT_WEBHOOK_URL != '' }}
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: |
+          curl --fail --silent --show-error -X POST "$ALERT_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"rule":"REMINDER_CRON_FAILED","severity":"warning","text":"Daily Lakzee expiry reminder cron job failed in GitHub Actions."}'

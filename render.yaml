@@ -21,6 +21,54 @@ services:
         value: 7d
       - key: CLIENT_URL
         value: "https://lakzee-fitness.vercel.app"
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: WHATSAPP_PROVIDER
+        value: meta
+      - key: WHATSAPP_GRAPH_VERSION
+        value: v21.0
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_TEMPLATE_NAME
+        value: membership_expiry_reminder
+      - key: WHATSAPP_TEMPLATE_LANG
+        value: en
+      - key: WHATSAPP_PAYMENT_TEMPLATE_NAME
+        value: membership_payment_receipt
+      - key: REMINDER_CRON_ENABLED
+        value: "true"
+      - key: REMINDER_TIMEZONE
+        value: Asia/Kolkata
+      - key: REMINDER_CRON_HOUR
+        value: "9"
+      - key: REMINDER_CRON_MINUTE
+        value: "0"
+      - key: DRY_RUN
+        value: "false"
+      - key: CRON_SECRET
+        sync: false
+      - key: RAZORPAY_MOCK_MODE
+        value: "false"
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: DIRECT_URL

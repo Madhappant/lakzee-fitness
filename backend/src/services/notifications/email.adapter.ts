@@ -171,15 +171,20 @@ export class NodemailerSmtpAdapter implements EmailProviderAdapter {
       from?: string;
     } = {}
   ) {
-    this.host = (config.host ?? process.env.SMTP_HOST ?? '').trim();
-    this.port = config.port ?? Number(process.env.SMTP_PORT || 587);
-    this.secure = config.secure ?? (String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || this.port === 465);
+    const rawHost = (config.host ?? process.env.SMTP_HOST ?? '').trim();
     this.user = (config.user ?? process.env.SMTP_USER ?? '').trim();
     this.pass = (config.pass ?? process.env.SMTP_PASS ?? '').trim();
+    this.host =
+      rawHost ||
+      (config.host === undefined && /@(gmail|googlemail)\.com$/i.test(this.user) ? 'smtp.gmail.com' : '');
+    this.port = config.port ?? Number(process.env.SMTP_PORT || 587);
+    this.secure = config.secure ?? (String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || this.port === 465);
+    const defaultFrom = this.user.includes('@')
+      ? `Lakzee Fitness Studio <${this.user}>`
+      : 'Lakzee Fitness Studio <notifications@lakzee.fit>';
     this.fromAddress = (
       config.from ??
-      process.env.EMAIL_FROM ??
-      'Lakzee Fitness Studio <notifications@lakzee.fit>'
+      (process.env.EMAIL_FROM?.trim() || defaultFrom)
     ).trim();
   }
 

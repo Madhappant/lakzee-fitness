@@ -18,6 +18,8 @@
 | `RENDER_DEPLOY_HOOK_URL` | Render Deploy Hook URL for `lakzee-backend` |
 | `RENDER_ROLLBACK_HOOK_URL` | *(Optional)* Webhook to trigger rollback on failed smoke checks |
 | `BACKEND_HEALTH_URL` | Public `https://<render-host>/api/health` endpoint verified post-deploy |
+| `BACKEND_BASE_URL` | Public `https://<render-host>` root URL used by daily reminder cron workflow |
+| `CRON_SECRET` | Secret sent in `X-Cron-Secret` by `.github/workflows/expiry-reminders.yml` |
 | `VERCEL_TOKEN` | Vercel CLI access token (for `cd.yml` staged deploy -> promote) |
 | `VERCEL_ORG_ID` | Vercel Organization/Team ID |
 | `VERCEL_PROJECT_ID` | Vercel Project ID for `lakzee-fitness/web` |

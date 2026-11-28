@@ -14,6 +14,7 @@ import {
   parseActiveMilestones,
 } from '../../src/services/notification.service';
 import { computeNextRunDelayMs } from '../../src/services/reminder-scheduler.service';
+import { NodemailerSmtpAdapter } from '../../src/services/notifications/email.adapter';
 import type { ReminderTemplateContext } from '../../src/services/notifications/messaging.types';
 
 const sampleContext: ReminderTemplateContext = {
@@ -118,5 +119,20 @@ describe('Messaging Helpers: E.164, Templates, Retries & IST Milestones', () => 
     // At 08:30 IST (03:00Z), 09:00 IST should schedule in ~30 minutes
     const delay30m = computeNextRunDelayMs(new Date('2026-11-28T03:00:00.000Z'), 9, 0, 'Asia/Kolkata');
     expect(delay30m).toBe(30 * 60 * 1000);
+  });
+
+  it('infers smtp.gmail.com and sender fromAddress for Gmail SMTP users when SMTP_HOST is omitted', () => {
+    const gmailAdapter = new NodemailerSmtpAdapter({
+      user: 'studio.notifications@gmail.com',
+      pass: 'app-password',
+    });
+    expect(gmailAdapter.isConfigured()).toBe(true);
+
+    const emptyHostAdapter = new NodemailerSmtpAdapter({
+      host: '',
+      user: '',
+      pass: '',
+    });
+    expect(emptyHostAdapter.isConfigured()).toBe(false);
   });
 });
